@@ -39,3 +39,16 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# SQLite (for local dev only)
+dev.db
+dev.db-journal
+/prisma/migrations/
+
+# node_modules in nested folders
+**/node_modules
+
+# Optional editor + OS files
+.vscode/
+.DS_Store
+Thumbs.db

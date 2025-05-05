@@ -1,8 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import WatchlistForm from '@/components/WatchlistForm';
-import WatchlistItems from '@/components/WatchlistItems';
+import WatchlistForm from '@/components/watchlist/WatchlistForm';
+import WatchlistItems from '@/components/watchlist/WatchlistItems';
 
 export default function Home() {
   const [refreshKey, setRefreshKey] = useState(0);

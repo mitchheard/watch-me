@@ -1,16 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-
-interface WatchItem {
-  id: number;
-  title: string;
-  type: string;
-  status: string;
-  currentSeason?: number | null;
-  totalSeasons?: number | null;
-  createdAt: string;
-}
+import { WatchItem } from '@/types/watchlist';
 
 export default function WatchlistItems() {
   const [items, setItems] = useState<WatchItem[]>([]);
@@ -33,19 +24,11 @@ export default function WatchlistItems() {
     <div className="mt-10 w-full max-w-lg">
       <h2 className="text-lg font-semibold mb-4">Your Watchlist</h2>
       <ul className="space-y-4">
-        {items.map((item) => {
-          const createdDate = new Date(item.createdAt).toLocaleDateString(undefined, {
-            year: 'numeric',
-            month: 'short',
-            day: 'numeric',
-          });
-
-          return (
+        {items
+          .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+          .map((item) => (
             <li key={item.id} className="border p-4 rounded shadow-sm">
-              <div className="flex justify-between items-center mb-1">
-                <span className="font-medium">{item.title}</span>
-                <span className="text-xs text-gray-400">{createdDate}</span>
-              </div>
+              <div className="font-medium">{item.title}</div>
               <div className="text-sm text-gray-600">
                 {item.type} — {item.status}
                 {item.type === 'show' && item.currentSeason && (
@@ -56,9 +39,11 @@ export default function WatchlistItems() {
                   </span>
                 )}
               </div>
+              <div className="text-xs text-gray-400 mt-1">
+                {new Date(item.createdAt).toLocaleDateString()}
+              </div>
             </li>
-          );
-        })}
+          ))}
       </ul>
     </div>
   );

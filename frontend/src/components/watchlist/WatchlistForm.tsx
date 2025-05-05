@@ -1,15 +1,19 @@
 'use client';
 
 import { useState } from 'react';
+import FormInput from './FormInput';
+import FormSelect from './FormSelect';
+import { WatchItem } from '@/types/watchlist';
 
 export default function WatchlistForm({ onAddItem }: { onAddItem: () => void }) {
-  const [form, setForm] = useState({
+  const [form, setForm] = useState<Omit<WatchItem, 'id' | 'createdAt'>>({
     title: '',
     type: 'movie',
     status: 'want-to-watch',
-    currentSeason: '',
-    totalSeasons: '',
+    currentSeason: null,
+    totalSeasons: null,
   });
+
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
 
@@ -23,8 +27,8 @@ export default function WatchlistForm({ onAddItem }: { onAddItem: () => void }) 
 
     const payload = {
       ...form,
-      currentSeason: form.currentSeason ? parseInt(form.currentSeason) : null,
-      totalSeasons: form.totalSeasons ? parseInt(form.totalSeasons) : null,
+      currentSeason: form.currentSeason ? Number(form.currentSeason) : null,
+      totalSeasons: form.totalSeasons ? Number(form.totalSeasons) : null,
     };
 
     const res = await fetch('/api/watchlist', {
@@ -33,81 +37,76 @@ export default function WatchlistForm({ onAddItem }: { onAddItem: () => void }) 
       body: JSON.stringify(payload),
     });
 
-    setSubmitting(false);
-
     if (res.ok) {
       setSuccess(true);
       setForm({
         title: '',
         type: 'movie',
         status: 'want-to-watch',
-        currentSeason: '',
-        totalSeasons: '',
+        currentSeason: null,
+        totalSeasons: null,
       });
       onAddItem();
       setTimeout(() => setSuccess(false), 3000);
     } else {
-      console.error('Submission failed');
+      console.error('Failed to add item');
     }
+
+    setSubmitting(false);
   };
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-4 max-w-sm mx-auto w-full">
+    <form onSubmit={handleSubmit} className="flex flex-col gap-4 max-w-sm w-full mx-auto">
       {success && (
         <div className="text-green-600 text-sm font-medium text-center">
           Added to your watchlist!
         </div>
       )}
 
-      <input
-        type="text"
+      <FormInput
         name="title"
         value={form.title}
         onChange={handleChange}
         placeholder="Title"
-        className="border px-3 py-2 rounded w-full"
         required
       />
 
-      <select
+      <FormSelect
         name="type"
         value={form.type}
         onChange={handleChange}
-        className="border px-3 py-2 rounded w-full"
-      >
-        <option value="movie">Movie</option>
-        <option value="show">TV Show</option>
-      </select>
+        options={[
+          { value: 'movie', label: 'Movie' },
+          { value: 'show', label: 'TV Show' },
+        ]}
+      />
 
-      <select
+      <FormSelect
         name="status"
         value={form.status}
         onChange={handleChange}
-        className="border px-3 py-2 rounded w-full"
-      >
-        <option value="want-to-watch">Want to Watch</option>
-        <option value="watching">Watching</option>
-        <option value="finished">Finished</option>
-      </select>
+        options={[
+          { value: 'want-to-watch', label: 'Want to Watch' },
+          { value: 'watching', label: 'Watching' },
+          { value: 'finished', label: 'Finished' },
+        ]}
+      />
 
       {form.type === 'show' && (
         <>
-          <input
+          <FormInput
             type="number"
             name="currentSeason"
-            value={form.currentSeason}
+            value={form.currentSeason ?? ''}
             onChange={handleChange}
             placeholder="Current Season (optional)"
-            className="border px-3 py-2 rounded w-full"
           />
-
-          <input
+          <FormInput
             type="number"
             name="totalSeasons"
-            value={form.totalSeasons}
+            value={form.totalSeasons ?? ''}
             onChange={handleChange}
             placeholder="Total Seasons (optional)"
-            className="border px-3 py-2 rounded w-full"
           />
         </>
       )}
@@ -115,13 +114,9 @@ export default function WatchlistForm({ onAddItem }: { onAddItem: () => void }) 
       <button
         type="submit"
         disabled={submitting}
-        className={`py-2 px-4 rounded transition-colors ${
-          submitting
-            ? 'bg-gray-400 cursor-not-allowed text-white'
-            : 'bg-black text-white hover:bg-gray-800'
-        }`}
+        className="bg-black text-white py-2 px-4 rounded hover:bg-gray-800 transition-colors disabled:opacity-50"
       >
-        {submitting ? 'Adding...' : 'Add to Watchlist'}
+        {submitting ? 'Submitting...' : 'Add to Watchlist'}
       </button>
     </form>
   );

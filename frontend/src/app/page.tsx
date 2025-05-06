@@ -3,16 +3,33 @@
 import { useState } from 'react';
 import WatchlistForm from '@/components/watchlist/WatchlistForm';
 import WatchlistItems from '@/components/watchlist/WatchlistItems';
+import { WatchItem } from '@/types/watchlist';
+import EditWatchItemModal from '@/components/watchlist/EditWatchItemModal';
 
 export default function Home() {
   const [refreshKey, setRefreshKey] = useState(0);
+  const [editingItem, setEditingItem] = useState<WatchItem | null>(null);
 
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
+    <div className="min-h-screen bg-white dark:bg-black text-black dark:text-white px-4 sm:px-8 py-10 flex flex-col items-center">
+      <main className="w-full max-w-2xl space-y-10">
         <WatchlistForm onAddItem={() => setRefreshKey((k) => k + 1)} />
-        <WatchlistItems key={refreshKey} />
+        <WatchlistItems
+          key={refreshKey}
+          onEditItem={(item) => setEditingItem(item)}
+        />
       </main>
+
+      {editingItem && (
+        <EditWatchItemModal
+          item={editingItem}
+          onClose={() => setEditingItem(null)}
+          onUpdate={() => {
+            setRefreshKey((k) => k + 1);
+            setEditingItem(null);
+          }}
+        />
+      )}
     </div>
   );
 }

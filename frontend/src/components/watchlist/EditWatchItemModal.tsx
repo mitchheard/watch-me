@@ -57,12 +57,11 @@ export default function EditWatchItemModal({ item, onClose, onUpdate }: Props) {
     }
   };
 
-  // Consistent styling for form inputs (can be extracted to a component later)
-  const inputBaseClass = "border border-slate-300 px-3 py-2 rounded-md w-full text-sm placeholder-slate-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-shadow";
+  // Reverted inputBaseClass to light-theme only
+  const inputBaseClass = "border border-slate-300 px-3 py-2 rounded-md w-full text-sm bg-white text-slate-900 placeholder-slate-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-shadow";
 
   return (
-    <Modal onClose={onClose}>
-      <h2 className="text-xl font-semibold mb-5 text-slate-700">Edit Watchlist Item</h2>
+    <Modal onClose={onClose} title="Edit Watchlist Item">
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         <div>
           <label htmlFor="title" className="block text-xs font-medium text-slate-600 mb-1">Title</label>
@@ -140,8 +139,7 @@ export default function EditWatchItemModal({ item, onClose, onUpdate }: Props) {
           <button
             type="button"
             onClick={onClose}
-            // Updated Cancel button styling
-            className="text-sm font-medium text-slate-600 px-4 py-2 rounded-md hover:bg-slate-100 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-400"
+            className="text-sm font-medium text-slate-600 bg-white border border-slate-300 px-4 py-2 rounded-md hover:bg-slate-100 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-400"
           >
             Cancel
           </button>

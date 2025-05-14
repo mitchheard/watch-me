@@ -1,14 +1,19 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import FormInput from './FormInput';
-import FormSelect from './FormSelect';
+import FormInput from '../forms/FormInput';
+import FormSelect from '../forms/FormSelect';
 import { WatchItem } from '@/types/watchlist';
 
 // Define a more specific type for the form state if WatchItem includes id/createdAt
 type WatchlistFormState = Omit<WatchItem, 'id' | 'createdAt'>;
 
-export default function WatchlistForm({ onAddItem }: { onAddItem: () => void }) {
+export default function WatchlistForm({ onAddItem, itemToEdit, onUpdateItem, onCancelEdit }: { 
+  onAddItem: (newItem: WatchItem) => void,
+  itemToEdit?: WatchItem, 
+  onUpdateItem?: (item: WatchItem) => void, 
+  onCancelEdit?: () => void 
+}) {
   const initialFormState: WatchlistFormState = {
     title: '',
     type: 'movie',
@@ -19,12 +24,25 @@ export default function WatchlistForm({ onAddItem }: { onAddItem: () => void }) 
   const [form, setForm] = useState<WatchlistFormState>(initialFormState);
   const [submitting, setSubmitting] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const titleInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    // Autofocus the title input on component mount
-    titleInputRef.current?.focus();
-  }, []);
+    if (!itemToEdit && titleInputRef.current) {
+      titleInputRef.current.focus();
+    }
+    // If itemToEdit changes, reset the form fields
+    setForm(prevForm => ({
+      ...prevForm,
+      title: itemToEdit?.title || '',
+      type: itemToEdit?.type || 'movie',
+      status: itemToEdit?.status || 'want-to-watch',
+      currentSeason: itemToEdit?.currentSeason || null,
+      totalSeasons: itemToEdit?.totalSeasons || null,
+    }));
+    setSuccessMessage(null);
+    setError(null);
+  }, [itemToEdit]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -40,45 +58,71 @@ export default function WatchlistForm({ onAddItem }: { onAddItem: () => void }) 
     e.preventDefault();
     setSubmitting(true);
     setSuccessMessage(null);
+    setError(null); // Clear previous errors
 
-    // Ensure currentSeason and totalSeasons are numbers or null
+    const currentSeasonNum = form.currentSeason ? Number(form.currentSeason) : null;
+    const totalSeasonsNum = form.totalSeasons ? Number(form.totalSeasons) : null;
+
+    // Validate only if a value is present and it's not a valid number
+    if (form.currentSeason !== null && isNaN(currentSeasonNum as number)) {
+      setError("Current season must be a valid number.");
+      setSubmitting(false);
+      return;
+    }
+    if (form.totalSeasons !== null && isNaN(totalSeasonsNum as number)) {
+      setError("Total seasons must be a valid number.");
+      setSubmitting(false);
+      return;
+    }
+
     const payload = {
       ...form,
-      currentSeason: form.currentSeason ? Number(form.currentSeason) : null,
-      totalSeasons: form.totalSeasons ? Number(form.totalSeasons) : null,
+      currentSeason: form.type === 'show' ? currentSeasonNum : null,
+      totalSeasons: form.type === 'show' ? totalSeasonsNum : null,
     };
 
     try {
-      const res = await fetch('/api/watchlist', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-
-      if (res.ok) {
-        setSuccessMessage('Successfully added to your watchlist!');
-        setForm(initialFormState); // Reset form
-        titleInputRef.current?.focus(); // Re-focus title input for next entry
-        onAddItem(); // Callback to refresh list or handle success
-        setTimeout(() => setSuccessMessage(null), 4000);
+      let response;
+      if (itemToEdit) {
+        response = await fetch(`/api/watchlist?id=${itemToEdit.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
       } else {
-        const errorData = await res.text();
-        console.error('Failed to add item:', errorData);
-        setSuccessMessage(`Error: ${errorData || 'Failed to add item'}`);
-        setTimeout(() => setSuccessMessage(null), 5000); 
+        response = await fetch('/api/watchlist', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
       }
-    } catch (error) {
-      console.error('An error occurred:', error);
-      setSuccessMessage('An unexpected error occurred.');
-      setTimeout(() => setSuccessMessage(null), 5000);
+
+      if (response.ok) {
+        const result = await response.json();
+        if (itemToEdit && onUpdateItem) {
+          onUpdateItem(result);
+          setSuccessMessage('Item updated successfully!');
+        } else if (onAddItem) {
+          onAddItem(result);
+          setSuccessMessage('Item added successfully!');
+          setForm(initialFormState);
+          titleInputRef.current?.focus();
+        }
+        setTimeout(() => { setSuccessMessage(null); setError(null); }, 4000);
+      } else {
+        const errorData = await response.text();
+        setError(`Error: ${errorData || (itemToEdit ? 'Failed to update item' : 'Failed to add item')}`);
+        setTimeout(() => setError(null), 5000);
+      }
+    } catch (err) {
+      setError('An unexpected error occurred.');
+      setTimeout(() => setError(null), 5000);
     } finally {
       setSubmitting(false);
     }
   };
 
   return (
-    // Removed padding, bg, shadow, and mb from form tag as modal provides it.
-    // Reduced gap from gap-5 to gap-4.
     <form 
       onSubmit={handleSubmit} 
       className="flex flex-col gap-4 w-full"
@@ -87,14 +131,13 @@ export default function WatchlistForm({ onAddItem }: { onAddItem: () => void }) 
       {/* <h2 className="text-xl font-semibold text-slate-700 mb-1 text-center">Add New Item</h2> */}
       
       {successMessage && (
-        <div 
-          className={`p-3 rounded-md text-sm font-medium text-center mb-2 ${
-            successMessage.startsWith('Error:') 
-              ? 'bg-red-50 text-red-700' 
-              : 'bg-green-50 text-green-700'
-          }`}
-        >
+        <div className="p-3 rounded-md text-sm font-medium text-center mb-2 bg-green-50 text-green-700 border border-green-200">
           {successMessage}
+        </div>
+      )}
+      {error && (
+        <div className="p-3 rounded-md text-sm font-medium text-center mb-2 bg-red-50 text-red-700 border border-red-200">
+          {error}
         </div>
       )}
 
@@ -106,8 +149,8 @@ export default function WatchlistForm({ onAddItem }: { onAddItem: () => void }) 
         onChange={handleChange}
         placeholder="e.g., Dune: Part Two"
         required
-        ref={titleInputRef} // Assign ref for autofocus
-        className="py-3 text-base" // Retain larger size for title input
+        ref={titleInputRef}
+        className="py-3 text-base"
       />
 
       <FormSelect
@@ -136,15 +179,13 @@ export default function WatchlistForm({ onAddItem }: { onAddItem: () => void }) 
       />
 
       {form.type === 'show' && (
-        // Reduced gap for season inputs as well if a specific grid gap was there
-        // (It was gap-5 implicitly from the parent form, now it's gap-4)
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <FormInput
             id="currentSeason"
             type="number"
             name="currentSeason"
             label="Current Season"
-            value={form.currentSeason ?? ''} // Handle null for input value
+            value={form.currentSeason ?? ''}
             onChange={handleChange}
             placeholder="e.g., 1 (optional)"
             min="0"
@@ -154,7 +195,7 @@ export default function WatchlistForm({ onAddItem }: { onAddItem: () => void }) 
             type="number"
             name="totalSeasons"
             label="Total Seasons"
-            value={form.totalSeasons ?? ''} // Handle null for input value
+            value={form.totalSeasons ?? ''}
             onChange={handleChange}
             placeholder="e.g., 3 (optional)"
             min="0"
@@ -162,13 +203,25 @@ export default function WatchlistForm({ onAddItem }: { onAddItem: () => void }) 
         </div>
       )}
 
-      <button
-        type="submit"
-        disabled={submitting}
-        className="w-full bg-blue-600 text-white py-2.5 px-4 rounded-md font-semibold hover:bg-blue-700 transition-colors disabled:opacity-60 disabled:cursor-not-allowed focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 mt-2"
-      >
-        {submitting ? 'Adding...' : 'Add to Watchlist'}
-      </button>
+      <div className={`flex gap-3 pt-4 ${itemToEdit ? 'justify-end' : 'justify-start'} border-t border-slate-200 mt-6`}>
+        {itemToEdit && onCancelEdit && (
+          <button
+            type="button"
+            onClick={onCancelEdit}
+            disabled={submitting}
+            className="px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-md shadow-sm hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
+          >
+            Cancel
+          </button>
+        )}
+        <button
+          type="submit"
+          disabled={submitting}
+          className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 border border-transparent rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
+        >
+          {submitting ? (itemToEdit ? 'Saving...': 'Adding...') : (itemToEdit ? 'Update Item' : 'Add to Watchlist')}
+        </button>
+      </div>
     </form>
   );
 }

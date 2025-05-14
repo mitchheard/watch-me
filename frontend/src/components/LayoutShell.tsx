@@ -13,7 +13,6 @@ export default function LayoutShell({ children }: { children: ReactNode }) {
       <header className="sticky top-0 z-50 w-full bg-blue-600 text-white shadow-md">
         <div className="container mx-auto px-4 h-14 flex items-center justify-between">
           <div className="text-xl font-bold">Watch Me</div>
-          {/* Navigation items can go here if needed */}
         </div>
       </header>
 
@@ -21,7 +20,6 @@ export default function LayoutShell({ children }: { children: ReactNode }) {
         {children}
       </main>
 
-      {/* Bottom Navigation for controls like Add New - more prominent on mobile */}
       <div className="sticky bottom-0 z-50 w-full bg-blue-600 text-white shadow-md md:hidden">
         <div className="container mx-auto px-4 h-16 flex items-center justify-around">
           {/* Placeholder for actual buttons - they will need to be styled for white text too */}

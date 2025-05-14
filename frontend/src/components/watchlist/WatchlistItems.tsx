@@ -55,7 +55,7 @@ export default function WatchlistItems() {
           <button
             key={t}
             onClick={() => updateFilters(t as FilterType, status)}
-            className={`flex-grow px-3 py-1.5 rounded-md text-sm font-medium transition-all duration-150 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-blue-100 ${
+            className={`flex-grow px-3 py-1.5 rounded-md text-sm font-medium transition-all duration-150 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-blue-100 ${ 
               type === t
                 ? 'bg-white text-blue-600 shadow-sm'
                 : 'bg-transparent text-blue-700 hover:bg-white/70 hover:text-blue-600'
@@ -71,7 +71,7 @@ export default function WatchlistItems() {
           <button
             key={s}
             onClick={() => updateFilters(type, s as FilterStatus)}
-            className={`px-3.5 py-1 rounded-full text-xs font-medium transition-colors duration-150 ease-in-out border focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-1 focus-visible:ring-offset-slate-100 ${
+            className={`px-3.5 py-1 rounded-full text-xs font-medium transition-colors duration-150 ease-in-out border focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-1 focus-visible:ring-offset-slate-100 ${ 
               status === s
                 ? 'bg-blue-600 text-white border-blue-600'
                 : 'bg-white text-slate-500 border-slate-300 hover:bg-slate-100 hover:border-slate-400 hover:text-slate-700'
@@ -101,9 +101,9 @@ export default function WatchlistItems() {
                   </h3>
                   <div className="mt-1 flex flex-col gap-1">
                     <div className="flex items-center gap-1.5">
-                      {item.type === 'movie' ?
-                        <FilmIcon className="w-4 h-4 text-blue-500 flex-shrink-0" /> :
-                        <TvIcon className="w-4 h-4 text-blue-500 flex-shrink-0" />
+                      {item.type === 'movie' ? 
+                        <FilmIcon className="w-4 h-4 text-blue-500 flex-shrink-0" /> : 
+                        <TvIcon className="w-4 h-4 text-blue-500 flex-shrink-0" /> 
                       }
                       <p className="text-sm text-slate-500">
                         {item.type.replace(/\b\w/g, l => l.toUpperCase())}
@@ -121,7 +121,7 @@ export default function WatchlistItems() {
                           ${item.status === 'want-to-watch' ? 'bg-blue-100 text-blue-700' :
                             item.status === 'watching' ? 'bg-yellow-100 text-yellow-700' :
                             item.status === 'finished' ? 'bg-green-100 text-green-700' :
-                            'bg-slate-100 text-slate-700' // Fallback, though not expected
+                            'bg-slate-100 text-slate-700' 
                           }`}
                       >
                         {item.status.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
@@ -136,7 +136,7 @@ export default function WatchlistItems() {
                 <div className="flex items-center gap-1 flex-shrink-0">
                   <button
                     onClick={() => setSelectedItem(item)}
-                    className="p-2 text-slate-500 hover:text-blue-600 hover:bg-slate-100 rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                    className="p-2 text-slate-500 hover:text-blue-600 hover:bg-slate-100 rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-1 focus-visible:ring-offset-slate-100"
                     aria-label="Edit item"
                   >
                     <PencilSquareIcon className="w-5 h-5" />
@@ -147,7 +147,7 @@ export default function WatchlistItems() {
                         handleDelete(item.id);
                       }
                     }}
-                    className="p-2 text-slate-500 hover:text-red-600 hover:bg-slate-100 rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500"
+                    className="p-2 text-slate-500 hover:text-red-600 hover:bg-slate-100 rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-1 focus-visible:ring-offset-slate-100"
                     aria-label="Delete item"
                   >
                     <TrashIcon className="w-5 h-5" />

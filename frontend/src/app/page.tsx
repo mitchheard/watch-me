@@ -37,11 +37,13 @@ export default function Page() {
         <PlusIcon className="w-6 h-6" />
       </button>
 
-      {isAddItemModalOpen && (
-        <Modal onClose={() => setIsAddItemModalOpen(false)}>
-          <WatchlistForm onAddItem={handleAddItemSuccess} />
-        </Modal>
-      )}
+      <main className="flex-1">
+        {isAddItemModalOpen && (
+          <Modal onClose={() => setIsAddItemModalOpen(false)} title="Add New Item">
+            <WatchlistForm onAddItem={handleAddItemSuccess} />
+          </Modal>
+        )}
+      </main>
     </>
   );
 }

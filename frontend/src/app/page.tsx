@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, Suspense } from 'react';
 import WatchlistForm from '@/components/watchlist/WatchlistForm';
 import WatchlistItems from '@/components/watchlist/WatchlistItems';
 import Modal from '@/components/Modal';
@@ -27,7 +27,9 @@ export default function Page() {
         </button>
       </div>
 
-      <WatchlistItems key={refreshKey} />
+      <Suspense fallback={<div className="text-center py-10">Loading watchlist...</div>}>
+        <WatchlistItems key={refreshKey} />
+      </Suspense>
 
       <button
         onClick={() => setIsAddItemModalOpen(true)}

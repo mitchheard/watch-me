@@ -14,6 +14,18 @@ const eslintConfig = [
   {
     ignores: ['node_modules/', '.next/', 'src/generated/**'],
   },
+  {
+    rules: {
+      "@typescript-eslint/no-unused-vars": [
+        "warn", // or "error" depending on how strict you want to be
+        {
+          "argsIgnorePattern": "^_",
+          "varsIgnorePattern": "^_",
+          "caughtErrorsIgnorePattern": "^_"
+        }
+      ]
+    }
+  }
 ];
 
 export default eslintConfig;

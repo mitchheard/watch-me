@@ -114,7 +114,7 @@ export default function WatchlistForm({ onAddItem, itemToEdit, onUpdateItem, onC
         setError(`Error: ${errorData || (itemToEdit ? 'Failed to update item' : 'Failed to add item')}`);
         setTimeout(() => setError(null), 5000);
       }
-    } catch (err) {
+    } catch (_err) {
       setError('An unexpected error occurred.');
       setTimeout(() => setError(null), 5000);
     } finally {

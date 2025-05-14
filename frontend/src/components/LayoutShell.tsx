@@ -9,23 +9,24 @@ export default function LayoutShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-100 text-slate-800">
-      {/* Header: Retaining white background for separation, updating border */}
-      {/* "Tailwind is working" div removed */}
-      <header className="p-4 border-b border-slate-200 bg-white flex justify-between items-center sticky top-0 z-10">
-        <h1 className="text-lg font-semibold text-slate-900">🎬 Watch Me</h1>
+    <div className="min-h-screen bg-slate-100 text-slate-800 flex flex-col">
+      <header className="sticky top-0 z-50 w-full bg-blue-600 text-white shadow-md">
+        <div className="container mx-auto px-4 h-14 flex items-center justify-between">
+          <div className="text-xl font-bold">Watch Me</div>
+          {/* Navigation items can go here if needed */}
+        </div>
       </header>
 
-      <main className="flex-1 px-4 sm:px-6 md:px-8 max-w-3xl w-full mx-auto py-6">
+      <main className="flex-grow container mx-auto px-4 py-6">
         {children}
       </main>
 
-      {/* Bottom nav (mobile only): Retaining white background, updating border */}
-      <nav className="fixed bottom-0 inset-x-0 border-t border-slate-200 bg-white sm:hidden flex justify-around py-2">
-        <NavLink href="/" isActive={pathname === '/'} icon={<HomeIcon className="w-5 h-5" />} label="Home" />
-        <NavLink href="/add" isActive={pathname === '/add'} icon={<PlusIcon className="w-5 h-5" />} label="Add" />
-        <NavLink href="/settings" isActive={pathname === '/settings'} icon={<CogIcon className="w-5 h-5" />} label="Settings" />
-      </nav>
+      {/* Bottom Navigation for controls like Add New - more prominent on mobile */}
+      <div className="sticky bottom-0 z-50 w-full bg-blue-600 text-white shadow-md md:hidden">
+        <div className="container mx-auto px-4 h-16 flex items-center justify-around">
+          {/* Placeholder for actual buttons - they will need to be styled for white text too */}
+        </div>
+      </div>
     </div>
   );
 }
@@ -46,8 +47,8 @@ function NavLink({
       href={href}
       className={`flex flex-col items-center gap-1 text-xs font-medium transition-colors ${
         isActive
-          ? 'text-blue-600' // Active link color
-          : 'text-slate-500 hover:text-slate-700' // Inactive link color
+          ? 'text-white font-semibold' // Active link on blue background
+          : 'text-blue-100 hover:text-white' // Inactive link on blue background
       }`}
     >
       {icon}

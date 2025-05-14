@@ -35,7 +35,7 @@ export default function Modal({
           exit={{ scale: 0.95, opacity: 0 }}
           transition={{ duration: 0.2 }}
           onClick={(e) => e.stopPropagation()}
-          className="bg-white text-slate-800 rounded-lg shadow-xl p-6 w-full max-w-md relative"
+          className="bg-white text-slate-800 rounded-lg shadow-xl p-6 w-full max-w-lg relative"
         >
           <button
             onClick={onClose}

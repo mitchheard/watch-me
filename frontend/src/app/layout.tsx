@@ -24,8 +24,14 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
+      {/* 
+        Added suppressHydrationWarning to the html tag as a broader measure,
+        as extensions can sometimes modify it too. 
+        If the error persists and specifically points to body, it can be moved there.
+      */}
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        suppressHydrationWarning={true}
       >
         {children}
       </body>

@@ -35,90 +35,122 @@ export default function EditWatchItemModal({ item, onClose, onUpdate }: Props) {
       totalSeasons: form.totalSeasons ? parseInt(form.totalSeasons) : null,
     };
 
-    const res = await fetch('/api/watchlist', {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-    });
+    try {
+      const res = await fetch('/api/watchlist', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
 
-    setLoading(false);
-    if (res.ok) {
-      onUpdate();
-    } else {
-      console.error('Update failed');
+      if (res.ok) {
+        onUpdate(); // Refresh the list
+        onClose();  // Close the modal
+      } else {
+        // Consider adding user-facing error feedback here
+        console.error('Update failed', await res.text());
+      }
+    } catch (error) {
+      // Handle network errors or other exceptions
+      console.error('An error occurred during update:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
+  // Consistent styling for form inputs (can be extracted to a component later)
+  const inputBaseClass = "border border-slate-300 px-3 py-2 rounded-md w-full text-sm placeholder-slate-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-shadow";
+
   return (
     <Modal onClose={onClose}>
-      <h2 className="text-lg font-semibold mb-4">Edit Watchlist Item</h2>
+      <h2 className="text-xl font-semibold mb-5 text-slate-700">Edit Watchlist Item</h2>
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-        <input
-          type="text"
-          name="title"
-          value={form.title}
-          onChange={handleChange}
-          placeholder="Title"
-          className="border px-3 py-2 rounded w-full"
-          required
-        />
+        <div>
+          <label htmlFor="title" className="block text-xs font-medium text-slate-600 mb-1">Title</label>
+          <input
+            id="title"
+            type="text"
+            name="title"
+            value={form.title}
+            onChange={handleChange}
+            placeholder="e.g., The Matrix"
+            className={inputBaseClass}
+            required
+          />
+        </div>
 
-        <select
-          name="type"
-          value={form.type}
-          onChange={handleChange}
-          className="border px-3 py-2 rounded w-full"
-        >
-          <option value="movie">Movie</option>
-          <option value="show">TV Show</option>
-        </select>
+        <div>
+          <label htmlFor="type" className="block text-xs font-medium text-slate-600 mb-1">Type</label>
+          <select
+            id="type"
+            name="type"
+            value={form.type}
+            onChange={handleChange}
+            className={`${inputBaseClass} appearance-none`}
+          >
+            <option value="movie">Movie</option>
+            <option value="show">TV Show</option>
+          </select>
+        </div>
 
-        <select
-          name="status"
-          value={form.status}
-          onChange={handleChange}
-          className="border px-3 py-2 rounded w-full"
-        >
-          <option value="want-to-watch">Want to Watch</option>
-          <option value="watching">Watching</option>
-          <option value="finished">Finished</option>
-        </select>
+        <div>
+          <label htmlFor="status" className="block text-xs font-medium text-slate-600 mb-1">Status</label>
+          <select
+            id="status"
+            name="status"
+            value={form.status}
+            onChange={handleChange}
+            className={`${inputBaseClass} appearance-none`}
+          >
+            <option value="want-to-watch">Want to Watch</option>
+            <option value="watching">Watching</option>
+            <option value="finished">Finished</option>
+          </select>
+        </div>
 
         {form.type === 'show' && (
           <>
-            <input
-              type="number"
-              name="currentSeason"
-              value={form.currentSeason}
-              onChange={handleChange}
-              placeholder="Current Season (optional)"
-              className="border px-3 py-2 rounded w-full"
-            />
-            <input
-              type="number"
-              name="totalSeasons"
-              value={form.totalSeasons}
-              onChange={handleChange}
-              placeholder="Total Seasons (optional)"
-              className="border px-3 py-2 rounded w-full"
-            />
+            <div>
+              <label htmlFor="currentSeason" className="block text-xs font-medium text-slate-600 mb-1">Current Season</label>
+              <input
+                id="currentSeason"
+                type="number"
+                name="currentSeason"
+                value={form.currentSeason}
+                onChange={handleChange}
+                placeholder="e.g., 1 (optional)"
+                className={inputBaseClass}
+              />
+            </div>
+            <div>
+              <label htmlFor="totalSeasons" className="block text-xs font-medium text-slate-600 mb-1">Total Seasons</label>
+              <input
+                id="totalSeasons"
+                type="number"
+                name="totalSeasons"
+                value={form.totalSeasons}
+                onChange={handleChange}
+                placeholder="e.g., 3 (optional)"
+                className={inputBaseClass}
+              />
+            </div>
           </>
         )}
 
-        <div className="flex justify-end gap-3 mt-4">
+        <div className="flex justify-end items-center gap-3 mt-6 border-t border-slate-200 pt-4">
           <button
             type="button"
             onClick={onClose}
-            className="text-sm px-4 py-2 border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-100 dark:hover:bg-gray-800"
+            // Updated Cancel button styling
+            className="text-sm font-medium text-slate-600 px-4 py-2 rounded-md hover:bg-slate-100 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-400"
           >
             Cancel
           </button>
           <button
             type="submit"
             disabled={loading}
-            className="text-sm px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
+            className="text-sm font-medium bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
           >
-            {loading ? 'Saving...' : 'Save'}
+            {loading ? 'Saving...' : 'Save Changes'}
           </button>
         </div>
       </form>

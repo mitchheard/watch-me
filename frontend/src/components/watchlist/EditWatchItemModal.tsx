@@ -36,19 +36,19 @@ export default function EditWatchItemModal({ item, onClose, onUpdate }: Props) {
     };
 
     try {
-      const res = await fetch('/api/watchlist', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
+    const res = await fetch('/api/watchlist', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
 
-      if (res.ok) {
+    if (res.ok) {
         onUpdate(); // Refresh the list
         onClose();  // Close the modal
-      } else {
+    } else {
         // Consider adding user-facing error feedback here
         console.error('Update failed', await res.text());
-      }
+    }
     } catch (error) {
       // Handle network errors or other exceptions
       console.error('An error occurred during update:', error);
@@ -65,72 +65,72 @@ export default function EditWatchItemModal({ item, onClose, onUpdate }: Props) {
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         <div>
           <label htmlFor="title" className="block text-xs font-medium text-slate-600 mb-1">Title</label>
-          <input
+        <input
             id="title"
-            type="text"
-            name="title"
-            value={form.title}
-            onChange={handleChange}
+          type="text"
+          name="title"
+          value={form.title}
+          onChange={handleChange}
             placeholder="e.g., The Matrix"
             className={inputBaseClass}
-            required
-          />
+          required
+        />
         </div>
 
         <div>
           <label htmlFor="type" className="block text-xs font-medium text-slate-600 mb-1">Type</label>
-          <select
+        <select
             id="type"
-            name="type"
-            value={form.type}
-            onChange={handleChange}
+          name="type"
+          value={form.type}
+          onChange={handleChange}
             className={`${inputBaseClass} appearance-none`}
-          >
-            <option value="movie">Movie</option>
-            <option value="show">TV Show</option>
-          </select>
+        >
+          <option value="movie">Movie</option>
+          <option value="show">TV Show</option>
+        </select>
         </div>
 
         <div>
           <label htmlFor="status" className="block text-xs font-medium text-slate-600 mb-1">Status</label>
-          <select
+        <select
             id="status"
-            name="status"
-            value={form.status}
-            onChange={handleChange}
+          name="status"
+          value={form.status}
+          onChange={handleChange}
             className={`${inputBaseClass} appearance-none`}
-          >
-            <option value="want-to-watch">Want to Watch</option>
-            <option value="watching">Watching</option>
-            <option value="finished">Finished</option>
-          </select>
+        >
+          <option value="want-to-watch">Want to Watch</option>
+          <option value="watching">Watching</option>
+          <option value="finished">Finished</option>
+        </select>
         </div>
 
         {form.type === 'show' && (
           <>
             <div>
               <label htmlFor="currentSeason" className="block text-xs font-medium text-slate-600 mb-1">Current Season</label>
-              <input
+            <input
                 id="currentSeason"
-                type="number"
-                name="currentSeason"
-                value={form.currentSeason}
-                onChange={handleChange}
+              type="number"
+              name="currentSeason"
+              value={form.currentSeason}
+              onChange={handleChange}
                 placeholder="e.g., 1 (optional)"
                 className={inputBaseClass}
-              />
+            />
             </div>
             <div>
               <label htmlFor="totalSeasons" className="block text-xs font-medium text-slate-600 mb-1">Total Seasons</label>
-              <input
+            <input
                 id="totalSeasons"
-                type="number"
-                name="totalSeasons"
-                value={form.totalSeasons}
-                onChange={handleChange}
+              type="number"
+              name="totalSeasons"
+              value={form.totalSeasons}
+              onChange={handleChange}
                 placeholder="e.g., 3 (optional)"
                 className={inputBaseClass}
-              />
+            />
             </div>
           </>
         )}

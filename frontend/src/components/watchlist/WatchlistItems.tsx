@@ -84,21 +84,21 @@ export default function WatchlistItems() {
 
       {visibleItems.length > 0 ? (
         <motion.ul layout className="space-y-3">
-          {visibleItems.map((item) => (
+        {visibleItems.map((item) => (
             <motion.li
-              key={item.id}
+            key={item.id}
               layout
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
               transition={{ duration: 0.2 }}
               className="bg-white border border-slate-200/80 shadow-sm rounded-lg p-4 transition-shadow hover:shadow-md"
-            >
+          >
               <div className="flex justify-between items-center gap-3">
                 <div className="flex-grow min-w-0">
                   <h3 className="text-md font-semibold text-slate-800 truncate">
-                    {item.title}
-                  </h3>
+                  {item.title}
+                </h3>
                   <div className="mt-1 flex flex-col gap-1">
                     <div className="flex items-center gap-1.5">
                       {item.type === 'movie' ? 
@@ -107,13 +107,13 @@ export default function WatchlistItems() {
                       }
                       <p className="text-sm text-slate-500">
                         {item.type.replace(/\b\w/g, l => l.toUpperCase())}
-                        {item.type === 'show' && item.currentSeason && (
+                  {item.type === 'show' && item.currentSeason && (
                           <span className="text-slate-400">
                             {` — S${item.currentSeason}`}
-                            {item.totalSeasons ? ` of ${item.totalSeasons}` : ''}
-                          </span>
-                        )}
-                      </p>
+                      {item.totalSeasons ? ` of ${item.totalSeasons}` : ''}
+                    </span>
+                  )}
+                </p>
                     </div>
                     <div>
                       <span
@@ -130,32 +130,32 @@ export default function WatchlistItems() {
                   </div>
                   <p className="text-xs text-slate-400 mt-2">
                     Added: {new Date(item.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
-                  </p>
-                </div>
+                </p>
+              </div>
 
                 <div className="flex items-center gap-1 flex-shrink-0">
-                  <button
-                    onClick={() => setSelectedItem(item)}
+                <button
+                  onClick={() => setSelectedItem(item)}
                     className="p-2 text-slate-500 hover:text-blue-600 hover:bg-slate-100 rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-1 focus-visible:ring-offset-slate-100"
                     aria-label="Edit item"
-                  >
+                >
                     <PencilSquareIcon className="w-5 h-5" />
-                  </button>
-                  <button
-                    onClick={() => {
+                </button>
+                <button
+                  onClick={() => {
                       if (confirm(`Delete "${item.title}"? This action cannot be undone.`)) {
-                        handleDelete(item.id);
-                      }
-                    }}
+                      handleDelete(item.id);
+                    }
+                  }}
                     className="p-2 text-slate-500 hover:text-red-600 hover:bg-slate-100 rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-1 focus-visible:ring-offset-slate-100"
                     aria-label="Delete item"
-                  >
+                >
                     <TrashIcon className="w-5 h-5" />
-                  </button>
-                </div>
+                </button>
               </div>
+            </div>
             </motion.li>
-          ))}
+        ))}
         </motion.ul>
       ) : (
         <div className="text-center py-16">

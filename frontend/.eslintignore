@@ -3,6 +3,6 @@
 
 # Ignore node_modules
 node_modules/
-
+ 
 # Ignore Prisma generated files
 src/generated/ 

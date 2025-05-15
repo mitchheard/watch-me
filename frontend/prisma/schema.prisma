@@ -21,6 +21,7 @@ model WatchItem {
   status        String   // "want-to-watch", "watching", "finished"
   currentSeason Int?     // Optional, for shows
   totalSeasons  Int?     // Optional, for shows
+  userId        String?  // Stores Supabase user UUID, now optional
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 }

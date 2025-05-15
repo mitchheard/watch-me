@@ -42,13 +42,13 @@ export default function Modal({
         >
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-xl font-semibold">{title}</h2>
-            <button
-              onClick={onClose}
+          <button
+            onClick={onClose}
               className="p-1.5 text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-md transition-colors"
-              aria-label="Close modal"
-            >
+            aria-label="Close modal"
+          >
               <XMarkIcon className="w-6 h-6" />
-            </button>
+          </button>
           </div>
           {children}
         </motion.div>

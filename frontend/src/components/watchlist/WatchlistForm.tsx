@@ -91,10 +91,10 @@ export default function WatchlistForm({ onAddItem, itemToEdit, onUpdateItem, onC
         });
       } else {
         response = await fetch('/api/watchlist', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload),
-        });
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
       }
 
       if (response.ok) {
@@ -109,16 +109,16 @@ export default function WatchlistForm({ onAddItem, itemToEdit, onUpdateItem, onC
           titleInputRef.current?.focus();
         }
         setTimeout(() => { setSuccessMessage(null); setError(null); }, 4000);
-      } else {
+    } else {
         const errorData = await response.text();
         setError(`Error: ${errorData || (itemToEdit ? 'Failed to update item' : 'Failed to add item')}`);
         setTimeout(() => setError(null), 5000);
-      }
+    }
     } catch (_err) {
       setError('An unexpected error occurred.');
       setTimeout(() => setError(null), 5000);
     } finally {
-      setSubmitting(false);
+    setSubmitting(false);
     }
   };
 
@@ -150,7 +150,7 @@ export default function WatchlistForm({ onAddItem, itemToEdit, onUpdateItem, onC
         placeholder="e.g., Dune: Part Two"
         required
         ref={titleInputRef}
-        className="py-3 text-base"
+        className="text-base"
       />
 
       <FormSelect
@@ -213,14 +213,14 @@ export default function WatchlistForm({ onAddItem, itemToEdit, onUpdateItem, onC
           >
             Cancel
           </button>
-        )}
-        <button
-          type="submit"
-          disabled={submitting}
+      )}
+      <button
+        type="submit"
+        disabled={submitting}
           className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 border border-transparent rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
-        >
+      >
           {submitting ? (itemToEdit ? 'Saving...': 'Adding...') : (itemToEdit ? 'Update Item' : 'Add to Watchlist')}
-        </button>
+      </button>
       </div>
     </form>
   );

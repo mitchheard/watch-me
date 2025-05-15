@@ -27,3 +27,11 @@ model WatchItem {
 
   @@index([userId]) // Add an index for faster queries
 }
+
+model UserSession {
+  id        Int      @id @default(autoincrement())
+  userId    String
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}

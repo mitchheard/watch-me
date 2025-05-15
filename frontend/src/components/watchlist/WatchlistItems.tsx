@@ -23,10 +23,23 @@ export default function WatchlistItems() {
   }, []);
 
   const fetchItems = async () => {
-    const res = await fetch('/api/watchlist');
-    const data = await res.json();
-    setItems(data);
-    setLoading(false);
+    try {
+      const res = await fetch('/api/watchlist');
+      const data = await res.json();
+      
+      if (!res.ok) {
+        console.error('Failed to fetch items:', data.error);
+        setItems([]);
+        return;
+      }
+      
+      setItems(Array.isArray(data) ? data : []);
+    } catch (error) {
+      console.error('Error fetching items:', error);
+      setItems([]);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleDelete = async (id: number) => {

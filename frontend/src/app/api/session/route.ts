@@ -26,7 +26,7 @@ export async function POST() {
     const userId = await getUserId();
     await prisma.userSession.create({ data: { userId } });
     return NextResponse.json({ success: true });
-  } catch (error) {
+  } catch (_error) {
     return NextResponse.json({ error: 'Failed to record session' }, { status: 500 });
   }
 } 

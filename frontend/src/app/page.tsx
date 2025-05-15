@@ -11,8 +11,8 @@ function LandingPage() {
   return (
     <div className="max-w-4xl mx-auto px-4 py-12">
       <div className="text-center mb-12">
-        <h1 className="text-4xl font-bold text-gray-900 mb-4">Track Your Movies & TV Shows</h1>
-        <p className="text-xl text-gray-600">Keep track of what you're watching and what you want to watch next.</p>
+        <h1 className="text-4xl font-bold text-gray-900 mb-4">Track Your Movies &amp; TV Shows</h1>
+        <p className="text-xl text-gray-600">Keep track of what you&apos;re watching and what you want to watch next.</p>
       </div>
 
       <div className="grid md:grid-cols-3 gap-8 mb-12">
@@ -29,7 +29,7 @@ function LandingPage() {
         <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
           <CheckCircleIcon className="w-8 h-8 text-blue-600 mb-4" />
           <h3 className="text-lg font-semibold mb-2">Progress</h3>
-          <p className="text-gray-600">Mark what you've watched and what's next.</p>
+          <p className="text-gray-600">Mark what you&apos;ve watched and what&apos;s next.</p>
         </div>
       </div>
 

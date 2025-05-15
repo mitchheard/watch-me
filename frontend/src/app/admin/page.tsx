@@ -11,9 +11,18 @@ const SORT_OPTIONS = [
   { value: 'sessionCount', label: 'Sessions' },
 ];
 
+type AdminUser = {
+  id: string;
+  email: string;
+  itemCount: number;
+  lastSignInAt?: string | null;
+  createdAt?: string | null;
+  sessionCount: number;
+};
+
 export default function AdminPage() {
   const { user, isLoading } = useAuth();
-  const [users, setUsers] = useState<any[]>([]);
+  const [users, setUsers] = useState<AdminUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [sortBy, setSortBy] = useState('createdAt');
@@ -30,7 +39,7 @@ export default function AdminPage() {
         else setUsers(data);
         setLoading(false);
       })
-      .catch(err => {
+      .catch(_err => {
         setError('Failed to fetch users');
         setLoading(false);
       });
@@ -43,14 +52,27 @@ export default function AdminPage() {
 
   // Sort users array
   const sortedUsers = [...users].sort((a, b) => {
-    let aVal = a[sortBy];
-    let bVal = b[sortBy];
-    if (sortBy === 'createdAt' || sortBy === 'lastSignInAt') {
-      aVal = aVal ? new Date(aVal).getTime() : 0;
-      bVal = bVal ? new Date(bVal).getTime() : 0;
+    let aVal: number | string | null | undefined;
+    let bVal: number | string | null | undefined;
+    switch (sortBy) {
+      case 'createdAt':
+        aVal = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+        bVal = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+        break;
+      case 'itemCount':
+        aVal = a.itemCount;
+        bVal = b.itemCount;
+        break;
+      case 'sessionCount':
+        aVal = a.sessionCount;
+        bVal = b.sessionCount;
+        break;
+      default:
+        aVal = 0;
+        bVal = 0;
     }
-    if (aVal < bVal) return sortDir === 'asc' ? -1 : 1;
-    if (aVal > bVal) return sortDir === 'asc' ? 1 : -1;
+    if (aVal! < bVal!) return sortDir === 'asc' ? -1 : 1;
+    if (aVal! > bVal!) return sortDir === 'asc' ? 1 : -1;
     return 0;
   });
 

@@ -30,19 +30,20 @@ export async function GET(request: Request) {
   return NextResponse.redirect(new URL('/', requestUrl.origin));
 }
 
-async function getUserId() {
-  const cookieStore = await cookies();
-  // Only implement 'get' for SSR session reading
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        get(name: string) {
-          return cookieStore.get(name)?.value;
-        },
-      },
-    }
-  );
-  // ...rest of function...
-} 
+// Remove or comment out unused variables 'getUserId' and 'supabase' if present
+// async function getUserId() {
+//   const cookieStore = await cookies();
+//   // Only implement 'get' for SSR session reading
+//   const supabase = createServerClient(
+//     process.env.NEXT_PUBLIC_SUPABASE_URL!,
+//     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+//     {
+//       cookies: {
+//         get(name: string) {
+//           return cookieStore.get(name)?.value;
+//         },
+//       },
+//     }
+//   );
+//   // ...rest of function...
+// } 

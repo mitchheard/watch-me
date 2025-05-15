@@ -1,11 +1,24 @@
 'use client';
 
-import { useState } from 'react';
-// Don't import useAuth unless window is defined
+import { useState, useEffect, useRef } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
 
 export function AuthButton() {
-  // If we're on a static page (SSR, like 404), just show a simple sign in button
-  if (typeof window === 'undefined') {
+  const { user, login, logout, isLoading } = useAuth();
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isClient, setIsClient] = useState(false);
+  const hasSetClient = useRef(false);
+
+  useEffect(() => {
+    // Only set isClient to true on the client
+    if (!hasSetClient.current) {
+      setIsClient(true);
+      hasSetClient.current = true;
+    }
+  }, []);
+
+  // If not client-side yet, show a simple sign in button (for SSR/static pages)
+  if (!isClient) {
     return (
       <button
         onClick={() => { window.location.href = '/'; }}
@@ -15,12 +28,6 @@ export function AuthButton() {
       </button>
     );
   }
-
-  // Only import/use useAuth on the client
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const { useAuth } = require('@/contexts/AuthContext');
-  const { user, login, logout, isLoading } = useAuth();
-  const [isModalOpen, setIsModalOpen] = useState(false);
 
   if (isLoading) {
     return (

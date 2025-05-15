@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 
 export function AuthButton() {
-  const { user, login, logout, isLoading } = useAuth();
+  const { user, loginWithGoogle, logout, isLoading } = useAuth();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isClient, setIsClient] = useState(false);
   const hasSetClient = useRef(false);
@@ -57,10 +57,10 @@ export function AuthButton() {
         <div className="w-full max-w-md p-6 bg-white rounded-lg shadow-xl">
           <h2 className="mb-4 text-xl font-semibold text-center">Sign In</h2>
           <button
-            onClick={() => login()}
+            onClick={() => loginWithGoogle()}
             className="flex items-center justify-center w-full gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700"
           >
-            Continue with GitHub
+            Continue with Google
           </button>
           <button
             onClick={() => setIsModalOpen(false)}

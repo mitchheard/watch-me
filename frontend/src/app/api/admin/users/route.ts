@@ -64,11 +64,12 @@ export async function GET() {
         const itemCount = await prisma.watchItem.count({ where: { userId: user.id } });
         let sessionCount = 0;
         try {
-          if (prisma.userSession) {
+          // @ts-ignore - If UserSession model doesn't exist, Prisma will throw. This is a speculative check.
+          if (prisma.userSession) { 
             sessionCount = await prisma.userSession.count({ where: { userId: user.id } });
           }
-        } catch (e: any) {
-          // console.warn(`[Admin API] Could not count sessions for user ${user.id} (UserSession model might be missing): ${e.message}`);
+        } catch (_e: unknown) {
+          // console.warn(`[Admin API] Could not count sessions for user ${user.id} (UserSession model might be missing): ${(_e instanceof Error) ? _e.message : String(_e)}`);
         }
         return {
           id: user.id,
@@ -82,8 +83,9 @@ export async function GET() {
     );
     console.log('[Admin API] Successfully fetched counts. Returning user data.');
     return NextResponse.json(usersWithCounts);
-  } catch (error: any) {
-    console.error('[Admin API] Overall error in GET handler:', error.message, error);
-    return NextResponse.json({ error: 'Internal server error', details: error.message }, { status: 500 });
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    console.error('[Admin API] Overall error in GET handler:', errorMessage, error);
+    return NextResponse.json({ error: 'Internal server error', details: errorMessage }, { status: 500 });
   }
 } 

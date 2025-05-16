@@ -64,7 +64,6 @@ export async function GET() {
         const itemCount = await prisma.watchItem.count({ where: { userId: user.id } });
         let sessionCount = 0;
         try {
-          // @ts-ignore - If UserSession model doesn't exist, Prisma will throw. This is a speculative check.
           if (prisma.userSession) { 
             sessionCount = await prisma.userSession.count({ where: { userId: user.id } });
           }

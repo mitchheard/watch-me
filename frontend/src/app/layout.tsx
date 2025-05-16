@@ -30,7 +30,7 @@ export default function RootLayout({
         <AuthProvider>
           <Header />
           <main className="container px-4 py-8">
-            {children}
+        {children}
           </main>
         </AuthProvider>
       </body>

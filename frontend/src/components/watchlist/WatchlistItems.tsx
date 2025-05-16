@@ -24,8 +24,8 @@ export default function WatchlistItems() {
 
   const fetchItems = async () => {
     try {
-      const res = await fetch('/api/watchlist');
-      const data = await res.json();
+    const res = await fetch('/api/watchlist');
+    const data = await res.json();
       
       if (!res.ok) {
         console.error('Failed to fetch items:', data.error);
@@ -38,7 +38,7 @@ export default function WatchlistItems() {
       console.error('Error fetching items:', error);
       setItems([]);
     } finally {
-      setLoading(false);
+    setLoading(false);
     }
   };
 

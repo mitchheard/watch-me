@@ -1,11 +1,16 @@
 'use client';
 
 import { useState, Suspense } from 'react';
+import dynamic from 'next/dynamic';
 import { useAuth } from '../contexts/AuthContext';
 import WatchlistForm from '@/components/watchlist/WatchlistForm';
-import WatchlistItems from '@/components/watchlist/WatchlistItems';
+// import WatchlistItems from '@/components/watchlist/WatchlistItems';
 import Modal from '@/components/Modal';
 import { PlusIcon, FilmIcon, TvIcon, CheckCircleIcon } from '@heroicons/react/24/solid';
+
+const WatchlistItems = dynamic(() => import('@/components/watchlist/WatchlistItems'), {
+  ssr: false,
+});
 
 function LandingPage() {
   return (
@@ -50,7 +55,7 @@ function LandingPage() {
 }
 
 export default function Page() {
-  const { user } = useAuth();
+  const { user, isLoading } = useAuth();
   const [refreshKey, setRefreshKey] = useState(0);
   const [isAddItemModalOpen, setIsAddItemModalOpen] = useState(false);
 
@@ -58,6 +63,15 @@ export default function Page() {
     setRefreshKey(prevKey => prevKey + 1);
     setIsAddItemModalOpen(false);
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <p className="text-xl text-gray-600">Authenticating...</p>
+        {/* You could add a spinner here */}
+      </div>
+    );
+  }
 
   if (!user) {
     return <LandingPage />;

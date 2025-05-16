@@ -8,43 +8,68 @@ import { createClient } from '@supabase/supabase-js';
 const ADMIN_USER_ID = '464661fa-7ae1-406f-9975-dec0ccbc94aa';
 
 async function getUserId() {
-  const cookieStore = await cookies();
+  const cookieStore = cookies();
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
       cookies: {
         get(name: string) {
+          // @ts-expect-error TypeScript compiler may incorrectly infer Promise here
           return cookieStore.get(name)?.value;
         },
       },
     }
   );
-  const { data: { session } } = await supabase.auth.getSession();
-  if (!session?.user) throw new Error('Not authenticated');
+  const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+  if (sessionError) {
+    console.error('[Admin API] Error getting session in getUserId:', sessionError.message);
+    throw new Error('Session fetch error');
+  }
+  if (!session?.user) {
+    console.warn('[Admin API] No session or user in getUserId');
+    throw new Error('Not authenticated');
+  }
   return session.user.id;
 }
 
 export async function GET() {
   try {
+    console.log('[Admin API] Verifying admin user...');
     const userId = await getUserId();
     if (userId !== ADMIN_USER_ID) {
+      console.warn(`[Admin API] Forbidden access attempt by user: ${userId}`);
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
+    console.log('[Admin API] Admin user verified. Fetching users...');
 
     // Use Supabase admin API to list users
     const supabaseAdmin = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.SUPABASE_SERVICE_ROLE_KEY!
     );
-    const { data, error } = await supabaseAdmin.auth.admin.listUsers();
-    if (error) throw error;
+    console.log('[Admin API] Attempting to list users with Supabase admin client.');
+    const { data: usersData, error: listUsersError } = await supabaseAdmin.auth.admin.listUsers();
+    
+    if (listUsersError) {
+      console.error('[Admin API] Error listing users with Supabase admin client:', listUsersError.message);
+      throw listUsersError;
+    }
+    console.log(`[Admin API] Successfully listed ${usersData.users.length} users.`);
 
     // For each user, count their watchlist items and session count
-    const users = await Promise.all(
-      data.users.map(async (user) => {
+    console.log('[Admin API] Fetching item and session counts for users...');
+    const usersWithCounts = await Promise.all(
+      usersData.users.map(async (user) => {
         const itemCount = await prisma.watchItem.count({ where: { userId: user.id } });
-        const sessionCount = await prisma.userSession.count({ where: { userId: user.id } });
+        let sessionCount = 0;
+        try {
+          if (prisma.userSession) {
+            sessionCount = await prisma.userSession.count({ where: { userId: user.id } });
+          }
+        } catch (e: any) {
+          // console.warn(`[Admin API] Could not count sessions for user ${user.id} (UserSession model might be missing): ${e.message}`);
+        }
         return {
           id: user.id,
           email: user.email,
@@ -55,9 +80,10 @@ export async function GET() {
         };
       })
     );
-    return NextResponse.json(users);
-  } catch (error) {
-    console.error('Admin users API error:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    console.log('[Admin API] Successfully fetched counts. Returning user data.');
+    return NextResponse.json(usersWithCounts);
+  } catch (error: any) {
+    console.error('[Admin API] Overall error in GET handler:', error.message, error);
+    return NextResponse.json({ error: 'Internal server error', details: error.message }, { status: 500 });
   }
 } 

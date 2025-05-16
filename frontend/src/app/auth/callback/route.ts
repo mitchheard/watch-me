@@ -28,21 +28,26 @@ export async function GET(request: NextRequest) {
       {
         cookies: {
           get(name: string) {
-            // @ts-ignore
+            // @ts-expect-error TypeScript compiler seems to incorrectly infer Promise here
             const value = cookieStore.get(name)?.value;
             console.log(`[AuthCallback] Cookie GET: ${name} = ${value ? 'found' : 'not found'}`);
             return value;
           },
           set(name: string, value: string, options: CookieOptions) {
             console.log(`[AuthCallback] Cookie SET: ${name}`);
-            // @ts-ignore
+            // @ts-expect-error TypeScript compiler seems to incorrectly infer Promise here
             cookieStore.set(name, value, options);
           },
           remove(name: string, options: CookieOptions) {
             console.log(`[AuthCallback] Cookie REMOVE: ${name}`);
-            const deleteOpts: { name: string; path?: string; domain?: string } = { name, ...options };
-            // @ts-ignore
-            cookieStore.delete(deleteOpts as any);
+            // Construct deleteOpts specifically for Next.js cookies().delete
+            const deleteOpts: { name: string; path?: string; domain?: string } = { name };
+            if (options.path) deleteOpts.path = options.path;
+            if (options.domain) deleteOpts.domain = options.domain;
+            // Note: Next.js delete typically doesn't need other options like secure, sameSite from the original set options
+            
+            // @ts-expect-error TypeScript compiler seems to incorrectly infer Promise here
+            cookieStore.delete(deleteOpts);
           },
         },
       }

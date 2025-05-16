@@ -1,6 +1,7 @@
 import { createServerClient, type CookieOptions } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import { NextResponse, type NextRequest } from 'next/server';
+import { prisma } from '@/lib/prisma';
 
 export async function GET(request: NextRequest) {
   // Use NEXTAUTH_URL (or your specific env var for site URL) as the reliable application origin
@@ -69,6 +70,22 @@ export async function GET(request: NextRequest) {
     }
 
     console.log('[AuthCallback] Successfully exchanged code for session. Session data:', sessionData);
+    
+    // Create a UserSession record
+    if (sessionData.session?.user) {
+      try {
+        await prisma.userSession.create({
+          data: {
+            userId: sessionData.session.user.id,
+          },
+        });
+        console.log(`[AuthCallback] UserSession record created for user: ${sessionData.session.user.id}`);
+      } catch (dbError: unknown) { // Explicitly type dbError
+        const errorMessage = dbError instanceof Error ? dbError.message : String(dbError);
+        console.error(`[AuthCallback] Failed to create UserSession record for user ${sessionData.session.user.id}:`, errorMessage, dbError);
+        // Non-critical, so we just log and continue
+      }
+    }
     
     const finalRedirectUrl = `${appOrigin}${next}`;
     console.log(`[AuthCallback] Preparing final redirect. AppOrigin: '${appOrigin}', next: '${next}', Final URL: '${finalRedirectUrl}'`);

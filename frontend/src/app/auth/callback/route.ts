@@ -62,8 +62,12 @@ export async function GET(request: NextRequest) {
     }
 
     console.log('[AuthCallback] Successfully exchanged code for session. Session data:', sessionData);
-    console.log(`[AuthCallback] Redirecting to: ${origin}${next}`);
-    return NextResponse.redirect(`${origin}${next}`);
+    
+    // Explicitly log the origin and next right before constructing the redirect URL
+    const finalRedirectUrl = `${origin}${next}`;
+    console.log(`[AuthCallback] Preparing final redirect. Current origin: '${origin}', next: '${next}', Final URL: '${finalRedirectUrl}'`);
+    
+    return NextResponse.redirect(finalRedirectUrl);
 
   } else {
     console.warn("[AuthCallback] Code missing in request parameters and no initial Supabase error detected.");

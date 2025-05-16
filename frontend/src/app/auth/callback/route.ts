@@ -9,7 +9,7 @@ export async function GET(request: NextRequest) {
   const next = searchParams.get('next') ?? '/';
 
   if (code) {
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
     const supabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -22,7 +22,16 @@ export async function GET(request: NextRequest) {
             cookieStore.set(name, value, options);
           },
           remove(name: string, options: CookieOptions) {
-            cookieStore.delete(name, options);
+            // Next.js 15.x cookies().delete might expect a single object argument
+            // that includes the name, path, and domain.
+            const deleteOpts: { name: string; path?: string; domain?: string } = { name };
+            if (options.path) deleteOpts.path = options.path;
+            if (options.domain) deleteOpts.domain = options.domain;
+            // other options like secure, sameSite might be needed if they were used during set
+            // but Next.js delete is often minimal. If options.secure is true, it should be passed.
+            // if (options.secure) deleteOpts.secure = options.secure; 
+            // if (options.sameSite) deleteOpts.sameSite = options.sameSite as 'lax' | 'strict' | 'none';
+            cookieStore.delete(deleteOpts);
           },
         },
       }

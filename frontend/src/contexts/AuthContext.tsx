@@ -22,34 +22,42 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    console.log('[AuthContext] useEffect: Initializing session check.');
     const getSession = async () => {
       setIsLoading(true);
+      console.log('[AuthContext] getSession: Fetching current session.');
       const { data, error } = await supabase.auth.getSession();
       if (error) {
-        console.error('Error getting session:', error);
+        console.error('[AuthContext] getSession: Error getting session:', error.message);
       } else {
+        console.log('[AuthContext] getSession: Fetched session data:', data.session);
         setSession(data.session);
         setUser(data.session?.user ?? null);
       }
       setIsLoading(false);
+      console.log('[AuthContext] getSession: Finished. isLoading set to false.');
     };
 
     getSession();
 
     const { data: authListener } = supabase.auth.onAuthStateChange(
       (_event, session) => {
+        console.log('[AuthContext] onAuthStateChange: Event triggered. Event:', _event, 'Session:', session);
         setSession(session);
         setUser(session?.user ?? null);
         setIsLoading(false);
+        console.log('[AuthContext] onAuthStateChange: State updated. isLoading set to false.');
       }
     );
 
     return () => {
+      console.log('[AuthContext] useEffect: Cleaning up auth listener.');
       authListener?.subscription.unsubscribe();
     };
   }, []);
 
   const loginWithGoogle = async () => {
+    console.log('[AuthContext] loginWithGoogle: Initiating Google OAuth.');
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
@@ -57,7 +65,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
     });
     if (error) {
-      console.error('Error logging in with Google:', error.message);
+      console.error('[AuthContext] loginWithGoogle: Error:', error.message);
     }
   };
 
@@ -88,12 +96,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const logout = async () => {
     setIsLoading(true);
-    const { error } = await supabase.auth.signOut();
+    console.log("[AuthContext] Attempting logout with scope: local");
+    const { error } = await supabase.auth.signOut({ scope: 'local' }); 
     if (error) {
-      console.error('Error logging out:', error.message);
+      console.error('[AuthContext] Error logging out (local scope attempt):', error.message);
+      setSession(null);
+      setUser(null);
+    } else {
+      console.log('[AuthContext] Successfully signed out (local scope attempt)');
     }
     setIsLoading(false);
+    console.log('[AuthContext] logout: Finished. isLoading set to false.');
   };
+
+  console.log('[AuthContext] Provider render. isLoading:', isLoading, 'User:', user?.id);
 
   return (
     <AuthContext.Provider value={{ 

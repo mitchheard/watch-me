@@ -18,6 +18,7 @@ type AdminUser = {
   lastSignInAt?: string | null;
   createdAt?: string | null;
   sessionCount: number;
+  lastItemAddedAt?: string | null;
 };
 
 export default function AdminPageClient() {
@@ -117,8 +118,11 @@ export default function AdminPageClient() {
               <div className="text-xs text-slate-400 mt-1">
                 Signup: {u.createdAt ? new Date(u.createdAt).toLocaleDateString() : 'Unknown'}
               </div>
-              <div className="text-xs text-slate-400 mt-1 mb-2">
+              <div className="text-xs text-slate-400 mt-1">
                 Last login: {u.lastSignInAt ? new Date(u.lastSignInAt).toLocaleString() : 'Never'}
+              </div>
+              <div className="text-xs text-slate-400 mt-1 mb-2">
+                Last item added: {u.lastItemAddedAt ? new Date(u.lastItemAddedAt).toLocaleString() : 'No items added'}
               </div>
               <div className="flex flex-row justify-center gap-8 mt-3">
                 <div className="flex flex-col items-center">

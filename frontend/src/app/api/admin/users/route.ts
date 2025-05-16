@@ -70,6 +70,14 @@ export async function GET() {
         } catch (_e: unknown) {
           // console.warn(`[Admin API] Could not count sessions for user ${user.id} (UserSession model might be missing): ${(_e instanceof Error) ? _e.message : String(_e)}`);
         }
+
+        const mostRecentItem = await prisma.watchItem.findFirst({
+          where: { userId: user.id },
+          orderBy: { createdAt: 'desc' },
+          select: { createdAt: true },
+        });
+        const lastItemAddedAt = mostRecentItem?.createdAt;
+
         return {
           id: user.id,
           email: user.email,
@@ -77,6 +85,7 @@ export async function GET() {
           lastSignInAt: user.last_sign_in_at,
           createdAt: user.created_at,
           sessionCount,
+          lastItemAddedAt,
         };
       })
     );

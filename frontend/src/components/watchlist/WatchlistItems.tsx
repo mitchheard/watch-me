@@ -95,7 +95,7 @@ export default function WatchlistItems() {
                   : 'bg-transparent text-slate-600 hover:bg-slate-50 hover:text-slate-800'
               }`}
             >
-              {s === 'all' ? 'All' : s.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+              {s === 'all' ? 'All' : s === 'want-to-watch' ? 'Want to Watch' : s.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
             </button>
           ))}
         </div>
@@ -143,7 +143,7 @@ export default function WatchlistItems() {
                             'bg-slate-100 text-slate-700' 
                           }`}
                       >
-                        {item.status.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                        {item.status === 'want-to-watch' ? 'Want to Watch' : item.status.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
                       </span>
                     </div>
                   </div>
@@ -155,7 +155,7 @@ export default function WatchlistItems() {
                 <div className="flex items-center gap-1 flex-shrink-0">
                 <button
                   onClick={() => setSelectedItem(item)}
-                    className="p-2 text-slate-500 hover:text-blue-600 hover:bg-slate-100 rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-1 focus-visible:ring-offset-slate-100"
+                    className="p-2 text-slate-500 hover:text-blue-600 hover:bg-slate-100 rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-1 focus-visible:ring-offset-white"
                     aria-label="Edit item"
                 >
                     <PencilSquareIcon className="w-5 h-5" />
@@ -166,7 +166,7 @@ export default function WatchlistItems() {
                       handleDelete(item.id);
                     }
                   }}
-                    className="p-2 text-slate-500 hover:text-red-600 hover:bg-slate-100 rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-1 focus-visible:ring-offset-slate-100"
+                    className="p-2 text-slate-500 hover:text-red-600 hover:bg-slate-100 rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-1 focus-visible:ring-offset-white"
                     aria-label="Delete item"
                 >
                     <TrashIcon className="w-5 h-5" />

@@ -2,15 +2,26 @@
 
 import { ReactNode } from 'react';
 import Link from 'next/link';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function LayoutShell({ children }: { children: ReactNode }) {
+  const { user, logout } = useAuth();
+
   return (
     <div className="min-h-screen bg-slate-100 text-slate-800 flex flex-col">
-      <header className="sticky top-0 z-50 w-full bg-blue-600 text-white shadow-md">
+      <header className="sticky top-0 z-50 w-full bg-white text-slate-900 shadow-sm border-b border-slate-200">
         <div className="container mx-auto px-4 h-14 flex items-center justify-between">
-          <Link href="/" className="text-xl font-bold hover:opacity-80 transition-opacity">
+          <Link href="/" className="text-xl font-bold text-blue-600 hover:text-blue-700 transition-colors">
             Watch Me
           </Link>
+          {user && (
+            <button
+              onClick={logout}
+              className="px-3 py-1.5 text-sm font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-900 rounded-md transition-colors"
+            >
+              Sign Out
+            </button>
+          )}
         </div>
       </header>
 
@@ -18,11 +29,6 @@ export default function LayoutShell({ children }: { children: ReactNode }) {
         {children}
       </main>
 
-      <div className="sticky bottom-0 z-50 w-full bg-blue-600 text-white shadow-md md:hidden">
-        <div className="container mx-auto px-4 h-16 flex items-center justify-around">
-          {/* Placeholder for actual buttons - they will need to be styled for white text too */}
-        </div>
-      </div>
     </div>
   );
 }

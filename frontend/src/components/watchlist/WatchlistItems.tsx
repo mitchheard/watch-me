@@ -63,36 +63,42 @@ export default function WatchlistItems() {
     <div className="mt-8 w-full max-w-2xl mx-auto">
       <h2 className="text-2xl font-semibold mb-6 text-center text-slate-800">Your Watchlist</h2>
 
-      <div className="mb-6 w-full flex justify-center gap-2 sm:gap-3 bg-blue-100 p-1 rounded-lg shadow-sm">
-        {['all', 'movie', 'show'].map((t) => (
-          <button
-            key={t}
-            onClick={() => updateFilters(t as FilterType, status)}
-            className={`flex-grow px-3 py-1.5 rounded-md text-sm font-medium transition-all duration-150 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-blue-100 ${ 
-              type === t
-                ? 'bg-white text-blue-600 shadow-sm'
-                : 'bg-transparent text-blue-700 hover:bg-white/70 hover:text-blue-600'
-            }`}
-          >
-            {t === 'all' ? 'All Types' : t === 'movie' ? 'Movies' : 'Shows'}
-          </button>
-        ))}
+      {/* Type Filters - Segmented Control Style */}
+      <div className="mb-6 flex justify-center">
+        <div className="inline-flex items-center bg-slate-200 p-1 rounded-lg shadow-sm">
+          {['all', 'movie', 'show'].map((t) => (
+            <button
+              key={t}
+              onClick={() => updateFilters(t as FilterType, status)}
+              className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all duration-200 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-200 ${ 
+                type === t
+                  ? 'bg-white text-blue-600 shadow-sm'
+                  : 'bg-transparent text-slate-600 hover:bg-slate-50 hover:text-slate-800'
+              }`}
+            >
+              {t === 'all' ? 'All' : t === 'movie' ? 'Movies' : 'Shows'}
+            </button>
+          ))}
+        </div>
       </div>
 
-      <div className="flex justify-center flex-wrap gap-2 mb-8">
-        {['all', 'want-to-watch', 'watching', 'finished'].map((s) => (
-          <button
-            key={s}
-            onClick={() => updateFilters(type, s as FilterStatus)}
-            className={`px-3.5 py-1 rounded-full text-xs font-medium transition-colors duration-150 ease-in-out border focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-1 focus-visible:ring-offset-slate-100 ${ 
-              status === s
-                ? 'bg-blue-600 text-white border-blue-600'
-                : 'bg-white text-slate-500 border-slate-300 hover:bg-slate-100 hover:border-slate-400 hover:text-slate-700'
-            }`}
-          >
-            {s === 'all' ? 'All Statuses' : s.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
-          </button>
-        ))}
+      {/* Status Filters - Updated to Segmented Control Style */}
+      <div className="mb-8 flex justify-center">
+        <div className="inline-flex flex-wrap justify-center items-center bg-slate-200 p-1 rounded-lg shadow-sm gap-1">
+          {['all', 'want-to-watch', 'watching', 'finished'].map((s) => (
+            <button
+              key={s}
+              onClick={() => updateFilters(type, s as FilterStatus)}
+              className={`px-2.5 py-1 rounded-md text-xs font-medium transition-all duration-200 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-1 focus-visible:ring-offset-slate-200 ${ 
+                status === s
+                  ? 'bg-white text-blue-600 shadow-sm'
+                  : 'bg-transparent text-slate-600 hover:bg-slate-50 hover:text-slate-800'
+              }`}
+            >
+              {s === 'all' ? 'All' : s.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+            </button>
+          ))}
+        </div>
       </div>
 
       {visibleItems.length > 0 ? (

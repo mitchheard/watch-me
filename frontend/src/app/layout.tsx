@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { AuthProvider } from "@/contexts/AuthContext";
-import { Header } from "../components/Header";
+// import { Header } from "../components/Header"; // Removed Header import
+import LayoutShell from "@/components/LayoutShell"; // Added LayoutShell import
 import "./globals.css";
 
 const geistSans = Geist({
@@ -28,10 +29,9 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning={true}>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <AuthProvider>
-          <Header />
-          <main className="container px-4 py-8">
-        {children}
-          </main>
+          <LayoutShell>
+            {children}
+          </LayoutShell>
         </AuthProvider>
       </body>
     </html>

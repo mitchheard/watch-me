@@ -1,13 +1,16 @@
 'use client';
 
 import { ReactNode } from 'react';
+import Link from 'next/link';
 
 export default function LayoutShell({ children }: { children: ReactNode }) {
   return (
     <div className="min-h-screen bg-slate-100 text-slate-800 flex flex-col">
       <header className="sticky top-0 z-50 w-full bg-blue-600 text-white shadow-md">
         <div className="container mx-auto px-4 h-14 flex items-center justify-between">
-          <div className="text-xl font-bold">Watch Me</div>
+          <Link href="/" className="text-xl font-bold hover:opacity-80 transition-opacity">
+            Watch Me
+          </Link>
         </div>
       </header>
 

@@ -75,6 +75,15 @@ export default function AdminPageClient() {
     return 0;
   });
 
+  const dateTimeFormatOptions: Intl.DateTimeFormatOptions = {
+    year: 'numeric',
+    month: 'numeric',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: 'numeric',
+    hour12: true,
+  };
+
   return (
     <div className="max-w-3xl mx-auto py-10 px-4">
       <h1 className="text-2xl font-bold mb-2">Admin: User Overview</h1>
@@ -112,25 +121,27 @@ export default function AdminPageClient() {
           {sortedUsers.map((u) => (
             <div
               key={u.id}
-              className="rounded-xl border border-slate-200 bg-white shadow-sm p-6 flex flex-col gap-3 transition-shadow hover:shadow-md"
+              className="group rounded-xl border border-slate-200 bg-white shadow-sm p-4 sm:p-6 flex flex-col sm:flex-row sm:justify-between items-stretch sm:items-start gap-4 sm:gap-6 transition-all duration-200 ease-in-out hover:shadow-md hover:border-slate-300"
             >
-              <div className="font-semibold text-slate-800 text-lg truncate">{u.email}</div>
-              <div className="text-xs text-slate-400 mt-1">
-                Signup: {u.createdAt ? new Date(u.createdAt).toLocaleDateString() : 'Unknown'}
+              <div className="flex flex-col w-full sm:flex-grow">
+                <div className="font-semibold text-slate-800 text-lg truncate mb-1 text-left">{u.email}</div>
+                <div className="text-xs text-slate-400 text-left">
+                  Signup: {u.createdAt ? new Date(u.createdAt).toLocaleDateString() : 'Unknown'}
+                </div>
+                <div className="text-xs text-slate-400 text-left">
+                  Last login: {u.lastSignInAt ? new Date(u.lastSignInAt).toLocaleString(undefined, dateTimeFormatOptions) : 'Never'}
+                </div>
+                <div className="text-xs text-slate-400 text-left">
+                  Last item added: {u.lastItemAddedAt ? new Date(u.lastItemAddedAt).toLocaleString(undefined, dateTimeFormatOptions) : 'No items added'}
+                </div>
               </div>
-              <div className="text-xs text-slate-400 mt-1">
-                Last login: {u.lastSignInAt ? new Date(u.lastSignInAt).toLocaleString() : 'Never'}
-              </div>
-              <div className="text-xs text-slate-400 mt-1 mb-2">
-                Last item added: {u.lastItemAddedAt ? new Date(u.lastItemAddedAt).toLocaleString() : 'No items added'}
-              </div>
-              <div className="flex flex-row justify-center gap-8 mt-3">
-                <div className="flex flex-col items-center">
-                  <span className="text-xs text-slate-500 mb-0.5">Watchlist Items</span>
+              <div className="flex flex-row sm:flex-col justify-around sm:items-end gap-4 sm:gap-3 w-full sm:w-auto mt-3 sm:mt-0 sm:flex-shrink-0 sm:pt-1">
+                <div className="flex flex-col items-center sm:items-end">
+                  <span className="text-xs text-slate-500">Watchlist Items</span>
                   <span className="text-2xl font-bold text-blue-600">{u.itemCount}</span>
                 </div>
-                <div className="flex flex-col items-center">
-                  <span className="text-xs text-slate-500 mb-0.5">Sessions</span>
+                <div className="flex flex-col items-center sm:items-end">
+                  <span className="text-xs text-slate-500">Sessions</span>
                   <span className="text-2xl font-bold text-green-600">{u.sessionCount}</span>
                 </div>
               </div>

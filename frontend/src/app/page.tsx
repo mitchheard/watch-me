@@ -15,6 +15,7 @@ const WatchlistItems = dynamic(() => import('@/components/watchlist/WatchlistIte
 function LandingPage() {
   return (
     <div className="max-w-4xl mx-auto px-4 py-12">
+      {/* <div className="manual-red-test">TEST WITH MANUAL CSS</div> */}
       <div className="text-center mb-12">
         <h1 className="text-4xl font-bold text-gray-900 mb-4">Track Your Movies &amp; TV Shows</h1>
         <p className="text-xl text-gray-600">Keep track of what you&apos;re watching and what you want to watch next.</p>

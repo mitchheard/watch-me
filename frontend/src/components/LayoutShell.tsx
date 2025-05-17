@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 
 export default function LayoutShell({ children }: { children: ReactNode }) {
-  const { user, logout } = useAuth();
+  const { user, logout, loginWithGoogle } = useAuth();
 
   return (
     <div className="min-h-screen bg-slate-100 text-slate-800 flex flex-col">
@@ -14,12 +14,20 @@ export default function LayoutShell({ children }: { children: ReactNode }) {
           <Link href="/" className="text-xl font-bold text-blue-600 hover:text-blue-700 transition-colors">
             Watch Me
           </Link>
-          {user && (
+          {user ? (
             <button
               onClick={logout}
               className="px-3 py-1.5 text-sm font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-900 rounded-md transition-colors"
             >
               Sign Out
+            </button>
+          ) : (
+            <button
+              onClick={loginWithGoogle}
+              aria-label="Sign In"
+              className="px-3 py-1.5 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md transition-colors"
+            >
+              Sign In
             </button>
           )}
         </div>

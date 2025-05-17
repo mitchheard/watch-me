@@ -14,9 +14,10 @@ async function getUserId() {
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
       cookies: {
-        get(name: string) {
+        async get(name: string) {
           // @ts-expect-error TypeScript compiler may incorrectly infer Promise here
-          return cookieStore.get(name)?.value;
+          const cookie = await cookieStore.get(name);
+          return cookie?.value;
         },
       },
     }

@@ -13,6 +13,8 @@ const WatchlistItems = dynamic(() => import('@/components/watchlist/WatchlistIte
 });
 
 function LandingPage() {
+  const { loginWithGoogle } = useAuth();
+
   return (
     <div className="max-w-4xl mx-auto px-4 py-12">
       {/* <div className="manual-red-test">TEST WITH MANUAL CSS</div> */}
@@ -42,10 +44,7 @@ function LandingPage() {
       <div className="text-center">
         <p className="text-gray-600 mb-4">Ready to start tracking your watchlist?</p>
         <button
-          onClick={() => {
-            const signInButton = document.querySelector('[aria-label="Sign In"]') as HTMLButtonElement;
-            signInButton?.click();
-          }}
+          onClick={loginWithGoogle}
           className="inline-flex items-center gap-2 bg-blue-600 text-white font-semibold py-3 px-6 rounded-lg hover:bg-blue-700 transition-colors"
         >
           Get Started

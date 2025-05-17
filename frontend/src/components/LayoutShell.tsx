@@ -3,6 +3,7 @@
 import { ReactNode, useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
+import { usePathname } from 'next/navigation';
 import { Bars3Icon } from '@heroicons/react/24/outline';
 import { UserCircleIcon, ArrowRightOnRectangleIcon, Cog8ToothIcon } from '@heroicons/react/24/solid';
 
@@ -12,6 +13,8 @@ export default function LayoutShell({ children }: { children: ReactNode }) {
   const { user, logout, loginWithGoogle } = useAuth();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+  const pathname = usePathname();
+  const isHomePage = pathname === '/';
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -33,55 +36,65 @@ export default function LayoutShell({ children }: { children: ReactNode }) {
             Watch Me
           </Link>
 
-          <div className="relative" ref={menuRef}>
-            <button
-              onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="p-2 rounded-md text-slate-500 hover:text-slate-700 hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500"
-              aria-label="Open user menu"
-              aria-expanded={isMenuOpen}
-            >
-              <Bars3Icon className="h-6 w-6" />
-            </button>
+          <div className="flex items-center gap-2">
+            {!user && isHomePage && (
+              <button
+                onClick={loginWithGoogle}
+                className="px-3 py-1.5 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md transition-colors"
+              >
+                Get Started
+              </button>
+            )}
+            <div className="relative" ref={menuRef}>
+              <button
+                onClick={() => setIsMenuOpen(!isMenuOpen)}
+                className="p-2 rounded-md text-slate-500 hover:text-slate-700 hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500"
+                aria-label="Open user menu"
+                aria-expanded={isMenuOpen}
+              >
+                <Bars3Icon className="h-6 w-6" />
+              </button>
 
-            {isMenuOpen && (
-              <div className="absolute right-0 mt-2 w-56 origin-top-right bg-white rounded-md shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none py-1 z-[1001]">
-                {user ? (
-                  <>
-                    {user.email && (
-                       <div className="px-4 py-2 text-sm text-slate-700 border-b border-slate-200">
-                         <p className="font-medium">Signed in as</p>
-                         <p className="truncate">{user.email}</p>
-                       </div>
-                    )}
-                    {user.id === ADMIN_USER_ID && (
-                      <Link
-                        href="/admin"
-                        onClick={() => setIsMenuOpen(false)}
+              {isMenuOpen && (
+                <div className="absolute right-0 mt-2 w-56 origin-top-right bg-white rounded-md shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none py-1 z-[1001]">
+                  {user ? (
+                    <>
+                      {user.email && (
+                         <div className="px-4 py-2 text-sm text-slate-700 border-b border-slate-200">
+                           <p className="font-medium">Signed in as</p>
+                           <p className="truncate">{user.email}</p>
+                         </div>
+                      )}
+                      {user.id === ADMIN_USER_ID && (
+                        <Link
+                          href="/admin"
+                          onClick={() => setIsMenuOpen(false)}
+                          className="flex items-center gap-2 px-4 py-2 text-sm text-slate-700 hover:bg-slate-100 hover:text-slate-900 w-full text-left"
+                        >
+                          <Cog8ToothIcon className="h-5 w-5 text-slate-500" />
+                          Admin Panel
+                        </Link>
+                      )}
+                      <button
+                        onClick={() => { logout(); setIsMenuOpen(false); }}
                         className="flex items-center gap-2 px-4 py-2 text-sm text-slate-700 hover:bg-slate-100 hover:text-slate-900 w-full text-left"
                       >
-                        <Cog8ToothIcon className="h-5 w-5 text-slate-500" />
-                        Admin Panel
-                      </Link>
-                    )}
+                        <ArrowRightOnRectangleIcon className="h-5 w-5 text-slate-500" />
+                        Sign Out
+                      </button>
+                    </>
+                  ) : (
                     <button
-                      onClick={() => { logout(); setIsMenuOpen(false); }}
+                      onClick={() => { loginWithGoogle(); setIsMenuOpen(false); }}
                       className="flex items-center gap-2 px-4 py-2 text-sm text-slate-700 hover:bg-slate-100 hover:text-slate-900 w-full text-left"
                     >
-                      <ArrowRightOnRectangleIcon className="h-5 w-5 text-slate-500" />
-                      Sign Out
+                      <UserCircleIcon className="h-5 w-5 text-slate-500" />
+                      Sign In with Google
                     </button>
-                  </>
-                ) : (
-                  <button
-                    onClick={() => { loginWithGoogle(); setIsMenuOpen(false); }}
-                    className="flex items-center gap-2 px-4 py-2 text-sm text-slate-700 hover:bg-slate-100 hover:text-slate-900 w-full text-left"
-                  >
-                    <UserCircleIcon className="h-5 w-5 text-slate-500" />
-                    Sign In with Google
-                  </button>
-                )}
-              </div>
-            )}
+                  )}
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </header>

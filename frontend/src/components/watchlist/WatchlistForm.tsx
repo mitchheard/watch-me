@@ -74,7 +74,7 @@ export default function WatchlistForm({ onAddItem, itemToEdit, onUpdateItem, onC
 
   // TMDB Search State
   const [tmdbSearchQuery, setTmdbSearchQuery] = useState('');
-  const debouncedTmdbSearchQuery = useDebounce(tmdbSearchQuery, 500);
+  // const debouncedTmdbSearchQuery = useDebounce(tmdbSearchQuery, 500); // Temporarily comment out
   const [tmdbResults, setTmdbResults] = useState<TmdbSearchResult[]>([]);
   const [tmdbLoading, setTmdbLoading] = useState(false);
   const [showTmdbResults, setShowTmdbResults] = useState(false);
@@ -129,21 +129,23 @@ export default function WatchlistForm({ onAddItem, itemToEdit, onUpdateItem, onC
 
   // Effect for debounced TMDB search
   useEffect(() => {
-    console.log('TMDB Search Effect on Render:', { // Added 'on Render' for clarity if logs get mixed
+    console.log('TMDB Search Effect on Render (NO DEBOUNCE):', { // Added 'on Render' for clarity if logs get mixed
       rawQuery: tmdbSearchQuery, 
-      debouncedQuery: debouncedTmdbSearchQuery, 
+      // debouncedQuery: debouncedTmdbSearchQuery, 
       selectedTmdbItemDetailsExists: !!selectedTmdbItemDetails, 
       isEditing: !!itemToEdit 
     });
-    if (debouncedTmdbSearchQuery && debouncedTmdbSearchQuery.length > 2 && !selectedTmdbItemDetails && !itemToEdit) {
-      console.log('Calling handleTmdbSearch with (on Render):', debouncedTmdbSearchQuery);
-      handleTmdbSearch(debouncedTmdbSearchQuery);
+    // Use tmdbSearchQuery directly here for the condition
+    if (tmdbSearchQuery && tmdbSearchQuery.length > 2 && !selectedTmdbItemDetails && !itemToEdit) {
+      console.log('Calling handleTmdbSearch with (NO DEBOUNCE - on Render):', tmdbSearchQuery);
+      handleTmdbSearch(tmdbSearchQuery); // Use raw query
     } else {
       // console.log('Not calling handleTmdbSearch, clearing results.'); // Optional log
       setTmdbResults([]);
       setShowTmdbResults(false);
     }
-  }, [debouncedTmdbSearchQuery, selectedTmdbItemDetails, itemToEdit]);
+  // Update dependencies array to use tmdbSearchQuery
+  }, [tmdbSearchQuery, selectedTmdbItemDetails, itemToEdit]);
 
   const handleTmdbSearch = async (query: string) => {
     if (!query) {

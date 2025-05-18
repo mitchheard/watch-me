@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { WatchItem } from '@/types/watchlist';
 // We'll hold off on FormInput, FormSelect, Image imports for now to keep it simpler
 
-console.log('WatchlistForm SCRIPT EXECUTING (Phase 1 Restore)');
+console.log('WatchlistForm SCRIPT EXECUTING (Phase 2 Restore - useEffect)');
 
 // Define types for TMDB search results (can be expanded)
 interface TmdbSearchResult {
@@ -50,7 +50,7 @@ export default function WatchlistForm({ onAddItem, itemToEdit, onUpdateItem, onC
   onUpdateItem?: (item: WatchItem) => void;
   onCancelEdit?: () => void;
 }) {
-  console.log('WatchlistForm FUNCTION BODY ENTERED (Phase 1 Restore)');
+  console.log('WatchlistForm FUNCTION BODY ENTERED (Phase 2 Restore - useEffect)');
 
   const initialFormState: WatchlistFormState = {
     title: '',
@@ -76,35 +76,64 @@ export default function WatchlistForm({ onAddItem, itemToEdit, onUpdateItem, onC
   const [fetchingTmdbDetails, setFetchingTmdbDetails] = useState(false);
   const searchResultsRef = useRef<HTMLUListElement>(null);
 
-  // Log some state to see if it initializes (optional, can be removed later)
-  console.log('WatchlistForm (Phase 1 Restore) - Initial form state:', form);
-  console.log('WatchlistForm (Phase 1 Restore) - Initial TMDB query:', tmdbSearchQuery);
+  // Reintroduce the main useEffect for itemToEdit
+  useEffect(() => {
+    console.log('WatchlistForm (Phase 2) - itemToEdit useEffect triggered. itemToEdit:', itemToEdit);
+    // Original logic from this useEffect
+    if (!itemToEdit && titleInputRef.current) {
+      // titleInputRef.current.focus(); // Still keep focus commented out
+    }
+    setForm(prevForm => ({
+      ...prevForm,
+      title: itemToEdit?.title || '',
+      type: itemToEdit?.type || 'movie',
+      status: itemToEdit?.status || 'want-to-watch',
+      currentSeason: itemToEdit?.currentSeason || null,
+      totalSeasons: itemToEdit?.totalSeasons || null,
+      notes: itemToEdit?.notes || null,
+      rating: itemToEdit?.rating || null,
+    }));
 
+    if (itemToEdit) {
+      const existingTmdbDetails: TmdbItemDetails = {};
+      if (itemToEdit.tmdbId !== undefined) existingTmdbDetails.tmdbId = itemToEdit.tmdbId;
+      if (itemToEdit.tmdbPosterPath !== undefined) existingTmdbDetails.tmdbPosterPath = itemToEdit.tmdbPosterPath;
+      // ... (conditionally add other tmdb fields from itemToEdit to existingTmdbDetails if they exist)
+      // For brevity, only adding a few here for the test, can expand later if this part works
+      if (itemToEdit.tmdbOverview !== undefined) existingTmdbDetails.tmdbOverview = itemToEdit.tmdbOverview;
 
-  // Minimal JSX from previous test
+      setSelectedTmdbItemDetails(Object.keys(existingTmdbDetails).length > 0 ? existingTmdbDetails : null);
+      console.log('(Phase 2) itemToEdit effect - existingTmdbDetails:', existingTmdbDetails);
+      setTmdbSearchQuery(itemToEdit.title || '');
+    } else {
+      setSelectedTmdbItemDetails(null); // Clear for new items
+      setTmdbSearchQuery('');
+    }
+    setSuccessMessage(null);
+    setError(null);
+    setTmdbResults([]);
+    setShowTmdbResults(false);
+    console.log('(Phase 2) itemToEdit effect - finished setting states');
+  }, [itemToEdit]);
+
+  console.log('WatchlistForm (Phase 2) - Render state. Form:', form, 'TMDB Query:', tmdbSearchQuery, 'Selected TMDB:', selectedTmdbItemDetails);
+
   return (
     <div>
-      <h1 style={{ color: 'orange', fontSize: '20px', padding: '15px', border: '2px solid orange', textAlign: 'center' }}>
-        WATCHLIST FORM - PHASE 1 RESTORE (State & Types)
+      <h1 style={{ color: 'purple', fontSize: '20px', padding: '15px', border: '2px solid purple', textAlign: 'center' }}>
+        WATCHLIST FORM - PHASE 2 RESTORE (useEffect)
       </h1>
       <p style={{ textAlign: 'center', margin: '10px' }}>
-        Check console for SCRIPT EXECUTING, FUNCTION BODY, and initial state logs.
+        Check console for SCRIPT, FUNCTION BODY, useEffect, and render state logs.
       </p>
-      <div style={{ padding: '10px', margin: '10px auto', border: '1px dashed #ccc', maxWidth: '300px' }}>
-        <p>Title (from state): {form.title || '(empty)'}</p>
-        <p>Type (from state): {form.type}</p>
+      <div style={{ padding: '10px', margin: '10px auto', border: '1px dashed #ccc', maxWidth: '400px' }}>
+        <p>Form Title (state): {form.title || '(empty)'}</p>
+        <p>Form Type (state): {form.type}</p>
         <p>TMDB Query (state): {tmdbSearchQuery || '(empty)'}</p>
+        <p>Selected TMDB ID (state): {selectedTmdbItemDetails?.tmdbId || '(none)'}</p>
+        <p>Selected TMDB Overview (state): {selectedTmdbItemDetails?.tmdbOverview || '(none)'}</p>
       </div>
-      <button
-        onClick={() => {
-          console.log('Phase 1 Test Button Clicked');
-          setForm(prev => ({...prev, title: 'Test Title Clicked'}));
-          setTmdbSearchQuery('Test Query Clicked');
-        }}
-        style={{ display: 'block', margin: '10px auto', padding: '10px', backgroundColor: 'green', color: 'white' }}
-      >
-        Phase 1 Test Interactions Button
-      </button>
+      {/* No button needed for this phase, we test by how itemToEdit (prop) affects state via useEffect */}
     </div>
   );
 }

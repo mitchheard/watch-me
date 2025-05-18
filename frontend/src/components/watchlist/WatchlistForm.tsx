@@ -4,9 +4,52 @@ import { useState, useEffect, useRef } from 'react';
 import FormInput from '../forms/FormInput';
 import FormSelect from '../forms/FormSelect';
 import { WatchItem } from '@/types/watchlist';
+import useDebounce from '@/hooks/useDebounce';
+import Image from 'next/image';
+
+// Define types for TMDB search results (can be expanded)
+interface TmdbSearchResult {
+  id: number;
+  title?: string; // For movies
+  name?: string; // For TV shows
+  poster_path?: string | null;
+  release_date?: string; // Movie release date
+  first_air_date?: string; // TV first air date
+  media_type?: 'movie' | 'tv'; // TMDB multi-search often returns this
+  // Add other fields you might want to display in search results
+}
 
 // Define a more specific type for the form state if WatchItem includes id/createdAt
-type WatchlistFormState = Omit<WatchItem, 'id' | 'createdAt'>;
+// WatchlistFormState will represent the fields the form directly manages.
+// User's notes and rating are part of this form.
+// TMDB fields are handled via selectedTmdbItemDetails and merged on submit.
+type WatchlistFormState = Omit<WatchItem, 
+  'id' | 'createdAt' | 'updatedAt' | 'userId' | // Fields not directly set by form
+  keyof TmdbItemDetails // Exclude TMDB fields as they are handled separately
+> & { 
+  notes: string | null; // Ensure notes and rating are part of the form state
+  rating: number | null;
+  // currentSeason and totalSeasons are already in WatchItem and not TMDB specific
+};
+
+// Type for the detailed TMDB data we plan to store
+interface TmdbItemDetails {
+  tmdbId?: number | null;
+  tmdbPosterPath?: string | null;
+  tmdbOverview?: string | null;
+  tmdbTagline?: string | null;
+  tmdbImdbId?: string | null;
+  tmdbMovieRuntime?: number | null;
+  tmdbMovieReleaseYear?: number | null;
+  tmdbMovieCertification?: string | null;
+  tmdbTvFirstAirYear?: number | null;
+  tmdbTvLastAirYear?: number | null;
+  tmdbTvNetworks?: string | null;
+  tmdbTvNumberOfEpisodes?: number | null;
+  tmdbTvNumberOfSeasons?: number | null;
+  tmdbTvStatus?: string | null;
+  tmdbTvCertification?: string | null;
+}
 
 export default function WatchlistForm({ onAddItem, itemToEdit, onUpdateItem, onCancelEdit }: { 
   onAddItem: (newItem: WatchItem) => void,
@@ -20,6 +63,8 @@ export default function WatchlistForm({ onAddItem, itemToEdit, onUpdateItem, onC
     status: 'want-to-watch',
     currentSeason: null,
     totalSeasons: null,
+    notes: null, // Initialize notes
+    rating: null,  // Initialize rating
   };
   const [form, setForm] = useState<WatchlistFormState>(initialFormState);
   const [submitting, setSubmitting] = useState(false);
@@ -27,11 +72,20 @@ export default function WatchlistForm({ onAddItem, itemToEdit, onUpdateItem, onC
   const [error, setError] = useState<string | null>(null);
   const titleInputRef = useRef<HTMLInputElement>(null);
 
+  // TMDB Search State
+  const [tmdbSearchQuery, setTmdbSearchQuery] = useState('');
+  const debouncedTmdbSearchQuery = useDebounce(tmdbSearchQuery, 500);
+  const [tmdbResults, setTmdbResults] = useState<TmdbSearchResult[]>([]);
+  const [tmdbLoading, setTmdbLoading] = useState(false);
+  const [showTmdbResults, setShowTmdbResults] = useState(false);
+  const [selectedTmdbItemDetails, setSelectedTmdbItemDetails] = useState<TmdbItemDetails | null>(null);
+  const [fetchingTmdbDetails, setFetchingTmdbDetails] = useState(false); // New state for detail fetching
+  const searchResultsRef = useRef<HTMLUListElement>(null);
+
   useEffect(() => {
     if (!itemToEdit && titleInputRef.current) {
       titleInputRef.current.focus();
     }
-    // If itemToEdit changes, reset the form fields
     setForm(prevForm => ({
       ...prevForm,
       title: itemToEdit?.title || '',
@@ -39,10 +93,130 @@ export default function WatchlistForm({ onAddItem, itemToEdit, onUpdateItem, onC
       status: itemToEdit?.status || 'want-to-watch',
       currentSeason: itemToEdit?.currentSeason || null,
       totalSeasons: itemToEdit?.totalSeasons || null,
+      notes: itemToEdit?.notes || null, // Populate notes from itemToEdit
+      rating: itemToEdit?.rating || null, // Populate rating from itemToEdit
     }));
+
+    if (itemToEdit) {
+      const existingTmdbDetails: TmdbItemDetails = {};
+      if (itemToEdit.tmdbId !== undefined) existingTmdbDetails.tmdbId = itemToEdit.tmdbId;
+      if (itemToEdit.tmdbPosterPath !== undefined) existingTmdbDetails.tmdbPosterPath = itemToEdit.tmdbPosterPath;
+      if (itemToEdit.tmdbOverview !== undefined) existingTmdbDetails.tmdbOverview = itemToEdit.tmdbOverview;
+      if (itemToEdit.tmdbTagline !== undefined) existingTmdbDetails.tmdbTagline = itemToEdit.tmdbTagline;
+      if (itemToEdit.tmdbImdbId !== undefined) existingTmdbDetails.tmdbImdbId = itemToEdit.tmdbImdbId;
+      if (itemToEdit.tmdbMovieRuntime !== undefined) existingTmdbDetails.tmdbMovieRuntime = itemToEdit.tmdbMovieRuntime;
+      if (itemToEdit.tmdbMovieReleaseYear !== undefined) existingTmdbDetails.tmdbMovieReleaseYear = itemToEdit.tmdbMovieReleaseYear;
+      if (itemToEdit.tmdbMovieCertification !== undefined) existingTmdbDetails.tmdbMovieCertification = itemToEdit.tmdbMovieCertification;
+      if (itemToEdit.tmdbTvFirstAirYear !== undefined) existingTmdbDetails.tmdbTvFirstAirYear = itemToEdit.tmdbTvFirstAirYear;
+      if (itemToEdit.tmdbTvLastAirYear !== undefined) existingTmdbDetails.tmdbTvLastAirYear = itemToEdit.tmdbTvLastAirYear;
+      if (itemToEdit.tmdbTvNetworks !== undefined) existingTmdbDetails.tmdbTvNetworks = itemToEdit.tmdbTvNetworks;
+      if (itemToEdit.tmdbTvNumberOfEpisodes !== undefined) existingTmdbDetails.tmdbTvNumberOfEpisodes = itemToEdit.tmdbTvNumberOfEpisodes;
+      if (itemToEdit.tmdbTvNumberOfSeasons !== undefined) existingTmdbDetails.tmdbTvNumberOfSeasons = itemToEdit.tmdbTvNumberOfSeasons;
+      if (itemToEdit.tmdbTvStatus !== undefined) existingTmdbDetails.tmdbTvStatus = itemToEdit.tmdbTvStatus;
+      if (itemToEdit.tmdbTvCertification !== undefined) existingTmdbDetails.tmdbTvCertification = itemToEdit.tmdbTvCertification;
+      
+      setSelectedTmdbItemDetails(Object.keys(existingTmdbDetails).length > 0 ? existingTmdbDetails : null);
+      setTmdbSearchQuery(itemToEdit.title || '');
+    } else {
+      setSelectedTmdbItemDetails(null); // Clear for new items
+      setTmdbSearchQuery('');
+    }
     setSuccessMessage(null);
     setError(null);
+    setTmdbResults([]);
+    setShowTmdbResults(false);
   }, [itemToEdit]);
+
+  // Effect for debounced TMDB search
+  useEffect(() => {
+    console.log('TMDB Search Effect:', { 
+      debouncedTmdbSearchQuery, 
+      selectedTmdbItemDetailsExists: !!selectedTmdbItemDetails, 
+      isEditing: !!itemToEdit 
+    });
+    if (debouncedTmdbSearchQuery && debouncedTmdbSearchQuery.length > 2 && !selectedTmdbItemDetails && !itemToEdit) {
+      console.log('Calling handleTmdbSearch with:', debouncedTmdbSearchQuery);
+      handleTmdbSearch(debouncedTmdbSearchQuery);
+    } else {
+      // console.log('Not calling handleTmdbSearch, clearing results.'); // Optional log
+      setTmdbResults([]);
+      setShowTmdbResults(false);
+    }
+  }, [debouncedTmdbSearchQuery, selectedTmdbItemDetails, itemToEdit]);
+
+  const handleTmdbSearch = async (query: string) => {
+    if (!query) {
+      setTmdbResults([]);
+      setShowTmdbResults(false);
+      return;
+    }
+    setTmdbLoading(true);
+    setError(null);
+    try {
+      // We will use a multi search to get both movies and TV shows
+      const response = await fetch(`/api/tmdb/search?query=${encodeURIComponent(query)}`); 
+      if (!response.ok) {
+        const errData = await response.json();
+        throw new Error(errData.details || 'Failed to search TMDB');
+      }
+      const data = await response.json();
+      console.log('Raw TMDB Search API response:', data);
+      // Filter out persons if multi-search returns them, and ensure we have a title/name
+      setTmdbResults(data.results?.filter((r: any) => (r.media_type === 'movie' || r.media_type === 'tv') && (r.title || r.name)) || []);
+      setShowTmdbResults(true);
+    } catch (err: any) {
+      console.error('TMDB Search Error:', err);
+      setError(err.message || 'Could not fetch TMDB results.');
+      setTmdbResults([]);
+      setShowTmdbResults(false);
+    }
+    setTmdbLoading(false);
+  };
+
+  const handleTmdbSelect = async (item: TmdbSearchResult) => {
+    if (!item.media_type || !item.id) {
+      setError('Selected TMDB item is missing type or ID.');
+      return;
+    }
+    setFetchingTmdbDetails(true);
+    setShowTmdbResults(false); // Hide search results
+    setTmdbResults([]); // Clear search results
+    setError(null);
+    try {
+      const response = await fetch(`/api/tmdb/details?type=${item.media_type}&tmdbId=${item.id}`);
+      if (!response.ok) {
+        const errData = await response.json();
+        throw new Error(errData.details || `Failed to fetch details for ${item.title || item.name}`);
+      }
+      const fetchedDetails: TmdbItemDetails = await response.json();
+      console.log('Fetched TMDB Item Details for selection:', fetchedDetails);
+      setSelectedTmdbItemDetails(fetchedDetails);
+
+      // Auto-fill form fields
+      setForm(prevForm => ({
+        ...prevForm,
+        title: item.title || item.name || prevForm.title, // Use TMDB title/name
+        type: item.media_type as 'movie' | 'show', // Set type from TMDB result
+        // Optionally pre-fill totalSeasons if it's a TV show and data is available
+        totalSeasons: item.media_type === 'tv' && fetchedDetails.tmdbTvNumberOfSeasons 
+                      ? fetchedDetails.tmdbTvNumberOfSeasons 
+                      : prevForm.totalSeasons,
+        // Reset currentSeason if type changes or totalSeasons gets populated from TMDB for a show
+        currentSeason: item.media_type === 'tv' && fetchedDetails.tmdbTvNumberOfSeasons 
+                       ? null // Encourage user to set current season if they start tracking a new show
+                       : prevForm.currentSeason,
+      }));
+      // Set the main title input value directly to reflect the selected TMDB item
+      // This also stops further debounced searches for this title.
+      setTmdbSearchQuery(item.title || item.name || ''); 
+
+    } catch (err: any) {
+      console.error('Error fetching TMDB details:', err);
+      setError(err.message || 'Could not fetch TMDB item details.');
+      setSelectedTmdbItemDetails(null); // Clear if fetching details failed
+    }
+    setFetchingTmdbDetails(false);
+  };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -52,18 +226,36 @@ export default function WatchlistForm({ onAddItem, itemToEdit, onUpdateItem, onC
               ? (value === '' ? null : Number(value)) 
               : value,
     }));
+
+    if (name === 'title') {
+      setTmdbSearchQuery(value); // Update search query based on title input
+      setSelectedTmdbItemDetails(null); // Clear selected TMDB item if title changes
+      setShowTmdbResults(value.length > 0); // Show results dropdown if title is not empty
+    }
   };
+  
+  // Click outside listener for TMDB results
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (searchResultsRef.current && !searchResultsRef.current.contains(event.target as Node)) {
+        setShowTmdbResults(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [searchResultsRef]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitting(true);
     setSuccessMessage(null);
-    setError(null); // Clear previous errors
+    setError(null);
 
     const currentSeasonNum = form.currentSeason ? Number(form.currentSeason) : null;
     const totalSeasonsNum = form.totalSeasons ? Number(form.totalSeasons) : null;
 
-    // Validate only if a value is present and it's not a valid number
     if (form.currentSeason !== null && isNaN(currentSeasonNum as number)) {
       setError("Current season must be a valid number.");
       setSubmitting(false);
@@ -75,26 +267,50 @@ export default function WatchlistForm({ onAddItem, itemToEdit, onUpdateItem, onC
       return;
     }
 
-    const payload = {
-      ...form,
+    // Define a type for the data being sent to the API
+    // This avoids issues with sending client-only or server-generated fields like createdAt
+    type WatchlistSubmitPayload = Partial<Omit<WatchItem, 'id' | 'createdAt' | 'updatedAt' | 'userId'>> & {
+      // Include all fields from WatchlistFormState effectively
+      title: string;
+      type: 'movie' | 'show';
+      status: 'want-to-watch' | 'watching' | 'finished';
+      currentSeason?: number | null;
+      totalSeasons?: number | null;
+      notes?: string | null;
+      rating?: number | null;
+      // And all TMDB fields are optional here because they come from selectedTmdbItemDetails
+    } & Partial<TmdbItemDetails>;
+
+    const submitData: WatchlistSubmitPayload = {
+      ...form, // Contains title, type, status, currentSeason, totalSeasons, notes, rating
       currentSeason: form.type === 'show' ? currentSeasonNum : null,
       totalSeasons: form.type === 'show' ? totalSeasonsNum : null,
+      ...(selectedTmdbItemDetails || {}), // Spread TMDB details if they exist
     };
+
+    // Remove tmdbId if it's null, as our Prisma schema has it as optional but unique.
+    // If we send null, it might conflict if other records have null.
+    // Better to not send the field at all if no TMDB item was linked.
+    if (submitData.tmdbId === null || submitData.tmdbId === undefined) {
+      delete submitData.tmdbId;
+    }
 
     try {
       let response;
       if (itemToEdit) {
+        // For PUT, we send the item ID in the query param, and the payload contains fields to update.
         response = await fetch(`/api/watchlist?id=${itemToEdit.id}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload),
+          body: JSON.stringify(submitData),
         });
       } else {
+        // For POST, the payload is the new item data.
         response = await fetch('/api/watchlist', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-    });
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(submitData),
+        });
       }
 
       if (response.ok) {
@@ -106,19 +322,23 @@ export default function WatchlistForm({ onAddItem, itemToEdit, onUpdateItem, onC
           onAddItem(result);
           setSuccessMessage('Item added successfully!');
           setForm(initialFormState);
+          setSelectedTmdbItemDetails(null);
+          setTmdbSearchQuery(''); 
+          setShowTmdbResults(false);
           titleInputRef.current?.focus();
         }
         setTimeout(() => { setSuccessMessage(null); setError(null); }, 4000);
-    } else {
-        const errorData = await response.text();
-        setError(`Error: ${errorData || (itemToEdit ? 'Failed to update item' : 'Failed to add item')}`);
+      } else {
+        const errorData = await response.json(); // Try to parse as JSON first
+        setError(`Error: ${errorData.error || errorData.message || (itemToEdit ? 'Failed to update item' : 'Failed to add item')}`);
         setTimeout(() => setError(null), 5000);
-    }
-    } catch (_err) {
-      setError('An unexpected error occurred.');
+      }
+    } catch (_err: any) {
+      console.error("Submit error:", _err);
+      setError(_err.message || 'An unexpected error occurred.');
       setTimeout(() => setError(null), 5000);
     } finally {
-    setSubmitting(false);
+      setSubmitting(false);
     }
   };
 
@@ -141,17 +361,59 @@ export default function WatchlistForm({ onAddItem, itemToEdit, onUpdateItem, onC
         </div>
       )}
 
-      <FormInput
-        id="title"
-        name="title"
-        label="Title"
-        value={form.title}
-        onChange={handleChange}
-        placeholder="e.g., Dune: Part Two"
-        required
-        ref={titleInputRef}
-        className="text-base"
-      />
+      <div className="relative">
+        <FormInput
+          id="title"
+          name="title"
+          label="Title"
+          value={form.title}
+          onChange={handleChange}
+          placeholder="e.g., Dune: Part Two"
+          required
+          ref={titleInputRef}
+          className="text-base"
+          autoComplete="off" // Prevent browser autocomplete from interfering with TMDB results
+        />
+        {(tmdbLoading || fetchingTmdbDetails) && 
+          <div className="absolute right-2 top-9 text-xs text-slate-500">
+            {tmdbLoading ? 'Searching TMDB...' : 'Fetching details...'}
+          </div>
+        }
+        {showTmdbResults && tmdbResults.length > 0 && (
+          <ul 
+            ref={searchResultsRef} 
+            className="absolute z-10 w-full mt-1 bg-white border border-slate-300 rounded-md shadow-lg max-h-60 overflow-y-auto"
+          >
+            {tmdbResults.map((item) => {
+              const title = item.title || item.name;
+              const year = item.release_date ? item.release_date.substring(0, 4) : item.first_air_date ? item.first_air_date.substring(0, 4) : '';
+              return (
+                <li 
+                  key={item.id}
+                  onClick={() => handleTmdbSelect(item)} // Wire up the click handler
+                  className="p-3 hover:bg-slate-100 cursor-pointer flex items-center gap-3"
+                >
+                  {item.poster_path && (
+                    <Image 
+                      src={`${process.env.NEXT_PUBLIC_TMDB_IMAGE_BASE_URL}${item.poster_path}`}
+                      alt={title || 'Poster'}
+                      width={40} 
+                      height={60} 
+                      className="rounded object-cover"
+                    />
+                  )}
+                  {!item.poster_path && <div className="w-10 h-[60px] bg-slate-200 rounded flex items-center justify-center text-xs text-slate-400">No Image</div>}
+                  <div>
+                    <span className="block text-sm font-medium text-slate-700">{title}</span>
+                    {year && <span className="block text-xs text-slate-500">{year}</span>}
+                    {item.media_type && <span className="block text-xs text-slate-400 capitalize">{item.media_type}</span>}
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </div>
 
       <FormSelect
         id="type"

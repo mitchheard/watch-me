@@ -2,10 +2,11 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
+import { WatchItem } from '@/types/watchlist';
 
 async function getUserId() {
   const cookieStore = await cookies();
-  console.log('All cookies:', cookieStore.getAll()); // Debug log
+  // console.log('All cookies:', cookieStore.getAll()); // Debug log - can be removed if not needed
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -14,15 +15,24 @@ async function getUserId() {
         get(name: string) {
           return cookieStore.get(name)?.value;
         },
+        // Required for server-side auth to correctly set/update cookies
+        set(name: string, value: string, options: any) {
+          cookieStore.set({ name, value, ...options });
+        },
+        remove(name: string, options: any) {
+          cookieStore.delete({ name, ...options });
+        },
       },
     }
   );
 
-  const { data: { session } } = await supabase.auth.getSession();
-  if (!session?.user) {
+  const { data: { user }, error } = await supabase.auth.getUser();
+
+  if (error || !user) {
+    console.error('Error getting user or no user:', error); // Added more detailed logging
     throw new Error('Not authenticated');
   }
-  return session.user.id;
+  return user.id;
 }
 
 // GET /api/watchlist
@@ -55,12 +65,37 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const userId = await getUserId();
-    const body = await request.json();
-    const { title, type, status, currentSeason, totalSeasons } = body;
+    console.log(`[POST /api/watchlist] Attempting action for userId: ${userId}`); // Added log
+
+    // Verify user exists in your public.User table
+    const appUser = await prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!appUser) {
+      console.error(`[POST /api/watchlist] User with ID ${userId} not found in the public.User table.`);
+      return NextResponse.json(
+        { error: 'User profile not found in application database. Cannot create watch item.' },
+        { status: 404 } // Not Found, as the referenced user is missing
+      );
+    }
+
+    const body: Partial<WatchItem> = await request.json();
+    // Destructure all potential fields from the body, including new TMDB fields
+    const {
+      title, type, status, currentSeason, totalSeasons, notes, rating, // User-managed fields
+      // TMDB common fields
+      tmdbId, tmdbPosterPath, tmdbOverview, tmdbTagline, tmdbImdbId,
+      // TMDB movie-specific fields
+      tmdbMovieRuntime, tmdbMovieReleaseYear, tmdbMovieCertification,
+      // TMDB TV-show-specific fields
+      tmdbTvFirstAirYear, tmdbTvLastAirYear, tmdbTvNetworks,
+      tmdbTvNumberOfEpisodes, tmdbTvNumberOfSeasons, tmdbTvStatus, tmdbTvCertification
+    } = body;
 
     if (!title || !type || !status) {
       return NextResponse.json(
-        { error: 'Missing required fields' },
+        { error: 'Missing required fields (title, type, status)' }, // Updated error message
         { status: 400 }
       );
     }
@@ -72,7 +107,25 @@ export async function POST(request: Request) {
         status,
         currentSeason,
         totalSeasons,
+        notes, // Add notes
+        rating, // Add rating
         userId,
+        // Add all TMDB fields to the data object
+        tmdbId,
+        tmdbPosterPath,
+        tmdbOverview,
+        tmdbTagline,
+        tmdbImdbId,
+        tmdbMovieRuntime,
+        tmdbMovieReleaseYear,
+        tmdbMovieCertification,
+        tmdbTvFirstAirYear,
+        tmdbTvLastAirYear,
+        tmdbTvNetworks,
+        tmdbTvNumberOfEpisodes,
+        tmdbTvNumberOfSeasons,
+        tmdbTvStatus,
+        tmdbTvCertification,
       },
     });
 
@@ -96,8 +149,18 @@ export async function POST(request: Request) {
 export async function PUT(request: Request) {
   try {
     const userId = await getUserId();
-    const body = await request.json();
-    const { id, title, type, status, currentSeason, totalSeasons } = body;
+    const body: Partial<WatchItem> & { id?: number } = await request.json();
+    // Destructure all potential fields, including item id and TMDB fields
+    const {
+      id, title, type, status, currentSeason, totalSeasons, notes, rating, // User-managed fields + id
+      // TMDB common fields
+      tmdbId, tmdbPosterPath, tmdbOverview, tmdbTagline, tmdbImdbId,
+      // TMDB movie-specific fields
+      tmdbMovieRuntime, tmdbMovieReleaseYear, tmdbMovieCertification,
+      // TMDB TV-show-specific fields
+      tmdbTvFirstAirYear, tmdbTvLastAirYear, tmdbTvNetworks,
+      tmdbTvNumberOfEpisodes, tmdbTvNumberOfSeasons, tmdbTvStatus, tmdbTvCertification
+    } = body;
 
     if (!id) {
       return NextResponse.json(
@@ -119,13 +182,33 @@ export async function PUT(request: Request) {
     }
 
     const watchItem = await prisma.watchItem.update({
-      where: { id },
+      where: { id }, // id is already an integer from the database
       data: {
+        // Only include fields that are actually sent for update.
+        // Prisma handles undefined fields by not updating them.
         title,
         type,
         status,
         currentSeason,
         totalSeasons,
+        notes, // Add notes
+        rating, // Add rating
+        // Add all TMDB fields to the data object for update
+        tmdbId,
+        tmdbPosterPath,
+        tmdbOverview,
+        tmdbTagline,
+        tmdbImdbId,
+        tmdbMovieRuntime,
+        tmdbMovieReleaseYear,
+        tmdbMovieCertification,
+        tmdbTvFirstAirYear,
+        tmdbTvLastAirYear,
+        tmdbTvNetworks,
+        tmdbTvNumberOfEpisodes,
+        tmdbTvNumberOfSeasons,
+        tmdbTvStatus,
+        tmdbTvCertification,
       },
     });
 

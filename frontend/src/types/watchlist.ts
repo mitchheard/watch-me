@@ -3,7 +3,26 @@ export interface WatchItem {
     title: string;
     type: 'movie' | 'show';
     status: 'want-to-watch' | 'watching' | 'finished';
+    rating?: number | null;
+    notes?: string | null;
+    userId: string;
+    createdAt: string;
+    updatedAt: string;
     currentSeason?: number | null;
     totalSeasons?: number | null;
-    createdAt: string;
+    tmdbId?: number | null;
+    tmdbPosterPath?: string | null;
+    tmdbOverview?: string | null;
+    tmdbTagline?: string | null;
+    tmdbImdbId?: string | null;
+    tmdbMovieRuntime?: number | null;
+    tmdbMovieReleaseYear?: number | null;
+    tmdbMovieCertification?: string | null;
+    tmdbTvFirstAirYear?: number | null;
+    tmdbTvLastAirYear?: number | null;
+    tmdbTvNetworks?: string | null;
+    tmdbTvNumberOfEpisodes?: number | null;
+    tmdbTvNumberOfSeasons?: number | null;
+    tmdbTvStatus?: string | null;
+    tmdbTvCertification?: string | null;
   }

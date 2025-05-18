@@ -26,6 +26,7 @@ export default function WatchlistItems() {
     try {
     const res = await fetch('/api/watchlist');
     const data = await res.json();
+    console.log('Fetched watchlist data:', data);
       
       if (!res.ok) {
         console.error('Failed to fetch items:', data.error);
@@ -119,38 +120,65 @@ export default function WatchlistItems() {
                   {item.title}
                 </h3>
                   <div className="mt-1 flex flex-col gap-1">
-                    <div className="flex items-center gap-1.5">
-                      {item.type === 'movie' ? 
-                        <FilmIcon className="w-4 h-4 text-blue-500 flex-shrink-0" /> : 
-                        <TvIcon className="w-4 h-4 text-blue-500 flex-shrink-0" /> 
-                      }
-                      <p className="text-sm text-slate-500">
-                        {item.type.replace(/\b\w/g, l => l.toUpperCase())}
-                  {item.type === 'show' && item.currentSeason && (
-                          <span className="text-slate-400">
-                            {` — S${item.currentSeason}`}
-                      {item.totalSeasons ? ` of ${item.totalSeasons}` : ''}
-                    </span>
-                  )}
-                </p>
+                    <div className="flex items-start gap-2">
+                      {item.tmdbPosterPath && (
+                        <img 
+                          src={`https://image.tmdb.org/t/p/w92${item.tmdbPosterPath}`} 
+                          alt={`${item.title} poster`}
+                          className="w-10 h-auto rounded mr-1 flex-shrink-0 shadow-sm"
+                        />
+                      )}
+                      <div className="flex-grow min-w-0">
+                        <div className="flex items-center gap-1.5">
+                          {item.type === 'movie' ? 
+                            <FilmIcon className="w-4 h-4 text-blue-500 flex-shrink-0" /> : 
+                            <TvIcon className="w-4 h-4 text-blue-500 flex-shrink-0" /> 
+                          }
+                          <p className="text-sm text-slate-500">
+                            {item.type.replace(/\b\w/g, l => l.toUpperCase())}
+                            {item.type === 'movie' && item.tmdbMovieReleaseYear && (
+                              <span className="text-slate-400">{` (${item.tmdbMovieReleaseYear})`}</span>
+                            )}
+                            {item.type === 'show' && item.tmdbTvFirstAirYear && (
+                              <span className="text-slate-400">
+                                {` (`}
+                                {item.tmdbTvFirstAirYear}
+                                {item.tmdbTvLastAirYear && item.tmdbTvLastAirYear !== item.tmdbTvFirstAirYear ? `-${item.tmdbTvLastAirYear}` : ''}
+                                {`)`}
+                              </span>
+                            )}
+                            {item.type === 'show' && item.currentSeason && (
+                              <span className="text-slate-400">
+                                {` — S${item.currentSeason}`}
+                                {item.totalSeasons ? ` of ${item.totalSeasons}` : ''}
+                              </span>
+                            )}
+                          </p>
+                        </div>
+                        {item.type === 'show' && item.tmdbTvNetworks && (
+                          <p className="text-xs text-slate-400 truncate mt-0.5">
+                            {item.tmdbTvNetworks}
+                          </p>
+                        )}
+                        <div className="mt-1">
+                          <span
+                            className={`px-2 py-0.5 text-xs font-medium rounded-full 
+                              ${item.status === 'want-to-watch' ? 'bg-blue-100 text-blue-700' :
+                                item.status === 'watching' ? 'bg-yellow-100 text-yellow-700' :
+                                item.status === 'finished' ? 'bg-green-100 text-green-700' :
+                                'bg-slate-100 text-slate-700' 
+                              }`}
+                          >
+                            {item.status === 'want-to-watch' ? 'Want to Watch' : item.status.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                          </span>
+                        </div>
+                      </div>
                     </div>
-                    <div>
-                      <span
-                        className={`px-2 py-0.5 text-xs font-medium rounded-full 
-                          ${item.status === 'want-to-watch' ? 'bg-blue-100 text-blue-700' :
-                            item.status === 'watching' ? 'bg-yellow-100 text-yellow-700' :
-                            item.status === 'finished' ? 'bg-green-100 text-green-700' :
-                            'bg-slate-100 text-slate-700' 
-                          }`}
-                      >
-                        {item.status === 'want-to-watch' ? 'Want to Watch' : item.status.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
-                      </span>
-                    </div>
+                    <p className="text-xs text-slate-400 mt-2">
+                      Added: {new Date(item.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
+                    </p>
                   </div>
-                  <p className="text-xs text-slate-400 mt-2">
-                    Added: {new Date(item.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
-                </p>
-              </div>
+                </div>
 
                 <div className="flex items-center gap-1 flex-shrink-0">
                 <button

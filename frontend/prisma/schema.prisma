@@ -4,6 +4,7 @@
 // Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
 // Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
 
+// Regenerate comment to try and refresh types
 generator client {
   provider = "prisma-client-js"
   output   = "../node_modules/.prisma/client"
@@ -19,19 +20,54 @@ model WatchItem {
   title         String
   type          String   // "movie" or "show"
   status        String   // "want-to-watch", "watching", "finished"
-  currentSeason Int?     // Optional, for shows
-  totalSeasons  Int?     // Optional, for shows
+  rating        Int?     // User's personal rating (e.g., 1-5 stars)
+  notes         String?
   userId        String   // Required, stores Supabase user UUID
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
+  currentSeason Int?     // Optional, for shows
+  totalSeasons  Int?     // Optional, for shows
+
+  // New TMDB Common Fields
+  tmdbId            Int?     @unique
+  tmdbPosterPath    String?
+  tmdbOverview      String?
+  tmdbTagline       String?
+  tmdbImdbId        String?
+
+  // New TMDB Movie-Specific Fields
+  tmdbMovieRuntime         Int?
+  tmdbMovieReleaseYear     Int?
+  tmdbMovieCertification   String?
+
+  // New TMDB TV-Show-Specific Fields
+  tmdbTvFirstAirYear     Int?
+  tmdbTvLastAirYear      Int?
+  tmdbTvNetworks         String?
+  tmdbTvNumberOfEpisodes Int?
+  tmdbTvNumberOfSeasons  Int?
+  tmdbTvStatus           String?
+  tmdbTvCertification    String? // e.g., "TV-PG" (from US content_ratings)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId]) // Add an index for faster queries
+}
+
+model User {
+  id          String        @id // Corresponds to Supabase auth.users.id (UUID)
+  email       String?       @unique
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  watchItems  WatchItem[]   // Relation to WatchItem
+  sessions    UserSession[] // Relation to UserSession
 }
 
 model UserSession {
   id        Int      @id @default(autoincrement())
   userId    String
   createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
 }

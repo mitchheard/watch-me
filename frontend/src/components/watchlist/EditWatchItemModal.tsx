@@ -17,10 +17,12 @@ export default function EditWatchItemModal({ item, onClose, onUpdate }: Props) {
     status: item.status,
     currentSeason: item.currentSeason?.toString() || '',
     totalSeasons: item.totalSeasons?.toString() || '',
+    notes: item.notes || '',
+    rating: item.rating?.toString() || '',
   });
   const [loading, setLoading] = useState(false);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
@@ -28,11 +30,16 @@ export default function EditWatchItemModal({ item, onClose, onUpdate }: Props) {
     e.preventDefault();
     setLoading(true);
 
-    const payload = {
-      ...form,
+    const payload: Partial<WatchItem> & { id: number } = {
+      ...item,
       id: item.id,
+      title: form.title,
+      type: form.type as 'movie' | 'show',
+      status: form.status as 'want-to-watch' | 'watching' | 'finished',
       currentSeason: form.currentSeason ? parseInt(form.currentSeason) : null,
       totalSeasons: form.totalSeasons ? parseInt(form.totalSeasons) : null,
+      notes: form.notes || null,
+      rating: form.rating ? parseInt(form.rating) : null,
     };
 
     try {
@@ -134,6 +141,34 @@ export default function EditWatchItemModal({ item, onClose, onUpdate }: Props) {
             </div>
           </>
         )}
+
+        <div>
+          <label htmlFor="rating" className="block text-xs font-medium text-slate-600 mb-1">Your Rating (1-5)</label>
+          <input
+            id="rating"
+            type="number"
+            name="rating"
+            value={form.rating}
+            onChange={handleChange}
+            placeholder="e.g., 4 (optional)"
+            min="1"
+            max="5"
+            className={inputBaseClass}
+          />
+        </div>
+
+        <div>
+          <label htmlFor="notes" className="block text-xs font-medium text-slate-600 mb-1">Notes</label>
+          <textarea
+            id="notes"
+            name="notes"
+            value={form.notes}
+            onChange={handleChange}
+            rows={3}
+            placeholder="e.g., Rewatch with friends, amazing soundtrack... (optional)"
+            className={inputBaseClass}
+          />
+        </div>
 
         <div className="flex justify-end items-center gap-3 mt-6 border-t border-slate-200 pt-4">
           <button

@@ -147,17 +147,17 @@ export default function WatchlistItems() {
                                 {`)`}
                               </span>
                             )}
-                            {item.type === 'show' && item.currentSeason && (
-                              <span className="text-slate-400">
-                                {` — S${item.currentSeason}`}
-                                {item.totalSeasons ? ` of ${item.totalSeasons}` : ''}
-                              </span>
-                            )}
                           </p>
                         </div>
                         {item.type === 'show' && item.tmdbTvNetworks && (
                           <p className="text-xs text-slate-400 truncate mt-0.5">
                             {item.tmdbTvNetworks}
+                          </p>
+                        )}
+                        {item.type === 'show' && item.currentSeason && (
+                          <p className="text-xs text-slate-500 mt-0.5">
+                            Season {item.currentSeason}
+                            {item.totalSeasons ? ` of ${item.totalSeasons}` : ''}
                           </p>
                         )}
                         <div className="mt-1">

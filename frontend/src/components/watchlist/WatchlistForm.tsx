@@ -174,6 +174,7 @@ export default function WatchlistForm({ onAddItem, itemToEdit, onUpdateItem, onC
   };
 
   const handleTmdbSelect = async (item: TmdbSearchResult) => {
+    console.log('TMDB item selected from dropdown:', item);
     if (!item.media_type || !item.id) {
       setError('Selected TMDB item is missing type or ID.');
       return;
@@ -193,19 +194,28 @@ export default function WatchlistForm({ onAddItem, itemToEdit, onUpdateItem, onC
       setSelectedTmdbItemDetails(fetchedDetails);
 
       // Auto-fill form fields
-      setForm(prevForm => ({
-        ...prevForm,
-        title: item.title || item.name || prevForm.title, // Use TMDB title/name
-        type: item.media_type as 'movie' | 'show', // Set type from TMDB result
-        // Optionally pre-fill totalSeasons if it's a TV show and data is available
-        totalSeasons: item.media_type === 'tv' && fetchedDetails.tmdbTvNumberOfSeasons 
-                      ? fetchedDetails.tmdbTvNumberOfSeasons 
-                      : prevForm.totalSeasons,
-        // Reset currentSeason if type changes or totalSeasons gets populated from TMDB for a show
-        currentSeason: item.media_type === 'tv' && fetchedDetails.tmdbTvNumberOfSeasons 
-                       ? null // Encourage user to set current season if they start tracking a new show
-                       : prevForm.currentSeason,
-      }));
+      setForm(prevForm => {
+        let newType: 'movie' | 'show' = prevForm.type; // Start with previous type or a default
+        if (item.media_type === 'movie') {
+          newType = 'movie';
+        } else if (item.media_type === 'tv') {
+          newType = 'show'; // Map TMDB 'tv' to internal 'show'
+        }
+        console.log('Setting form type to:', newType, 'from item.media_type:', item.media_type);
+        return {
+          ...prevForm,
+          title: item.title || item.name || prevForm.title, // Use TMDB title/name
+          type: newType, 
+          // Optionally pre-fill totalSeasons if it's a TV show and data is available
+          totalSeasons: item.media_type === 'tv' && fetchedDetails.tmdbTvNumberOfSeasons 
+                        ? fetchedDetails.tmdbTvNumberOfSeasons 
+                        : prevForm.totalSeasons,
+          // Reset currentSeason if type changes or totalSeasons gets populated from TMDB for a show
+          currentSeason: item.media_type === 'tv' && fetchedDetails.tmdbTvNumberOfSeasons 
+                         ? null // Encourage user to set current season if they start tracking a new show
+                         : prevForm.currentSeason,
+        };
+      });
       // Set the main title input value directly to reflect the selected TMDB item
       // This also stops further debounced searches for this title.
       setTmdbSearchQuery(item.title || item.name || ''); 

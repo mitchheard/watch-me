@@ -4,8 +4,9 @@ import { useState, useEffect, useRef } from 'react';
 import FormInput from '../forms/FormInput';
 import FormSelect from '../forms/FormSelect';
 import { WatchItem } from '@/types/watchlist';
-import useDebounce from '@/hooks/useDebounce';
 import Image from 'next/image';
+
+console.log('WatchlistForm SCRIPT EXECUTING (Render Test)'); // Top-level log for script execution
 
 // Define types for TMDB search results (can be expanded)
 interface TmdbSearchResult {
@@ -57,14 +58,16 @@ export default function WatchlistForm({ onAddItem, itemToEdit, onUpdateItem, onC
   onUpdateItem?: (item: WatchItem) => void, 
   onCancelEdit?: () => void 
 }) {
+  console.log('WatchlistForm FUNCTION BODY ENTERED (Render Test)'); // Log at function entry
+
   const initialFormState: WatchlistFormState = {
     title: '',
     type: 'movie',
     status: 'want-to-watch',
     currentSeason: null,
     totalSeasons: null,
-    notes: null, // Initialize notes
-    rating: null,  // Initialize rating
+    notes: null,
+    rating: null,
   };
   const [form, setForm] = useState<WatchlistFormState>(initialFormState);
   const [submitting, setSubmitting] = useState(false);
@@ -74,7 +77,7 @@ export default function WatchlistForm({ onAddItem, itemToEdit, onUpdateItem, onC
 
   // TMDB Search State
   const [tmdbSearchQuery, setTmdbSearchQuery] = useState('');
-  // const debouncedTmdbSearchQuery = useDebounce(tmdbSearchQuery, 500); // Temporarily comment out
+  // const debouncedTmdbSearchQuery = useDebounce(tmdbSearchQuery, 500); // Still bypassed
   const [tmdbResults, setTmdbResults] = useState<TmdbSearchResult[]>([]);
   const [tmdbLoading, setTmdbLoading] = useState(false);
   const [showTmdbResults, setShowTmdbResults] = useState(false);
@@ -83,8 +86,9 @@ export default function WatchlistForm({ onAddItem, itemToEdit, onUpdateItem, onC
   const searchResultsRef = useRef<HTMLUListElement>(null);
 
   useEffect(() => {
+    console.log('WatchlistForm MOUNT useEffect triggered (Render Test)'); // Simple mount effect
     if (!itemToEdit && titleInputRef.current) {
-      titleInputRef.current.focus();
+      // titleInputRef.current.focus(); // Temporarily disable focus to simplify
     }
     setForm(prevForm => ({
       ...prevForm,
@@ -127,24 +131,20 @@ export default function WatchlistForm({ onAddItem, itemToEdit, onUpdateItem, onC
     setShowTmdbResults(false);
   }, [itemToEdit]);
 
-  // Effect for debounced TMDB search
+  // Temporarily simplified TMDB search useEffect (still bypassed debounce)
   useEffect(() => {
-    console.log('TMDB Search Effect on Render (NO DEBOUNCE):', { // Added 'on Render' for clarity if logs get mixed
+    console.log('TMDB Search Effect on Render (NO DEBOUNCE):', { 
       rawQuery: tmdbSearchQuery, 
-      // debouncedQuery: debouncedTmdbSearchQuery, 
       selectedTmdbItemDetailsExists: !!selectedTmdbItemDetails, 
       isEditing: !!itemToEdit 
     });
-    // Use tmdbSearchQuery directly here for the condition
-    if (tmdbSearchQuery && tmdbSearchQuery.length > 2 && !selectedTmdbItemDetails && !itemToEdit) {
-      console.log('Calling handleTmdbSearch with (NO DEBOUNCE - on Render):', tmdbSearchQuery);
-      handleTmdbSearch(tmdbSearchQuery); // Use raw query
+    if (tmdbSearchQuery && tmdbSearchQuery.length > 0 && !selectedTmdbItemDetails && !itemToEdit) { // Simplified length check to 1 for quicker test
+      console.log('Calling handleTmdbSearch with (NO DEBOUNCE - on Render - LEN > 0):', tmdbSearchQuery);
+      // handleTmdbSearch(tmdbSearchQuery); // Temporarily disable actual search call
     } else {
-      // console.log('Not calling handleTmdbSearch, clearing results.'); // Optional log
-      setTmdbResults([]);
-      setShowTmdbResults(false);
+      // setTmdbResults([]); // Temporarily disable state sets
+      // setShowTmdbResults(false);
     }
-  // Update dependencies array to use tmdbSearchQuery
   }, [tmdbSearchQuery, selectedTmdbItemDetails, itemToEdit]);
 
   const handleTmdbSearch = async (query: string) => {
@@ -232,6 +232,7 @@ export default function WatchlistForm({ onAddItem, itemToEdit, onUpdateItem, onC
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    console.log('handleChange triggered (Render Test):', e.target.name, e.target.value);
     const { name, value } = e.target;
     setForm(prevForm => ({
       ...prevForm,
@@ -241,9 +242,10 @@ export default function WatchlistForm({ onAddItem, itemToEdit, onUpdateItem, onC
     }));
 
     if (name === 'title') {
-      setTmdbSearchQuery(value); // Update search query based on title input
-      setSelectedTmdbItemDetails(null); // Clear selected TMDB item if title changes
-      setShowTmdbResults(value.length > 0); // Show results dropdown if title is not empty
+      console.log('Title changed (Render Test), setting tmdbSearchQuery to:', value);
+      setTmdbSearchQuery(value); 
+      // setSelectedTmdbItemDetails(null); 
+      // setShowTmdbResults(value.length > 0);
     }
   };
   
@@ -355,148 +357,30 @@ export default function WatchlistForm({ onAddItem, itemToEdit, onUpdateItem, onC
     }
   };
 
+  console.log('WatchlistForm RETURN statement reached (Render Test)');
   return (
     <form 
-      onSubmit={handleSubmit} 
+      onSubmit={(e) => e.preventDefault()} // Temporarily disable submit 
       className="flex flex-col gap-4 w-full"
     >
-      {/* Title is now part of the modal content, not inside WatchlistForm itself often */}
-      {/* <h2 className="text-xl font-semibold text-slate-700 mb-1 text-center">Add New Item</h2> */}
-      
-      {successMessage && (
-        <div className="p-3 rounded-md text-sm font-medium text-center mb-2 bg-green-50 text-green-700 border border-green-200">
-          {successMessage}
-        </div>
-      )}
-      {error && (
-        <div className="p-3 rounded-md text-sm font-medium text-center mb-2 bg-red-50 text-red-700 border border-red-200">
-          {error}
-        </div>
-      )}
-
-      <div className="relative">
-        <FormInput
+      <div className="text-center font-bold p-2">Render Test Mode - Check Console</div>
+      {/* ... (rest of the JSX, but keep it rendering) ... */}
+      <FormInput
           id="title"
           name="title"
           label="Title"
-          value={form.title}
+          value={form.title} // Ensure this is still wired up to see if it updates
           onChange={handleChange}
           placeholder="e.g., Dune: Part Two"
           required
-          ref={titleInputRef}
+          // ref={titleInputRef} // Temporarily disable ref to simplify
           className="text-base"
-          autoComplete="off" // Prevent browser autocomplete from interfering with TMDB results
+          autoComplete="off"
         />
-        {(tmdbLoading || fetchingTmdbDetails) && 
-          <div className="absolute right-2 top-9 text-xs text-slate-500">
-            {tmdbLoading ? 'Searching TMDB...' : 'Fetching details...'}
-          </div>
-        }
-        {showTmdbResults && tmdbResults.length > 0 && (
-          <ul 
-            ref={searchResultsRef} 
-            className="absolute z-10 w-full mt-1 bg-white border border-slate-300 rounded-md shadow-lg max-h-60 overflow-y-auto"
-          >
-            {tmdbResults.map((item) => {
-              const title = item.title || item.name;
-              const year = item.release_date ? item.release_date.substring(0, 4) : item.first_air_date ? item.first_air_date.substring(0, 4) : '';
-              return (
-                <li 
-                  key={item.id}
-                  onClick={() => handleTmdbSelect(item)} // Wire up the click handler
-                  className="p-3 hover:bg-slate-100 cursor-pointer flex items-center gap-3"
-                >
-                  {item.poster_path && (
-                    <Image 
-                      src={`${process.env.NEXT_PUBLIC_TMDB_IMAGE_BASE_URL}${item.poster_path}`}
-                      alt={title || 'Poster'}
-                      width={40} 
-                      height={60} 
-                      className="rounded object-cover"
-                    />
-                  )}
-                  {!item.poster_path && <div className="w-10 h-[60px] bg-slate-200 rounded flex items-center justify-center text-xs text-slate-400">No Image</div>}
-                  <div>
-                    <span className="block text-sm font-medium text-slate-700">{title}</span>
-                    {year && <span className="block text-xs text-slate-500">{year}</span>}
-                    {item.media_type && <span className="block text-xs text-slate-400 capitalize">{item.media_type}</span>}
-                  </div>
-                </li>
-              );
-            })}
-          </ul>
-        )}
-      </div>
-
-      <FormSelect
-        id="type"
-        name="type"
-        label="Type"
-        value={form.type}
-        onChange={handleChange}
-        options={[
-          { value: 'movie', label: 'Movie' },
-          { value: 'show', label: 'TV Show' },
-        ]}
-      />
-
-      <FormSelect
-        id="status"
-        name="status"
-        label="Status"
-        value={form.status}
-        onChange={handleChange}
-        options={[
-          { value: 'want-to-watch', label: 'Want to Watch' },
-          { value: 'watching', label: 'Watching' },
-          { value: 'finished', label: 'Finished' },
-        ]}
-      />
-
-      {form.type === 'show' && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <FormInput
-            id="currentSeason"
-            type="number"
-            name="currentSeason"
-            label="Current Season"
-            value={form.currentSeason ?? ''}
-            onChange={handleChange}
-            placeholder="e.g., 1 (optional)"
-            min="0"
-          />
-          <FormInput
-            id="totalSeasons"
-            type="number"
-            name="totalSeasons"
-            label="Total Seasons"
-            value={form.totalSeasons ?? ''}
-            onChange={handleChange}
-            placeholder="e.g., 3 (optional)"
-            min="0"
-          />
-        </div>
-      )}
-
-      <div className={`flex gap-3 pt-4 ${itemToEdit ? 'justify-end' : 'justify-start'} border-t border-slate-200 mt-6`}>
-        {itemToEdit && onCancelEdit && (
-          <button
-            type="button"
-            onClick={onCancelEdit}
-            disabled={submitting}
-            className="px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-md shadow-sm hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
-          >
-            Cancel
-          </button>
-      )}
-      <button
-        type="submit"
-        disabled={submitting}
-          className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 border border-transparent rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
-      >
-          {submitting ? (itemToEdit ? 'Saving...': 'Adding...') : (itemToEdit ? 'Update Item' : 'Add to Watchlist')}
-      </button>
-      </div>
+        {/* ... other form elements ... */}
+        <button type="button" onClick={() => console.log('Test Button Clicked (Render Test)')} className="p-2 bg-blue-500 text-white rounded">
+          Test Log Button
+        </button>
     </form>
   );
 }

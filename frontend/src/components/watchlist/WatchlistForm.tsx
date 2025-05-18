@@ -129,13 +129,14 @@ export default function WatchlistForm({ onAddItem, itemToEdit, onUpdateItem, onC
 
   // Effect for debounced TMDB search
   useEffect(() => {
-    console.log('TMDB Search Effect:', { 
-      debouncedTmdbSearchQuery, 
+    console.log('TMDB Search Effect on Render:', { // Added 'on Render' for clarity if logs get mixed
+      rawQuery: tmdbSearchQuery, 
+      debouncedQuery: debouncedTmdbSearchQuery, 
       selectedTmdbItemDetailsExists: !!selectedTmdbItemDetails, 
       isEditing: !!itemToEdit 
     });
     if (debouncedTmdbSearchQuery && debouncedTmdbSearchQuery.length > 2 && !selectedTmdbItemDetails && !itemToEdit) {
-      console.log('Calling handleTmdbSearch with:', debouncedTmdbSearchQuery);
+      console.log('Calling handleTmdbSearch with (on Render):', debouncedTmdbSearchQuery);
       handleTmdbSearch(debouncedTmdbSearchQuery);
     } else {
       // console.log('Not calling handleTmdbSearch, clearing results.'); // Optional log

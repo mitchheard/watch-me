@@ -104,6 +104,7 @@ export default function Page() {
       <main className="flex-1">
         {isAddItemModalOpen && (
           <Modal onClose={() => setIsAddItemModalOpen(false)} title="Add New Item">
+            {console.log('Page.tsx: Attempting to render WatchlistForm inside Modal')}
             <WatchlistForm onAddItem={handleAddItemSuccess} />
           </Modal>
         )}

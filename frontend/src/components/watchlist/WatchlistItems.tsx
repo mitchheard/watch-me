@@ -2,7 +2,9 @@
 
 import { useEffect, useState } from 'react';
 import { WatchItem } from '@/types/watchlist';
-import EditWatchItemModal from './EditWatchItemModal';
+// import EditWatchItemModal from './EditWatchItemModal'; // Temporarily disable EditWatchItemModal
+import WatchlistForm from './WatchlistForm'; // Import our test form
+import Modal from '@/components/Modal'; // Import Modal for WatchlistForm
 import useWatchlistFilters from '@/hooks/useWatchlistFilters';
 import { PencilSquareIcon, TrashIcon, FilmIcon, TvIcon } from '@heroicons/react/24/outline';
 import { motion } from 'framer-motion';
@@ -13,7 +15,8 @@ type FilterStatus = 'all' | 'want-to-watch' | 'watching' | 'finished';
 export default function WatchlistItems() {
   const [items, setItems] = useState<WatchItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedItem, setSelectedItem] = useState<WatchItem | null>(null);
+  const [selectedItem, setSelectedItem] = useState<WatchItem | null>(null); // This will be itemToEdit for WatchlistForm
+  // No need for isEditModalOpen, selectedItem existing will trigger the modal with WatchlistForm
   const { type, status, updateFilters } = useWatchlistFilters();
   const [hasMounted, setHasMounted] = useState(false);
 
@@ -59,6 +62,20 @@ export default function WatchlistItems() {
     .filter((item) => type === 'all' || item.type === type)
     .filter((item) => status === 'all' || item.status === status)
     .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
+  // Dummy handler for onAddItem, as WatchlistForm expects it even in edit mode
+  const handleDummyAddItem = (newItem: WatchItem) => {
+    console.log('handleDummyAddItem called from edit mode, should not happen in a real update flow', newItem);
+  };
+
+  const handleUpdateItemSuccess = () => {
+    fetchItems();
+    setSelectedItem(null); // Close modal on successful update
+  };
+
+  const handleCancelEdit = () => {
+    setSelectedItem(null); // Close modal on cancel
+  };
 
   return (
     <div className="mt-8 w-full max-w-2xl mx-auto">
@@ -218,6 +235,21 @@ export default function WatchlistItems() {
         </div>
       )}
 
+      {/* Render WatchlistForm in a Modal when selectedItem is set (for editing) */}
+      {selectedItem && (
+        <Modal 
+          onClose={() => setSelectedItem(null)} 
+          title={`Edit: ${selectedItem.title}`}
+        >
+          <WatchlistForm 
+            itemToEdit={selectedItem} 
+            onAddItem={handleDummyAddItem} // Pass dummy for now
+            onUpdateItem={handleUpdateItemSuccess} 
+            onCancelEdit={handleCancelEdit}
+          />
+        </Modal>
+      )}
+      {/* Original EditWatchItemModal rendering commented out for this test
       {selectedItem && (
         <EditWatchItemModal
           item={selectedItem}
@@ -228,6 +260,7 @@ export default function WatchlistItems() {
           }}
         />
       )}
+      */}
     </div>
   );
 }

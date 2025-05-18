@@ -29,6 +29,7 @@ export async function GET(request: Request) {
   }
 
   try {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let details: any = {};
     let certification: string | null = null;
     let imdbId: string | null = null;
@@ -94,6 +95,7 @@ export async function GET(request: Request) {
     // Consider checking error structure for TMDB specific messages if available
     // For example, if (error.response && error.response.data && error.response.data.status_message)
     if (typeof error === 'object' && error !== null && 'status_message' in error) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       errorMessage = (error as any).status_message;
     }
     return NextResponse.json({ error: `Failed to fetch TMDB ${type} details.`, details: errorMessage }, { status: 500 });

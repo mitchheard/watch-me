@@ -4,8 +4,11 @@ console.log('WatchlistForm SCRIPT EXECUTING (Render Test - MINIMAL)');
 
 // Using 'any' for props temporarily to reduce complexity for this test
 export default function WatchlistForm({ onAddItem, itemToEdit, onUpdateItem, onCancelEdit }: { 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   onAddItem: (newItem: any) => void, 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   itemToEdit?: any, 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   onUpdateItem?: (item: any) => void, 
   onCancelEdit?: () => void 
 }) {

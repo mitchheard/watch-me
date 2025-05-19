@@ -138,7 +138,11 @@ export async function PUT(request: Request) {
 export async function DELETE(request: Request) {
   try {
     const userId = await getUserId();
-    const { id } = await request.json();
+    const { searchParams } = new URL(request.url);
+    const id = Number(searchParams.get('id'));
+    if (!id) {
+      return NextResponse.json({ error: 'Missing id' }, { status: 400 });
+    }
     await prisma.watchItem.delete({
       where: { id, userId }
     });

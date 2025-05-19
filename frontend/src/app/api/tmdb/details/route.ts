@@ -54,6 +54,7 @@ export async function GET(request: Request) {
         tmdbMovieRuntime: movieDetails.runtime,
         tmdbMovieReleaseYear: getYear(movieDetails.release_date),
         tmdbMovieCertification: certification,
+        media_type: 'movie',
         // TV specific fields will be null or undefined
       };
     } else if (type === 'tv') {
@@ -80,6 +81,7 @@ export async function GET(request: Request) {
         tmdbTvNumberOfSeasons: tvDetails.number_of_seasons,
         tmdbTvStatus: tvDetails.status,
         tmdbTvCertification: certification,
+        media_type: 'tv',
         // Movie specific fields will be null or undefined
       };
     }

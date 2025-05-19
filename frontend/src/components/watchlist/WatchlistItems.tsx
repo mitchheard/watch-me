@@ -9,11 +9,15 @@ import useWatchlistFilters from '@/hooks/useWatchlistFilters';
 import { PencilSquareIcon, TrashIcon, FilmIcon, TvIcon } from '@heroicons/react/24/outline';
 import { motion } from 'framer-motion';
 import Image from 'next/image';
+import { useAuth } from '@/contexts/AuthContext';
 
 type FilterType = 'all' | 'movie' | 'show';
 type FilterStatus = 'all' | 'want-to-watch' | 'watching' | 'finished';
 
 export default function WatchlistItems() {
+  const { user } = useAuth();
+  if (!user) return null;
+
   const [items, setItems] = useState<WatchItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedItem, setSelectedItem] = useState<WatchItem | null>(null); // This will be itemToEdit for WatchlistForm
@@ -139,13 +143,22 @@ export default function WatchlistItems() {
                   </h3>
                   <div className="mt-1 flex flex-col gap-1">
                     <div className="flex items-start gap-2">
-                      {item.tmdbPosterPath && (
+                      {item.tmdbPosterPath ? (
                         <Image
                           src={`https://image.tmdb.org/t/p/w92${item.tmdbPosterPath}`}
                           alt={`${item.title} poster`}
                           width={40}
                           height={60}
                           className="rounded mr-1 flex-shrink-0 shadow-sm"
+                          unoptimized
+                        />
+                      ) : (
+                        <Image
+                          src="/no-image.svg"
+                          alt="No poster available"
+                          width={40}
+                          height={60}
+                          className="rounded mr-1 flex-shrink-0 shadow-sm bg-slate-200"
                           unoptimized
                         />
                       )}

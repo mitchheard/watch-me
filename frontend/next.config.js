@@ -15,6 +15,7 @@ const nextConfig = {
         pathname: '/**',
       },
     ],
+    domains: ['image.tmdb.org'],
   },
   // Add other existing Next.js configurations here if you have them
   // For example:

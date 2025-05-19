@@ -40,6 +40,21 @@ interface WatchlistFormProps {
   onCancelEdit?: () => void;
 }
 
+const tvKeywords = [
+  'season', 'episode', 'series', 'show', 'tv', 's0', 'e0', 'part', 'volume', 'chapter'
+];
+
+const guessTypeFromTitle = (title: string) => {
+  const lower = title.toLowerCase();
+  return tvKeywords.some((kw) => lower.includes(kw)) ? 'show' : 'movie';
+};
+
+const normalizeType = (type: string) => {
+  if (type.toLowerCase().replace(/\s/g, '') === 'tvshow') return 'show';
+  if (type.toLowerCase() === 'show') return 'show';
+  return 'movie';
+};
+
 export default function WatchlistForm({
   itemToEdit,
   onAddItem,
@@ -81,6 +96,7 @@ export default function WatchlistForm({
   });
 
   const watchedTitle = watch('title');
+  const watchedType = watch('type');
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -94,6 +110,7 @@ export default function WatchlistForm({
   const searchResultsRef = useRef<HTMLUListElement>(null);
   const [tmdbSearchError, setTmdbSearchError] = useState<string | null>(null);
   const [tmdbDetailError, setTmdbDetailError] = useState<string | null>(null);
+  const [isTotalSeasonsFromTmdb, setIsTotalSeasonsFromTmdb] = useState(false);
 
   const handleTmdbItemSelect = useCallback(async (item: TMDBSearchResult): Promise<void> => {
     setShowTmdbResults(false);
@@ -101,33 +118,42 @@ export default function WatchlistForm({
     try {
       const response = await fetch(`/api/tmdb/details?id=${item.id}&type=${item.media_type}`);
       const details: TMDBItemDetails = await response.json();
+      console.log('TMDB details:', details);
       setSelectedTmdbItemDetails(details);
-      
-      // Update form values with correct field names from API response
-      setValue('title', item.title || item.name || '');
-      setValue('type', details.media_type === 'tv' ? 'show' : 'movie');
-      setValue('tmdbId', details.tmdbId || details.id);
-      setValue('tmdbPosterPath', details.tmdbPosterPath || details.poster_path || null);
-      setValue('tmdbOverview', details.tmdbOverview || null);
-      setValue('tmdbTagline', details.tmdbTagline || null);
-      setValue('tmdbImdbId', details.tmdbImdbId || null);
-      setValue('tmdbMovieCertification', details.tmdbMovieCertification || null);
-      setValue('tmdbMovieReleaseYear', details.tmdbMovieReleaseYear || null);
-      setValue('tmdbMovieRuntime', details.tmdbMovieRuntime || null);
-      setValue('tmdbTvCertification', details.tmdbTvCertification || null);
-      setValue('tmdbTvFirstAirYear', details.tmdbTvFirstAirYear || null);
-      setValue('tmdbTvLastAirYear', details.tmdbTvLastAirYear || null);
-      setValue('tmdbTvNetworks', details.tmdbTvNetworks || null);
-      setValue('tmdbTvNumberOfEpisodes', details.tmdbTvNumberOfEpisodes || null);
-      setValue('tmdbTvNumberOfSeasons', details.tmdbTvNumberOfSeasons || null);
-      setValue('tmdbTvStatus', details.tmdbTvStatus || null);
+      // Gather all new values for reset
+      const totalSeasonsFromTmdb = details.tmdbTvNumberOfSeasons || null;
+      setIsTotalSeasonsFromTmdb(!!totalSeasonsFromTmdb);
+      const newValues = {
+        title: item.title || item.name || '',
+        type: details.media_type === 'tv' ? 'show' : 'movie',
+        status: 'want-to-watch',
+        currentSeason: null,
+        totalSeasons: totalSeasonsFromTmdb,
+        tmdbId: details.tmdbId || details.id,
+        tmdbPosterPath: details.tmdbPosterPath || details.poster_path || null,
+        tmdbOverview: details.tmdbOverview || null,
+        tmdbTagline: details.tmdbTagline || null,
+        tmdbImdbId: details.tmdbImdbId || null,
+        tmdbMovieCertification: details.tmdbMovieCertification || null,
+        tmdbMovieReleaseYear: details.tmdbMovieReleaseYear || null,
+        tmdbMovieRuntime: details.tmdbMovieRuntime || null,
+        tmdbTvCertification: details.tmdbTvCertification || null,
+        tmdbTvFirstAirYear: details.tmdbTvFirstAirYear || null,
+        tmdbTvLastAirYear: details.tmdbTvLastAirYear || null,
+        tmdbTvNetworks: details.tmdbTvNetworks || null,
+        tmdbTvNumberOfEpisodes: details.tmdbTvNumberOfEpisodes || null,
+        tmdbTvNumberOfSeasons: details.tmdbTvNumberOfSeasons || null,
+        tmdbTvStatus: details.tmdbTvStatus || null,
+      };
+      console.log('Resetting form with values:', newValues);
+      reset(newValues);
     } catch (error) {
       console.error('Error fetching TMDB details:', error);
       setTmdbDetailError('Failed to fetch title details. Please try again.');
     } finally {
       setFetchingTmdbDetails(false);
     }
-  }, [setValue]);
+  }, [reset, watch]);
 
   useEffect(() => {
     if (itemToEdit) {
@@ -153,9 +179,11 @@ export default function WatchlistForm({
         tmdbTvNumberOfSeasons: itemToEdit.tmdbTvNumberOfSeasons,
         tmdbTvStatus: itemToEdit.tmdbTvStatus
       });
+      setIsTotalSeasonsFromTmdb(!!itemToEdit.tmdbTvNumberOfSeasons);
     } else {
       reset(initialFormState);
       setSelectedTmdbItemDetails(null);
+      setIsTotalSeasonsFromTmdb(false);
     }
     setTmdbSearchQuery('');
     setError(null);
@@ -210,7 +238,7 @@ export default function WatchlistForm({
     const newValue = e.target.value;
     setValue('title', newValue);
     setTmdbSearchQuery(newValue);
-    
+
     if (!newValue) {
       setSelectedTmdbItemDetails(null);
       setValue('tmdbId', null);
@@ -228,6 +256,12 @@ export default function WatchlistForm({
       setValue('tmdbTvNumberOfEpisodes', null);
       setValue('tmdbTvNumberOfSeasons', null);
       setValue('tmdbTvStatus', null);
+    } else {
+      // Auto-detect type if user is typing and not selecting TMDB
+      const detectedType = guessTypeFromTitle(newValue);
+      const normalizedType = normalizeType(detectedType);
+      console.log('Auto-detected type:', detectedType, 'Normalized type:', normalizedType);
+      setValue('type', normalizedType);
     }
   };
 
@@ -258,7 +292,7 @@ export default function WatchlistForm({
     }
   };
   
-  console.log('(Phase 6) Render. Watched Title (RHF):', watchedTitle, 'isSubmitting:', isSubmitting);
+  console.log('(Phase 6) Render. Watched Title (RHF):', watchedTitle, 'Watched Type:', watchedType, 'isSubmitting:', isSubmitting);
 
   return (
     <div>
@@ -364,7 +398,7 @@ export default function WatchlistForm({
           <>
             <div>
               <label htmlFor="currentSeason" className="block text-sm font-medium text-gray-700 mb-1">
-                Current Season
+                What season are you on?
               </label>
               <input
                 type="number"
@@ -384,6 +418,7 @@ export default function WatchlistForm({
                 {...register('totalSeasons', { valueAsNumber: true })}
                 className="block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 sm:text-sm"
                 placeholder="e.g., 3"
+                disabled={isTotalSeasonsFromTmdb}
               />
             </div>
           </>

@@ -16,14 +16,14 @@ type FilterStatus = 'all' | 'want-to-watch' | 'watching' | 'finished';
 
 export default function WatchlistItems() {
   const { user } = useAuth();
-  if (!user) return null;
-
   const [items, setItems] = useState<WatchItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedItem, setSelectedItem] = useState<WatchItem | null>(null); // This will be itemToEdit for WatchlistForm
   // No need for isEditModalOpen, selectedItem existing will trigger the modal with WatchlistForm
   const { type, status, updateFilters } = useWatchlistFilters();
   const [hasMounted, setHasMounted] = useState(false);
+
+  if (!user) return null;
 
   useEffect(() => {
     setHasMounted(true);

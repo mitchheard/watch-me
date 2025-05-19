@@ -1,10 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
-// Regenerate comment to try and refresh types
 generator client {
   provider = "prisma-client-js"
   output   = "../node_modules/.prisma/client"
@@ -15,52 +8,13 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model WatchItem {
-  id            Int      @id @default(autoincrement())
-  title         String
-  type          String   // "movie" or "show"
-  status        String   // "want-to-watch", "watching", "finished"
-  rating        Int?     // User's personal rating (e.g., 1-5 stars)
-  notes         String?
-  userId        String   // Required, stores Supabase user UUID
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-  currentSeason Int?     // Optional, for shows
-  totalSeasons  Int?     // Optional, for shows
-
-  // New TMDB Common Fields
-  tmdbId            Int?     @unique
-  tmdbPosterPath    String?
-  tmdbOverview      String?
-  tmdbTagline       String?
-  tmdbImdbId        String?
-
-  // New TMDB Movie-Specific Fields
-  tmdbMovieRuntime         Int?
-  tmdbMovieReleaseYear     Int?
-  tmdbMovieCertification   String?
-
-  // New TMDB TV-Show-Specific Fields
-  tmdbTvFirstAirYear     Int?
-  tmdbTvLastAirYear      Int?
-  tmdbTvNetworks         String?
-  tmdbTvNumberOfEpisodes Int?
-  tmdbTvNumberOfSeasons  Int?
-  tmdbTvStatus           String?
-  tmdbTvCertification    String? // e.g., "TV-PG" (from US content_ratings)
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([userId]) // Add an index for faster queries
-}
-
 model User {
-  id          String        @id // Corresponds to Supabase auth.users.id (UUID)
-  email       String?       @unique
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
-  watchItems  WatchItem[]   // Relation to WatchItem
-  sessions    UserSession[] // Relation to UserSession
+  id        String        @id
+  email     String?       @unique
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+  sessions  UserSession[]
+  WatchItem WatchItem[]
 }
 
 model UserSession {
@@ -68,6 +22,38 @@ model UserSession {
   userId    String
   createdAt DateTime @default(now())
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model WatchItem {
+  id                     Int      @id @default(autoincrement())
+  title                  String
+  type                   String
+  status                 String
+  currentSeason          Int?
+  totalSeasons           Int?
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime
+  userId                 String
+  notes                  String?
+  rating                 Int?
+  tmdbId                 Int?     @unique
+  tmdbImdbId             String?
+  tmdbMovieCertification String?
+  tmdbMovieReleaseYear   Int?
+  tmdbMovieRuntime       Int?
+  tmdbOverview           String?
+  tmdbPosterPath         String?
+  tmdbTagline            String?
+  tmdbTvCertification    String?
+  tmdbTvFirstAirYear     Int?
+  tmdbTvLastAirYear      Int?
+  tmdbTvNetworks         String?
+  tmdbTvNumberOfEpisodes Int?
+  tmdbTvNumberOfSeasons  Int?
+  tmdbTvStatus           String?
+  User                   User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
 }

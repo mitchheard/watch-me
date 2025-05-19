@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useForm } from 'react-hook-form';
 import { WatchlistFormData, TMDBSearchResult, TMDBItemDetails, MediaType, WatchStatus, WatchItem } from '@/types/watchlist';
 import Image from 'next/image';
@@ -14,17 +14,31 @@ const initialFormState: WatchlistFormInputs = {
   title: '',
   type: 'movie',
   status: 'plan_to_watch',
-  currentEpisode: null,
-  totalEpisodes: null,
-  season: null,
+  currentSeason: null,
+  totalSeasons: null,
+  notes: null,
+  rating: null,
   tmdbId: null,
-  tmdbPosterPath: null
+  tmdbPosterPath: null,
+  tmdbOverview: null,
+  tmdbTagline: null,
+  tmdbImdbId: null,
+  tmdbMovieCertification: null,
+  tmdbMovieReleaseYear: null,
+  tmdbMovieRuntime: null,
+  tmdbTvCertification: null,
+  tmdbTvFirstAirYear: null,
+  tmdbTvLastAirYear: null,
+  tmdbTvNetworks: null,
+  tmdbTvNumberOfEpisodes: null,
+  tmdbTvNumberOfSeasons: null,
+  tmdbTvStatus: null
 };
 
 interface WatchlistFormProps {
   itemToEdit?: WatchItem;
   onAddItem: (item: WatchlistFormData) => Promise<void>;
-  onUpdateItem?: (id: string, item: WatchlistFormData) => Promise<void>;
+  onUpdateItem?: (id: number, item: WatchlistFormData) => Promise<void>;
   onCancelEdit?: () => void;
 }
 
@@ -48,11 +62,25 @@ export default function WatchlistForm({
       title: itemToEdit.title,
       type: itemToEdit.type,
       status: itemToEdit.status,
-      currentEpisode: itemToEdit.currentEpisode,
-      totalEpisodes: itemToEdit.totalEpisodes,
-      season: itemToEdit.season,
+      currentSeason: itemToEdit.currentSeason,
+      totalSeasons: itemToEdit.totalSeasons,
+      notes: itemToEdit.notes,
+      rating: itemToEdit.rating,
       tmdbId: itemToEdit.tmdbId,
-      tmdbPosterPath: itemToEdit.tmdbPosterPath
+      tmdbPosterPath: itemToEdit.tmdbPosterPath,
+      tmdbOverview: itemToEdit.tmdbOverview,
+      tmdbTagline: itemToEdit.tmdbTagline,
+      tmdbImdbId: itemToEdit.tmdbImdbId,
+      tmdbMovieCertification: itemToEdit.tmdbMovieCertification,
+      tmdbMovieReleaseYear: itemToEdit.tmdbMovieReleaseYear,
+      tmdbMovieRuntime: itemToEdit.tmdbMovieRuntime,
+      tmdbTvCertification: itemToEdit.tmdbTvCertification,
+      tmdbTvFirstAirYear: itemToEdit.tmdbTvFirstAirYear,
+      tmdbTvLastAirYear: itemToEdit.tmdbTvLastAirYear,
+      tmdbTvNetworks: itemToEdit.tmdbTvNetworks,
+      tmdbTvNumberOfEpisodes: itemToEdit.tmdbTvNumberOfEpisodes,
+      tmdbTvNumberOfSeasons: itemToEdit.tmdbTvNumberOfSeasons,
+      tmdbTvStatus: itemToEdit.tmdbTvStatus
     } : initialFormState
   });
 
@@ -71,23 +99,62 @@ export default function WatchlistForm({
   const [tmdbSearchError, setTmdbSearchError] = useState<string | null>(null);
   const [tmdbDetailError, setTmdbDetailError] = useState<string | null>(null);
 
+  const handleTmdbItemSelect = useCallback(async (item: TMDBSearchResult): Promise<void> => {
+    setShowTmdbResults(false);
+    setFetchingTmdbDetails(true);
+    try {
+      const response = await fetch(`/api/tmdb/details?id=${item.id}&mediaType=${item.media_type}`);
+      const details: TMDBItemDetails = await response.json();
+      setSelectedTmdbItemDetails(details);
+      
+      // Update form values
+      setValue('title', details.title || details.name || '');
+      setValue('type', details.media_type === 'tv' ? 'show' : 'movie');
+      setValue('tmdbId', details.id);
+      setValue('tmdbPosterPath', details.poster_path || null);
+      
+      if (details.media_type === 'tv' && details.number_of_episodes) {
+        setValue('tmdbTvNumberOfEpisodes', details.number_of_episodes);
+      }
+    } catch (error) {
+      console.error('Error fetching TMDB details:', error);
+      setTmdbDetailError('Failed to fetch title details. Please try again.');
+    } finally {
+      setFetchingTmdbDetails(false);
+    }
+  }, [setValue]);
+
   useEffect(() => {
     if (itemToEdit) {
       reset({
         title: itemToEdit.title,
         type: itemToEdit.type,
         status: itemToEdit.status,
-        currentEpisode: itemToEdit.currentEpisode,
-        totalEpisodes: itemToEdit.totalEpisodes,
-        season: itemToEdit.season,
+        currentSeason: itemToEdit.currentSeason,
+        totalSeasons: itemToEdit.totalSeasons,
+        notes: itemToEdit.notes,
+        rating: itemToEdit.rating,
         tmdbId: itemToEdit.tmdbId,
-        tmdbPosterPath: itemToEdit.tmdbPosterPath
+        tmdbPosterPath: itemToEdit.tmdbPosterPath,
+        tmdbOverview: itemToEdit.tmdbOverview,
+        tmdbTagline: itemToEdit.tmdbTagline,
+        tmdbImdbId: itemToEdit.tmdbImdbId,
+        tmdbMovieCertification: itemToEdit.tmdbMovieCertification,
+        tmdbMovieReleaseYear: itemToEdit.tmdbMovieReleaseYear,
+        tmdbMovieRuntime: itemToEdit.tmdbMovieRuntime,
+        tmdbTvCertification: itemToEdit.tmdbTvCertification,
+        tmdbTvFirstAirYear: itemToEdit.tmdbTvFirstAirYear,
+        tmdbTvLastAirYear: itemToEdit.tmdbTvLastAirYear,
+        tmdbTvNetworks: itemToEdit.tmdbTvNetworks,
+        tmdbTvNumberOfEpisodes: itemToEdit.tmdbTvNumberOfEpisodes,
+        tmdbTvNumberOfSeasons: itemToEdit.tmdbTvNumberOfSeasons,
+        tmdbTvStatus: itemToEdit.tmdbTvStatus
       });
 
       // If item has TMDB data, fetch fresh details
       if (itemToEdit.tmdbId) {
         handleTmdbItemSelect({
-          id: Number(itemToEdit.tmdbId),
+          id: itemToEdit.tmdbId,
           media_type: itemToEdit.type === 'movie' ? 'movie' : 'tv',
           poster_path: itemToEdit.tmdbPosterPath || null
         } as TMDBSearchResult);
@@ -103,7 +170,7 @@ export default function WatchlistForm({
     setShowTmdbResults(false);
     setTmdbSearchError(null);
     setTmdbDetailError(null);
-  }, [itemToEdit, reset]);
+  }, [itemToEdit, reset, handleTmdbItemSelect]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -145,31 +212,6 @@ export default function WatchlistForm({
     searchTmdb();
   }, [debouncedSearchQuery]);
 
-  const handleTmdbItemSelect = async (item: TMDBSearchResult): Promise<void> => {
-    setShowTmdbResults(false);
-    setFetchingTmdbDetails(true);
-    try {
-      const response = await fetch(`/api/tmdb/details?id=${item.id}&mediaType=${item.media_type}`);
-      const details: TMDBItemDetails = await response.json();
-      setSelectedTmdbItemDetails(details);
-      
-      // Update form values
-      setValue('title', details.title || details.name || '');
-      setValue('type', details.media_type === 'tv' ? 'show' : 'movie');
-      setValue('tmdbId', details.id.toString());
-      setValue('tmdbPosterPath', details.poster_path || undefined);
-      
-      if (details.media_type === 'tv' && details.number_of_episodes) {
-        setValue('totalEpisodes', details.number_of_episodes);
-      }
-    } catch (error) {
-      console.error('Error fetching TMDB details:', error);
-      setTmdbDetailError('Failed to fetch title details. Please try again.');
-    } finally {
-      setFetchingTmdbDetails(false);
-    }
-  };
-
   const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = e.target.value;
     setValue('title', newValue);
@@ -177,8 +219,21 @@ export default function WatchlistForm({
     
     if (!newValue) {
       setSelectedTmdbItemDetails(null);
-      setValue('tmdbId', undefined);
-      setValue('tmdbPosterPath', undefined);
+      setValue('tmdbId', null);
+      setValue('tmdbPosterPath', null);
+      setValue('tmdbOverview', null);
+      setValue('tmdbTagline', null);
+      setValue('tmdbImdbId', null);
+      setValue('tmdbMovieCertification', null);
+      setValue('tmdbMovieReleaseYear', null);
+      setValue('tmdbMovieRuntime', null);
+      setValue('tmdbTvCertification', null);
+      setValue('tmdbTvFirstAirYear', null);
+      setValue('tmdbTvLastAirYear', null);
+      setValue('tmdbTvNetworks', null);
+      setValue('tmdbTvNumberOfEpisodes', null);
+      setValue('tmdbTvNumberOfSeasons', null);
+      setValue('tmdbTvStatus', null);
     }
   };
 
@@ -204,7 +259,6 @@ export default function WatchlistForm({
   };
   
   console.log('(Phase 6) Render. Watched Title (RHF):', watchedTitle, 'isSubmitting:', isSubmitting);
-  const watchedFormValues = watch();
 
   return (
     <div>
@@ -253,12 +307,8 @@ export default function WatchlistForm({
                       <div className="font-medium">{result.title || result.name}</div>
                       <div className="text-sm text-gray-500">
                         {result.release_date || result.first_air_date
-                          ? new Date(
-                              result.release_date || result.first_air_date || ''
-                            ).getFullYear()
+                          ? new Date(result.release_date || result.first_air_date || '').getFullYear()
                           : 'Release date unknown'}
-                        {' • '}
-                        {result.media_type === 'tv' ? 'TV Show' : 'Movie'}
                       </div>
                     </div>
                   </div>
@@ -274,15 +324,9 @@ export default function WatchlistForm({
           {tmdbSearchError && (
             <div className="mt-2 text-sm text-red-600">{tmdbSearchError}</div>
           )}
-
-          {!tmdbLoading && !tmdbSearchError && watchedTitle && watchedTitle.length >= 3 && !showTmdbResults && !selectedTmdbItemDetails && !itemToEdit && (
-            <div className="mt-2 text-sm text-gray-600">
-              We couldn&apos;t find this title in our database, but you can still add it to your list. We&apos;ll work on matching it with our database later.
-            </div>
-          )}
         </div>
 
-        {/* Type Select */}
+        {/* Type Selection */}
         <div>
           <label htmlFor="type" className="block text-sm font-medium text-gray-700 mb-1">
             Type
@@ -291,14 +335,13 @@ export default function WatchlistForm({
             id="type"
             {...register('type')}
             className="block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 sm:text-sm"
-            disabled={!!selectedTmdbItemDetails}
           >
             <option value="movie">Movie</option>
             <option value="show">TV Show</option>
           </select>
         </div>
 
-        {/* Status Select */}
+        {/* Status Selection */}
         <div>
           <label htmlFor="status" className="block text-sm font-medium text-gray-700 mb-1">
             Status
@@ -315,68 +358,93 @@ export default function WatchlistForm({
           </select>
         </div>
 
-        {/* Season Fields for TV Shows */}
+        {/* Show-specific fields */}
         {watch('type') === 'show' && (
-          <div className="space-y-4">
+          <>
             <div>
-              <label htmlFor="season" className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="currentSeason" className="block text-sm font-medium text-gray-700 mb-1">
                 Current Season
               </label>
               <input
                 type="number"
-                id="season"
-                {...register('season', {
-                  min: { value: 1, message: 'Season must be at least 1' },
-                  valueAsNumber: true,
-                })}
+                id="currentSeason"
+                {...register('currentSeason', { valueAsNumber: true })}
                 className="block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 sm:text-sm"
+                placeholder="e.g., 1"
               />
-              {errors.season && (
-                <p className="mt-1 text-sm text-red-600">{errors.season.message}</p>
-              )}
             </div>
-
             <div>
-              <label htmlFor="currentEpisode" className="block text-sm font-medium text-gray-700 mb-1">
-                Current Episode
+              <label htmlFor="totalSeasons" className="block text-sm font-medium text-gray-700 mb-1">
+                Total Seasons
               </label>
               <input
                 type="number"
-                id="currentEpisode"
-                {...register('currentEpisode', {
-                  min: { value: 1, message: 'Episode must be at least 1' },
-                  valueAsNumber: true,
-                })}
+                id="totalSeasons"
+                {...register('totalSeasons', { valueAsNumber: true })}
                 className="block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 sm:text-sm"
+                placeholder="e.g., 3"
               />
-              {errors.currentEpisode && (
-                <p className="mt-1 text-sm text-red-600">{errors.currentEpisode.message}</p>
-              )}
             </div>
+          </>
+        )}
 
-            {selectedTmdbItemDetails?.number_of_episodes && (
-              <div>
-                <p className="text-sm text-gray-500">
-                  Total Episodes: {selectedTmdbItemDetails.number_of_episodes}
-                </p>
-              </div>
-            )}
+        {/* Rating */}
+        <div>
+          <label htmlFor="rating" className="block text-sm font-medium text-gray-700 mb-1">
+            Rating (1-5)
+          </label>
+          <input
+            type="number"
+            id="rating"
+            {...register('rating', {
+              valueAsNumber: true,
+              min: { value: 1, message: 'Rating must be at least 1' },
+              max: { value: 5, message: 'Rating must be at most 5' }
+            })}
+            className="block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 sm:text-sm"
+            placeholder="e.g., 4"
+            min="1"
+            max="5"
+          />
+          {errors.rating && (
+            <p className="mt-1 text-sm text-red-600">{errors.rating.message}</p>
+          )}
+        </div>
+
+        {/* Notes */}
+        <div>
+          <label htmlFor="notes" className="block text-sm font-medium text-gray-700 mb-1">
+            Notes
+          </label>
+          <textarea
+            id="notes"
+            {...register('notes')}
+            className="block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 sm:text-sm"
+            rows={3}
+            placeholder="Add any notes about this title..."
+          />
+        </div>
+
+        {/* Error and Success Messages */}
+        {error && (
+          <div className="rounded-md bg-red-50 p-4">
+            <div className="text-sm text-red-700">{error}</div>
           </div>
         )}
 
-        {/* Error and Success Messages */}
-        {error && <div className="text-sm text-red-600">{error}</div>}
         {successMessage && (
-          <div className="text-sm text-green-600">{successMessage}</div>
+          <div className="rounded-md bg-green-50 p-4">
+            <div className="text-sm text-green-700">{successMessage}</div>
+          </div>
         )}
 
-        {/* Submit Button */}
-        <div className="mt-6 flex justify-end gap-3">
+        {/* Form Actions */}
+        <div className="flex justify-end gap-3">
           {onCancelEdit && (
             <button
               type="button"
               onClick={onCancelEdit}
-              className="inline-flex justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+              className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
             >
               Cancel
             </button>
@@ -384,9 +452,9 @@ export default function WatchlistForm({
           <button
             type="submit"
             disabled={isSubmitting}
-            className="inline-flex justify-center rounded-md border border-transparent bg-blue-600 py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50"
+            className="inline-flex justify-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50"
           >
-            {isSubmitting ? 'Saving...' : itemToEdit ? 'Update' : 'Add to List'}
+            {isSubmitting ? 'Saving...' : itemToEdit ? 'Update' : 'Add'}
           </button>
         </div>
       </form>

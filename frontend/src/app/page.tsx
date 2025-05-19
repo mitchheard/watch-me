@@ -7,6 +7,7 @@ import WatchlistForm from '@/components/watchlist/WatchlistForm';
 // import WatchlistItems from '@/components/watchlist/WatchlistItems';
 import Modal from '@/components/Modal';
 import { PlusIcon, FilmIcon, TvIcon, CheckCircleIcon } from '@heroicons/react/24/solid';
+import { WatchlistFormData } from '@/types/watchlist';
 
 const WatchlistItems = dynamic(() => import('@/components/watchlist/WatchlistItems'), {
   ssr: false,
@@ -59,7 +60,7 @@ export default function Page() {
   const [refreshKey, setRefreshKey] = useState(0);
   const [isAddItemModalOpen, setIsAddItemModalOpen] = useState(false);
 
-  const handleAddItemSuccess = () => {
+  const handleAddItemSuccess = async (_item: WatchlistFormData) => {
     setRefreshKey(prevKey => prevKey + 1);
     setIsAddItemModalOpen(false);
   };

@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { WatchItem } from '@/types/watchlist';
+import { WatchItem, WatchlistFormData } from '@/types/watchlist';
 // import EditWatchItemModal from './EditWatchItemModal'; // Temporarily disable EditWatchItemModal
 import WatchlistForm from './WatchlistForm'; // Import our test form
 import Modal from '@/components/Modal'; // Import Modal for WatchlistForm
@@ -28,9 +28,9 @@ export default function WatchlistItems() {
 
   const fetchItems = async () => {
     try {
-    const res = await fetch('/api/watchlist');
-    const data = await res.json();
-    console.log('Fetched watchlist data:', data);
+      const res = await fetch('/api/watchlist');
+      const data = await res.json();
+      console.log('Fetched watchlist data:', data);
       
       if (!res.ok) {
         console.error('Failed to fetch items:', data.error);
@@ -43,11 +43,11 @@ export default function WatchlistItems() {
       console.error('Error fetching items:', error);
       setItems([]);
     } finally {
-    setLoading(false);
+      setLoading(false);
     }
   };
 
-  const handleDelete = async (id: string) => {
+  const handleDelete = async (id: number) => {
     const res = await fetch(`/api/watchlist?id=${id}`, { method: 'DELETE' });
     if (res.ok) {
       fetchItems();
@@ -65,12 +65,12 @@ export default function WatchlistItems() {
     .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
   // Dummy handler for onAddItem, as WatchlistForm expects it even in edit mode
-  const handleDummyAddItem = (newItem: WatchItem) => {
+  const handleDummyAddItem = async (newItem: WatchlistFormData) => {
     console.log('handleDummyAddItem called from edit mode, should not happen in a real update flow', newItem);
   };
 
-  const handleUpdateItemSuccess = () => {
-    fetchItems();
+  const handleUpdateItemSuccess = async () => {
+    await fetchItems();
     setSelectedItem(null); // Close modal on successful update
   };
 
@@ -122,21 +122,21 @@ export default function WatchlistItems() {
 
       {visibleItems.length > 0 ? (
         <motion.ul layout className="space-y-3">
-        {visibleItems.map((item) => (
+          {visibleItems.map((item) => (
             <motion.li
-            key={item.id}
+              key={item.id}
               layout
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
               transition={{ duration: 0.2 }}
               className="bg-white border border-slate-200/80 shadow-sm rounded-lg p-4 transition-shadow hover:shadow-md"
-          >
+            >
               <div className="flex justify-between items-center gap-3">
                 <div className="flex-grow min-w-0">
                   <h3 className="text-md font-semibold text-slate-800 truncate">
-                  {item.title}
-                </h3>
+                    {item.title}
+                  </h3>
                   <div className="mt-1 flex flex-col gap-1">
                     <div className="flex items-start gap-2">
                       {item.tmdbPosterPath && (
@@ -202,28 +202,28 @@ export default function WatchlistItems() {
                 </div>
 
                 <div className="flex items-center gap-1 flex-shrink-0">
-                <button
-                  onClick={() => setSelectedItem(item)}
+                  <button
+                    onClick={() => setSelectedItem(item)}
                     className="p-2 text-slate-500 hover:text-blue-600 hover:bg-slate-100 rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-1 focus-visible:ring-offset-white"
                     aria-label="Edit item"
-                >
+                  >
                     <PencilSquareIcon className="w-5 h-5" />
-                </button>
-                <button
-                  onClick={() => {
+                  </button>
+                  <button
+                    onClick={() => {
                       if (confirm(`Delete "${item.title}"? This action cannot be undone.`)) {
-                      handleDelete(item.id.toString());
-                    }
-                  }}
+                        handleDelete(item.id);
+                      }
+                    }}
                     className="p-2 text-slate-500 hover:text-red-600 hover:bg-slate-100 rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-1 focus-visible:ring-offset-white"
                     aria-label="Delete item"
-                >
+                  >
                     <TrashIcon className="w-5 h-5" />
-                </button>
+                  </button>
+                </div>
               </div>
-            </div>
             </motion.li>
-        ))}
+          ))}
         </motion.ul>
       ) : (
         <div className="text-center py-16">
@@ -253,18 +253,6 @@ export default function WatchlistItems() {
           />
         </Modal>
       )}
-      {/* Original EditWatchItemModal rendering commented out for this test
-      {selectedItem && (
-        <EditWatchItemModal
-          item={selectedItem}
-          onClose={() => setSelectedItem(null)}
-          onUpdate={() => {
-            fetchItems();
-            setSelectedItem(null);
-          }}
-        />
-      )}
-      */}
     </div>
   );
 }

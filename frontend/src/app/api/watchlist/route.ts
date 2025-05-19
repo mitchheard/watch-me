@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
-import { WatchItem } from '@/types/watchlist';
+import { WatchlistFormData } from '@/types/watchlist';
 
 async function getUserId() {
   const cookieStore = await cookies();
@@ -41,25 +41,14 @@ async function getUserId() {
 export async function GET() {
   try {
     const userId = await getUserId();
-    const watchlist = await prisma.watchItem.findMany({
+    const items = await prisma.watchItem.findMany({
       where: { userId },
-      orderBy: {
-        createdAt: 'desc',
-      },
+      orderBy: { updatedAt: 'desc' }
     });
-    return NextResponse.json(watchlist);
+    return NextResponse.json(items);
   } catch (error) {
-    console.error('Error fetching watchlist:', error);
-    if (error instanceof Error && error.message === 'Not authenticated') {
-      return NextResponse.json(
-        { error: 'Not authenticated' },
-        { status: 401 }
-      );
-    }
-    return NextResponse.json(
-      { error: 'Failed to fetch watchlist' },
-      { status: 500 }
-    );
+    console.error('Failed to fetch watchlist items:', error);
+    return NextResponse.json({ error: 'Failed to fetch watchlist items' }, { status: 500 });
   }
 }
 
@@ -67,83 +56,39 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const userId = await getUserId();
-    console.log(`[POST /api/watchlist] Attempting action for userId: ${userId}`); // Added log
-
-    // Verify user exists in your public.User table
-    const appUser = await prisma.user.findUnique({
-      where: { id: userId },
-    });
-
-    if (!appUser) {
-      console.error(`[POST /api/watchlist] User with ID ${userId} not found in the public.User table.`);
-      return NextResponse.json(
-        { error: 'User profile not found in application database. Cannot create watch item.' },
-        { status: 404 } // Not Found, as the referenced user is missing
-      );
-    }
-
-    const body: Partial<WatchItem> = await request.json();
-    // Destructure all potential fields from the body, including new TMDB fields
-    const {
-      title, type, status, currentSeason, totalSeasons, notes, rating, // User-managed fields
-      // TMDB common fields
-      tmdbId, tmdbPosterPath, tmdbOverview, tmdbTagline, tmdbImdbId,
-      // TMDB movie-specific fields
-      tmdbMovieRuntime, tmdbMovieReleaseYear, tmdbMovieCertification,
-      // TMDB TV-show-specific fields
-      tmdbTvFirstAirYear, tmdbTvLastAirYear, tmdbTvNetworks,
-      tmdbTvNumberOfEpisodes, tmdbTvNumberOfSeasons, tmdbTvStatus, tmdbTvCertification
-    } = body;
-
-    if (!title || !type || !status) {
-      return NextResponse.json(
-        { error: 'Missing required fields (title, type, status)' }, // Updated error message
-        { status: 400 }
-      );
-    }
-
-    const watchItem = await prisma.watchItem.create({
+    const data: WatchlistFormData = await request.json();
+    const item = await prisma.watchItem.create({
       data: {
-        title,
-        type,
-        status,
-        currentSeason,
-        totalSeasons,
-        notes, // Add notes
-        rating, // Add rating
         userId,
-        // Add all TMDB fields to the data object
-        tmdbId,
-        tmdbPosterPath,
-        tmdbOverview,
-        tmdbTagline,
-        tmdbImdbId,
-        tmdbMovieRuntime,
-        tmdbMovieReleaseYear,
-        tmdbMovieCertification,
-        tmdbTvFirstAirYear,
-        tmdbTvLastAirYear,
-        tmdbTvNetworks,
-        tmdbTvNumberOfEpisodes,
-        tmdbTvNumberOfSeasons,
-        tmdbTvStatus,
-        tmdbTvCertification,
-      },
+        title: data.title,
+        type: data.type,
+        status: data.status,
+        currentSeason: data.currentSeason ? Number(data.currentSeason) : null,
+        totalSeasons: data.totalSeasons ? Number(data.totalSeasons) : null,
+        notes: data.notes || null,
+        rating: data.rating ? Number(data.rating) : null,
+        tmdbId: data.tmdbId || null,
+        tmdbPosterPath: data.tmdbPosterPath || null,
+        tmdbOverview: data.tmdbOverview || null,
+        tmdbTagline: data.tmdbTagline || null,
+        tmdbImdbId: data.tmdbImdbId || null,
+        tmdbMovieCertification: data.tmdbMovieCertification || null,
+        tmdbMovieReleaseYear: data.tmdbMovieReleaseYear || null,
+        tmdbMovieRuntime: data.tmdbMovieRuntime || null,
+        tmdbTvCertification: data.tmdbTvCertification || null,
+        tmdbTvFirstAirYear: data.tmdbTvFirstAirYear || null,
+        tmdbTvLastAirYear: data.tmdbTvLastAirYear || null,
+        tmdbTvNetworks: data.tmdbTvNetworks || null,
+        tmdbTvNumberOfEpisodes: data.tmdbTvNumberOfEpisodes || null,
+        tmdbTvNumberOfSeasons: data.tmdbTvNumberOfSeasons || null,
+        tmdbTvStatus: data.tmdbTvStatus || null,
+        updatedAt: new Date(),
+      }
     });
-
-    return NextResponse.json(watchItem, { status: 201 });
+    return NextResponse.json(item);
   } catch (error) {
-    console.error('Error creating watch item:', error);
-    if (error instanceof Error && error.message === 'Not authenticated') {
-      return NextResponse.json(
-        { error: 'Not authenticated' },
-        { status: 401 }
-      );
-    }
-    return NextResponse.json(
-      { error: 'Failed to create watch item' },
-      { status: 500 }
-    );
+    console.error('Failed to create watchlist item:', error);
+    return NextResponse.json({ error: 'Failed to create watchlist item' }, { status: 500 });
   }
 }
 
@@ -151,82 +96,40 @@ export async function POST(request: Request) {
 export async function PUT(request: Request) {
   try {
     const userId = await getUserId();
-    const body: Partial<WatchItem> & { id?: number } = await request.json();
-    // Destructure all potential fields, including item id and TMDB fields
-    const {
-      id, title, type, status, currentSeason, totalSeasons, notes, rating, // User-managed fields + id
-      // TMDB common fields
-      tmdbId, tmdbPosterPath, tmdbOverview, tmdbTagline, tmdbImdbId,
-      // TMDB movie-specific fields
-      tmdbMovieRuntime, tmdbMovieReleaseYear, tmdbMovieCertification,
-      // TMDB TV-show-specific fields
-      tmdbTvFirstAirYear, tmdbTvLastAirYear, tmdbTvNetworks,
-      tmdbTvNumberOfEpisodes, tmdbTvNumberOfSeasons, tmdbTvStatus, tmdbTvCertification
-    } = body;
-
-    if (!id) {
-      return NextResponse.json(
-        { error: 'Missing item ID' },
-        { status: 400 }
-      );
-    }
-
-    // First check if the item belongs to the user
-    const existingItem = await prisma.watchItem.findFirst({
+    const data: WatchlistFormData & { id: number } = await request.json();
+    const { id, ...updateData } = data;
+    
+    const item = await prisma.watchItem.update({
       where: { id, userId },
-    });
-
-    if (!existingItem) {
-      return NextResponse.json(
-        { error: 'Item not found or unauthorized' },
-        { status: 404 }
-      );
-    }
-
-    const watchItem = await prisma.watchItem.update({
-      where: { id }, // id is already an integer from the database
       data: {
-        // Only include fields that are actually sent for update.
-        // Prisma handles undefined fields by not updating them.
-        title,
-        type,
-        status,
-        currentSeason,
-        totalSeasons,
-        notes, // Add notes
-        rating, // Add rating
-        // Add all TMDB fields to the data object for update
-        tmdbId,
-        tmdbPosterPath,
-        tmdbOverview,
-        tmdbTagline,
-        tmdbImdbId,
-        tmdbMovieRuntime,
-        tmdbMovieReleaseYear,
-        tmdbMovieCertification,
-        tmdbTvFirstAirYear,
-        tmdbTvLastAirYear,
-        tmdbTvNetworks,
-        tmdbTvNumberOfEpisodes,
-        tmdbTvNumberOfSeasons,
-        tmdbTvStatus,
-        tmdbTvCertification,
-      },
+        ...updateData,
+        currentSeason: updateData.currentSeason ? Number(updateData.currentSeason) : null,
+        totalSeasons: updateData.totalSeasons ? Number(updateData.totalSeasons) : null,
+        notes: updateData.notes || null,
+        rating: updateData.rating ? Number(updateData.rating) : null,
+        tmdbId: updateData.tmdbId || null,
+        tmdbPosterPath: updateData.tmdbPosterPath || null,
+        tmdbOverview: updateData.tmdbOverview || null,
+        tmdbTagline: updateData.tmdbTagline || null,
+        tmdbImdbId: updateData.tmdbImdbId || null,
+        tmdbMovieCertification: updateData.tmdbMovieCertification || null,
+        tmdbMovieReleaseYear: updateData.tmdbMovieReleaseYear || null,
+        tmdbMovieRuntime: updateData.tmdbMovieRuntime || null,
+        tmdbTvCertification: updateData.tmdbTvCertification || null,
+        tmdbTvFirstAirYear: updateData.tmdbTvFirstAirYear || null,
+        tmdbTvLastAirYear: updateData.tmdbTvLastAirYear || null,
+        tmdbTvNetworks: updateData.tmdbTvNetworks || null,
+        tmdbTvNumberOfEpisodes: updateData.tmdbTvNumberOfEpisodes || null,
+        tmdbTvNumberOfSeasons: updateData.tmdbTvNumberOfSeasons || null,
+        tmdbTvStatus: updateData.tmdbTvStatus || null,
+        updatedAt: new Date(),
+      }
     });
-
-    return NextResponse.json(watchItem);
+    
+    return NextResponse.json(item);
   } catch (error) {
-    console.error('Error updating watch item:', error);
-    if (error instanceof Error && error.message === 'Not authenticated') {
-      return NextResponse.json(
-        { error: 'Not authenticated' },
-        { status: 401 }
-      );
-    }
-    return NextResponse.json(
-      { error: 'Failed to update watch item' },
-      { status: 500 }
-    );
+    console.error('Failed to update watchlist item:', error);
+    return NextResponse.json({ error: 'Failed to update watchlist item' }, { status: 500 });
   }
 }
 
@@ -234,44 +137,13 @@ export async function PUT(request: Request) {
 export async function DELETE(request: Request) {
   try {
     const userId = await getUserId();
-    const { searchParams } = new URL(request.url);
-    const id = searchParams.get('id');
-
-    if (!id) {
-      return NextResponse.json(
-        { error: 'Missing item ID' },
-        { status: 400 }
-      );
-    }
-
-    // First check if the item belongs to the user
-    const existingItem = await prisma.watchItem.findFirst({
-      where: { id: parseInt(id), userId },
-    });
-
-    if (!existingItem) {
-      return NextResponse.json(
-        { error: 'Item not found or unauthorized' },
-        { status: 404 }
-      );
-    }
-
+    const { id } = await request.json();
     await prisma.watchItem.delete({
-      where: { id: parseInt(id) },
+      where: { id, userId }
     });
-
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('Error deleting watch item:', error);
-    if (error instanceof Error && error.message === 'Not authenticated') {
-      return NextResponse.json(
-        { error: 'Not authenticated' },
-        { status: 401 }
-      );
-    }
-    return NextResponse.json(
-      { error: 'Failed to delete watch item' },
-      { status: 500 }
-    );
+    console.error('Failed to delete watchlist item:', error);
+    return NextResponse.json({ error: 'Failed to delete watchlist item' }, { status: 500 });
   }
 } 

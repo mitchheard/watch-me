@@ -2,17 +2,32 @@ export type MediaType = 'movie' | 'show';
 export type WatchStatus = 'watching' | 'completed' | 'plan_to_watch' | 'dropped';
 
 export type WatchItem = {
-  id: string;
+  id: number;
   title: string;
-  type: MediaType;
-  status: WatchStatus;
-  currentEpisode: number | null;
-  totalEpisodes: number | null;
-  season: number | null;
-  tmdbId?: string | null;
-  tmdbPosterPath?: string | null;
+  type: string;
+  status: string;
+  currentSeason: number | null;
+  totalSeasons: number | null;
   createdAt: Date;
   updatedAt: Date;
+  userId: string;
+  notes: string | null;
+  rating: number | null;
+  tmdbId: number | null;
+  tmdbImdbId: string | null;
+  tmdbMovieCertification: string | null;
+  tmdbMovieReleaseYear: number | null;
+  tmdbMovieRuntime: number | null;
+  tmdbOverview: string | null;
+  tmdbPosterPath: string | null;
+  tmdbTagline: string | null;
+  tmdbTvCertification: string | null;
+  tmdbTvFirstAirYear: number | null;
+  tmdbTvLastAirYear: number | null;
+  tmdbTvNetworks: string | null;
+  tmdbTvNumberOfEpisodes: number | null;
+  tmdbTvNumberOfSeasons: number | null;
+  tmdbTvStatus: string | null;
 };
 
 export interface WatchlistItem {
@@ -25,6 +40,8 @@ export interface WatchlistItem {
   season?: number;
   tmdbId?: string;
   tmdbPosterPath?: string;
+  notes?: string;
+  rating?: number;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -53,11 +70,25 @@ export interface TMDBItemDetails {
 
 export interface WatchlistFormData {
   title: string;
-  type: MediaType;
-  status: WatchStatus;
-  currentEpisode?: number | null;
-  totalEpisodes?: number | null;
-  season?: number | null;
-  tmdbId?: string | null;
+  type: string;
+  status: string;
+  currentSeason?: number | null;
+  totalSeasons?: number | null;
+  notes?: string | null;
+  rating?: number | null;
+  tmdbId?: number | null;
+  tmdbImdbId?: string | null;
+  tmdbMovieCertification?: string | null;
+  tmdbMovieReleaseYear?: number | null;
+  tmdbMovieRuntime?: number | null;
+  tmdbOverview?: string | null;
   tmdbPosterPath?: string | null;
+  tmdbTagline?: string | null;
+  tmdbTvCertification?: string | null;
+  tmdbTvFirstAirYear?: number | null;
+  tmdbTvLastAirYear?: number | null;
+  tmdbTvNetworks?: string | null;
+  tmdbTvNumberOfEpisodes?: number | null;
+  tmdbTvNumberOfSeasons?: number | null;
+  tmdbTvStatus?: string | null;
 }

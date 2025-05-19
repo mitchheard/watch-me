@@ -16,16 +16,16 @@ export async function GET(request: Request) {
   const tmdb = new TMDB(apiKey);
 
   const { searchParams } = new URL(request.url);
-  const tmdbId = searchParams.get('tmdbId');
+  const tmdbIdParam = searchParams.get('id');
   const type = searchParams.get('type'); // 'movie' or 'tv'
 
-  if (!tmdbId || !type || (type !== 'movie' && type !== 'tv')) {
-    return NextResponse.json({ error: 'tmdbId and type (movie/tv) are required.' }, { status: 400 });
+  if (!tmdbIdParam || !type || (type !== 'movie' && type !== 'tv')) {
+    return NextResponse.json({ error: 'id and type (movie/tv) are required.' }, { status: 400 });
   }
 
-  const id = parseInt(tmdbId, 10);
+  const id = parseInt(tmdbIdParam, 10);
   if (isNaN(id)) {
-    return NextResponse.json({ error: 'Invalid tmdbId.' }, { status: 400 });
+    return NextResponse.json({ error: 'Invalid id.' }, { status: 400 });
   }
 
   try {

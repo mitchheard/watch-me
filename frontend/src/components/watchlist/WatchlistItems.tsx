@@ -23,12 +23,12 @@ export default function WatchlistItems() {
   const { type, status, updateFilters } = useWatchlistFilters();
   const [hasMounted, setHasMounted] = useState(false);
 
-  if (!user) return null;
-
   useEffect(() => {
     setHasMounted(true);
     fetchItems();
   }, []);
+
+  if (!user) return null;
 
   const fetchItems = async () => {
     try {
@@ -41,7 +41,7 @@ export default function WatchlistItems() {
       }
       
       setItems(Array.isArray(data) ? data : []);
-    } catch (error) {
+    } catch (_error) {
       setItems([]);
     } finally {
       setLoading(false);
@@ -64,7 +64,7 @@ export default function WatchlistItems() {
     .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
   // Dummy handler for onAddItem, as WatchlistForm expects it even in edit mode
-  const handleDummyAddItem = async (newItem: WatchlistFormData) => {
+  const handleDummyAddItem = async (_newItem: WatchlistFormData) => {
     // This should never be called in edit mode
   };
 

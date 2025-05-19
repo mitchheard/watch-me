@@ -142,7 +142,7 @@ export default function WatchlistForm({
       console.error('Error fetching TMDB details:', error);
       setTmdbSearchError('Failed to fetch title details. Please try again.');
     }
-  }, [reset, watch]);
+  }, [reset]);
 
   useEffect(() => {
     if (itemToEdit) {

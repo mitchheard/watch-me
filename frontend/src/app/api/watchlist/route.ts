@@ -144,7 +144,7 @@ export async function DELETE(request: Request) {
       return NextResponse.json({ error: 'Missing id' }, { status: 400 });
     }
     await prisma.watchItem.delete({
-      where: { id, userId }
+      where: { id }
     });
     return NextResponse.json({ success: true });
   } catch (error) {

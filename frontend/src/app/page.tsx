@@ -103,7 +103,7 @@ export default function Page() {
 
       <main className="flex-1">
         {isAddItemModalOpen && (
-          <Modal onClose={() => setIsAddItemModalOpen(false)} title="Add New Item">
+          <Modal onClose={() => setIsAddItemModalOpen(false)} title="Add Item">
             <WatchlistForm onAddItem={handleAddItemSuccess} />
           </Modal>
         )}

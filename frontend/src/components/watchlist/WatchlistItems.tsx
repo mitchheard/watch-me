@@ -8,6 +8,7 @@ import Modal from '@/components/Modal'; // Import Modal for WatchlistForm
 import useWatchlistFilters from '@/hooks/useWatchlistFilters';
 import { PencilSquareIcon, TrashIcon, FilmIcon, TvIcon } from '@heroicons/react/24/outline';
 import { motion } from 'framer-motion';
+import Image from 'next/image';
 
 type FilterType = 'all' | 'movie' | 'show';
 type FilterStatus = 'all' | 'want-to-watch' | 'watching' | 'finished';
@@ -46,7 +47,7 @@ export default function WatchlistItems() {
     }
   };
 
-  const handleDelete = async (id: number) => {
+  const handleDelete = async (id: string) => {
     const res = await fetch(`/api/watchlist?id=${id}`, { method: 'DELETE' });
     if (res.ok) {
       fetchItems();
@@ -139,11 +140,13 @@ export default function WatchlistItems() {
                   <div className="mt-1 flex flex-col gap-1">
                     <div className="flex items-start gap-2">
                       {item.tmdbPosterPath && (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img 
-                          src={`https://image.tmdb.org/t/p/w92${item.tmdbPosterPath}`} 
+                        <Image
+                          src={`https://image.tmdb.org/t/p/w92${item.tmdbPosterPath}`}
                           alt={`${item.title} poster`}
-                          className="w-10 h-auto rounded mr-1 flex-shrink-0 shadow-sm"
+                          width={40}
+                          height={60}
+                          className="rounded mr-1 flex-shrink-0 shadow-sm"
+                          unoptimized
                         />
                       )}
                       <div className="flex-grow min-w-0">
@@ -209,7 +212,7 @@ export default function WatchlistItems() {
                 <button
                   onClick={() => {
                       if (confirm(`Delete "${item.title}"? This action cannot be undone.`)) {
-                      handleDelete(item.id);
+                      handleDelete(item.id.toString());
                     }
                   }}
                     className="p-2 text-slate-500 hover:text-red-600 hover:bg-slate-100 rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-1 focus-visible:ring-offset-white"
@@ -240,11 +243,11 @@ export default function WatchlistItems() {
       {selectedItem && (
         <Modal 
           onClose={() => setSelectedItem(null)} 
-          title={`Edit: ${selectedItem.title}`}
+          title="Edit Item"
         >
           <WatchlistForm 
             itemToEdit={selectedItem} 
-            onAddItem={handleDummyAddItem} // Pass dummy for now
+            onAddItem={handleDummyAddItem}
             onUpdateItem={handleUpdateItemSuccess} 
             onCancelEdit={handleCancelEdit}
           />

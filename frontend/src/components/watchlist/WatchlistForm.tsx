@@ -162,6 +162,7 @@ export default function WatchlistForm({
       console.log('(Phase 4) Live TMDB Search API response:', data);
       setTmdbResults(data.results?.filter((r: TmdbSearchResult) => (r.media_type === 'movie' || r.media_type === 'tv') && (r.title || r.name)) || []);
       setShowTmdbResults(true);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       console.error('(Phase 4) TMDB Search Error:', err);
       setTmdbSearchError(err.message || 'Could not fetch TMDB results.');

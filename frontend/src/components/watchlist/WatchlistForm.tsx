@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { WatchItem } from '@/types/watchlist';
 // We'll hold off on FormInput, FormSelect, Image imports for now to keep it simpler
 
-console.log('WatchlistForm SCRIPT EXECUTING (Phase 2 Restore - useEffect)');
+console.log('WatchlistForm SCRIPT EXECUTING (Phase 3 Restore - TMDB Search Effect Stub)');
 
 // Define types for TMDB search results (can be expanded)
 interface TmdbSearchResult {
@@ -50,7 +50,7 @@ export default function WatchlistForm({ onAddItem, itemToEdit, onUpdateItem, onC
   onUpdateItem?: (item: WatchItem) => void;
   onCancelEdit?: () => void;
 }) {
-  console.log('WatchlistForm FUNCTION BODY ENTERED (Phase 2 Restore - useEffect)');
+  console.log('WatchlistForm FUNCTION BODY ENTERED (Phase 3 Restore - TMDB Search Effect Stub)');
 
   const initialFormState: WatchlistFormState = {
     title: '',
@@ -78,7 +78,7 @@ export default function WatchlistForm({ onAddItem, itemToEdit, onUpdateItem, onC
 
   // Reintroduce the main useEffect for itemToEdit
   useEffect(() => {
-    console.log('WatchlistForm (Phase 2) - itemToEdit useEffect triggered. itemToEdit:', itemToEdit);
+    console.log('WatchlistForm (Phase 3) - itemToEdit useEffect triggered. itemToEdit:', itemToEdit);
     // Original logic from this useEffect
     if (!itemToEdit && titleInputRef.current) {
       // titleInputRef.current.focus(); // Still keep focus commented out
@@ -103,7 +103,7 @@ export default function WatchlistForm({ onAddItem, itemToEdit, onUpdateItem, onC
       if (itemToEdit.tmdbOverview !== undefined) existingTmdbDetails.tmdbOverview = itemToEdit.tmdbOverview;
 
       setSelectedTmdbItemDetails(Object.keys(existingTmdbDetails).length > 0 ? existingTmdbDetails : null);
-      console.log('(Phase 2) itemToEdit effect - existingTmdbDetails:', existingTmdbDetails);
+      console.log('(Phase 3) itemToEdit effect - existingTmdbDetails:', existingTmdbDetails);
       setTmdbSearchQuery(itemToEdit.title || '');
     } else {
       setSelectedTmdbItemDetails(null); // Clear for new items
@@ -113,27 +113,78 @@ export default function WatchlistForm({ onAddItem, itemToEdit, onUpdateItem, onC
     setError(null);
     setTmdbResults([]);
     setShowTmdbResults(false);
-    console.log('(Phase 2) itemToEdit effect - finished setting states');
+    console.log('(Phase 3) itemToEdit effect - finished setting states');
   }, [itemToEdit]);
 
-  console.log('WatchlistForm (Phase 2) - Render state. Form:', form, 'TMDB Query:', tmdbSearchQuery, 'Selected TMDB:', selectedTmdbItemDetails);
+  // Reintroduce TMDB search useEffect (stubbed)
+  useEffect(() => {
+    const queryToSearch = tmdbSearchQuery; // Using the direct state, not debounced yet
+    console.log('WatchlistForm (Phase 3) - TMDB Search useEffect triggered. Query:', queryToSearch, 'SelectedDetails:', !!selectedTmdbItemDetails, 'IsEditing:', !!itemToEdit);
+
+    if (queryToSearch && queryToSearch.length > 1 && !selectedTmdbItemDetails && !itemToEdit) {
+      console.log('(Phase 3) TMDB Search useEffect: Conditions MET. Would call handleTmdbSearch with:', queryToSearch);
+      handleTmdbSearch(queryToSearch); // Call the stubbed handler
+    } else {
+      console.log('(Phase 3) TMDB Search useEffect: Conditions NOT MET or form is for editing/has selection.');
+      // setTmdbResults([]); // Don't clear results here yet, could be due to edit mode
+      // setShowTmdbResults(false);
+    }
+  }, [tmdbSearchQuery, selectedTmdbItemDetails, itemToEdit]);
+
+  // Reintroduce handleTmdbSearch function (stubbed - no actual API call)
+  const handleTmdbSearch = async (query: string) => {
+    console.log('(Phase 3) handleTmdbSearch STUB called with query:', query);
+    if (!query) {
+      // setTmdbResults([]);
+      // setShowTmdbResults(false);
+      console.log('(Phase 3) handleTmdbSearch STUB: Query is empty, would clear results.');
+      return;
+    }
+    // setTmdbLoading(true);
+    // setError(null);
+    console.log('(Phase 3) handleTmdbSearch STUB: Would set loading to true.');
+    // try {
+      // const response = await fetch(`/api/tmdb/search?query=${encodeURIComponent(query)}`); 
+      // ... (original fetch and result handling logic commented out) ...
+      // console.log('Original Raw TMDB Search API response:', data);
+      // setTmdbResults(data.results?.filter(...) || []);
+      // setShowTmdbResults(true);
+    // } catch (err: any) { /* ... */ }
+    // setTmdbLoading(false);
+    console.log('(Phase 3) handleTmdbSearch STUB: Would set loading to false after (mock) API call.');
+  };
+
+  console.log('WatchlistForm (Phase 3) - Render state. Form:', form, 'TMDB Query:', tmdbSearchQuery, 'Selected TMDB:', selectedTmdbItemDetails);
 
   return (
     <div>
-      <h1 style={{ color: 'purple', fontSize: '20px', padding: '15px', border: '2px solid purple', textAlign: 'center' }}>
-        WATCHLIST FORM - PHASE 2 RESTORE (useEffect)
+      <h1 style={{ color: '#008080', fontSize: '20px', padding: '15px', border: '2px solid #008080', textAlign: 'center' }}>
+        WATCHLIST FORM - PHASE 3 (TMDB Search Effect Stub)
       </h1>
       <p style={{ textAlign: 'center', margin: '10px' }}>
-        Check console for SCRIPT, FUNCTION BODY, useEffect, and render state logs.
+        Test by changing TMDB Search Query below or by editing an item (which sets query via title).
       </p>
       <div style={{ padding: '10px', margin: '10px auto', border: '1px dashed #ccc', maxWidth: '400px' }}>
         <p>Form Title (state): {form.title || '(empty)'}</p>
-        <p>Form Type (state): {form.type}</p>
         <p>TMDB Query (state): {tmdbSearchQuery || '(empty)'}</p>
         <p>Selected TMDB ID (state): {selectedTmdbItemDetails?.tmdbId || '(none)'}</p>
-        <p>Selected TMDB Overview (state): {selectedTmdbItemDetails?.tmdbOverview || '(none)'}</p>
+        <p style={{fontWeight: 'bold'}}>Simulate Typing Title for Search:</p>
+        <input 
+          type="text" 
+          value={tmdbSearchQuery} 
+          onChange={(e) => {
+            console.log('(Phase 3) Manual TMDB Query Input Changed:', e.target.value);
+            setTmdbSearchQuery(e.target.value);
+            // When typing a title manually for a new item, we should clear any selected TMDB item
+            // This mimics the original behavior where typing in title input would reset selection.
+            if (!itemToEdit) { // Only do this if we are NOT in edit mode
+                setSelectedTmdbItemDetails(null); 
+            }
+          }} 
+          placeholder="Type here to set tmdbSearchQuery"
+          style={{width: '90%', padding: '5px', margin: '5px'}}
+        />
       </div>
-      {/* No button needed for this phase, we test by how itemToEdit (prop) affects state via useEffect */}
     </div>
   );
 }

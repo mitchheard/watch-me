@@ -139,6 +139,7 @@ export default function WatchlistItems() {
                   <div className="mt-1 flex flex-col gap-1">
                     <div className="flex items-start gap-2">
                       {item.tmdbPosterPath && (
+                        // eslint-disable-next-line @next/next/no-img-element
                         <img 
                           src={`https://image.tmdb.org/t/p/w92${item.tmdbPosterPath}`} 
                           alt={`${item.title} poster`}

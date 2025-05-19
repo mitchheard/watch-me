@@ -34,17 +34,14 @@ export default function WatchlistItems() {
     try {
       const res = await fetch('/api/watchlist');
       const data = await res.json();
-      console.log('Fetched watchlist data:', data);
       
       if (!res.ok) {
-        console.error('Failed to fetch items:', data.error);
         setItems([]);
         return;
       }
       
       setItems(Array.isArray(data) ? data : []);
     } catch (error) {
-      console.error('Error fetching items:', error);
       setItems([]);
     } finally {
       setLoading(false);
@@ -55,8 +52,6 @@ export default function WatchlistItems() {
     const res = await fetch(`/api/watchlist?id=${id}`, { method: 'DELETE' });
     if (res.ok) {
       fetchItems();
-    } else {
-      console.error('Failed to delete item');
     }
   };
 

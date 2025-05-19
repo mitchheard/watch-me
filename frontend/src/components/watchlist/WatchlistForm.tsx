@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useForm } from 'react-hook-form';
-import { WatchlistFormData, TMDBSearchResult, TMDBItemDetails, MediaType, WatchStatus, WatchItem } from '@/types/watchlist';
+import { WatchlistFormData, TMDBSearchResult, TMDBItemDetails, WatchItem } from '@/types/watchlist';
 import Image from 'next/image';
 import { useDebounceValue } from 'usehooks-ts';
 
@@ -95,8 +95,6 @@ export default function WatchlistForm({
     } : initialFormState
   });
 
-  const watchedTitle = watch('title');
-  const watchedType = watch('type');
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -105,21 +103,15 @@ export default function WatchlistForm({
   const [tmdbResults, setTmdbResults] = useState<TMDBSearchResult[]>([]);
   const [tmdbLoading, setTmdbLoading] = useState(false);
   const [showTmdbResults, setShowTmdbResults] = useState(false);
-  const [selectedTmdbItemDetails, setSelectedTmdbItemDetails] = useState<TMDBItemDetails | null>(null);
-  const [fetchingTmdbDetails, setFetchingTmdbDetails] = useState(false);
   const searchResultsRef = useRef<HTMLUListElement>(null);
   const [tmdbSearchError, setTmdbSearchError] = useState<string | null>(null);
-  const [tmdbDetailError, setTmdbDetailError] = useState<string | null>(null);
   const [isTotalSeasonsFromTmdb, setIsTotalSeasonsFromTmdb] = useState(false);
 
   const handleTmdbItemSelect = useCallback(async (item: TMDBSearchResult): Promise<void> => {
     setShowTmdbResults(false);
-    setFetchingTmdbDetails(true);
     try {
       const response = await fetch(`/api/tmdb/details?id=${item.id}&type=${item.media_type}`);
       const details: TMDBItemDetails = await response.json();
-      console.log('TMDB details:', details);
-      setSelectedTmdbItemDetails(details);
       // Gather all new values for reset
       const totalSeasonsFromTmdb = details.tmdbTvNumberOfSeasons || null;
       setIsTotalSeasonsFromTmdb(!!totalSeasonsFromTmdb);
@@ -145,13 +137,10 @@ export default function WatchlistForm({
         tmdbTvNumberOfSeasons: details.tmdbTvNumberOfSeasons || null,
         tmdbTvStatus: details.tmdbTvStatus || null,
       };
-      console.log('Resetting form with values:', newValues);
       reset(newValues);
     } catch (error) {
       console.error('Error fetching TMDB details:', error);
-      setTmdbDetailError('Failed to fetch title details. Please try again.');
-    } finally {
-      setFetchingTmdbDetails(false);
+      setTmdbSearchError('Failed to fetch title details. Please try again.');
     }
   }, [reset, watch]);
 
@@ -182,7 +171,6 @@ export default function WatchlistForm({
       setIsTotalSeasonsFromTmdb(!!itemToEdit.tmdbTvNumberOfSeasons);
     } else {
       reset(initialFormState);
-      setSelectedTmdbItemDetails(null);
       setIsTotalSeasonsFromTmdb(false);
     }
     setTmdbSearchQuery('');
@@ -191,7 +179,6 @@ export default function WatchlistForm({
     setTmdbResults([]);
     setShowTmdbResults(false);
     setTmdbSearchError(null);
-    setTmdbDetailError(null);
   }, [itemToEdit, reset]);
 
   useEffect(() => {
@@ -240,7 +227,6 @@ export default function WatchlistForm({
     setTmdbSearchQuery(newValue);
 
     if (!newValue) {
-      setSelectedTmdbItemDetails(null);
       setValue('tmdbId', null);
       setValue('tmdbPosterPath', null);
       setValue('tmdbOverview', null);
@@ -283,7 +269,6 @@ export default function WatchlistForm({
         await onAddItem(data);
         setSuccessMessage('Item added successfully!');
         reset();
-        setSelectedTmdbItemDetails(null);
         setTmdbSearchQuery('');
       }
     } catch (err) {
@@ -292,8 +277,6 @@ export default function WatchlistForm({
     }
   };
   
-  console.log('(Phase 6) Render. Watched Title (RHF):', watchedTitle, 'Watched Type:', watchedType, 'isSubmitting:', isSubmitting);
-
   return (
     <div>
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">

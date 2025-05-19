@@ -34,6 +34,11 @@ async function getUserId() {
     console.error('Error getting user or no user:', error); // Added more detailed logging
     throw new Error('Not authenticated');
   }
+  // Auto-create user in User table if not found
+  const existingUser = await prisma.user.findUnique({ where: { id: user.id } });
+  if (!existingUser) {
+    await prisma.user.create({ data: { id: user.id, email: user.email } });
+  }
   return user.id;
 }
 
@@ -65,8 +70,6 @@ export async function POST(request: Request) {
         status: data.status,
         currentSeason: data.currentSeason ? Number(data.currentSeason) : null,
         totalSeasons: data.totalSeasons ? Number(data.totalSeasons) : null,
-        notes: data.notes || null,
-        rating: data.rating ? Number(data.rating) : null,
         tmdbId: data.tmdbId || null,
         tmdbPosterPath: data.tmdbPosterPath || null,
         tmdbOverview: data.tmdbOverview || null,
@@ -105,8 +108,6 @@ export async function PUT(request: Request) {
         ...updateData,
         currentSeason: updateData.currentSeason ? Number(updateData.currentSeason) : null,
         totalSeasons: updateData.totalSeasons ? Number(updateData.totalSeasons) : null,
-        notes: updateData.notes || null,
-        rating: updateData.rating ? Number(updateData.rating) : null,
         tmdbId: updateData.tmdbId || null,
         tmdbPosterPath: updateData.tmdbPosterPath || null,
         tmdbOverview: updateData.tmdbOverview || null,

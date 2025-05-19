@@ -56,6 +56,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     };
   }, []);
 
+  useEffect(() => {
+    if (user) {
+      fetch('/api/user/sync', { method: 'POST' });
+    }
+  }, [user]);
+
   const loginWithGoogle = async () => {
     const redirectToUrl = `${window.location.origin}/auth/callback`;
     console.log('[AuthContext] loginWithGoogle: Initiating Google OAuth. Redirecting to:', redirectToUrl);

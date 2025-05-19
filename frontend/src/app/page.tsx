@@ -60,7 +60,12 @@ export default function Page() {
   const [refreshKey, setRefreshKey] = useState(0);
   const [isAddItemModalOpen, setIsAddItemModalOpen] = useState(false);
 
-  const handleAddItemSuccess = async (_item: WatchlistFormData) => {
+  const handleAddItem = async (item: WatchlistFormData) => {
+    await fetch('/api/watchlist', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(item),
+    });
     setRefreshKey(prevKey => prevKey + 1);
     setIsAddItemModalOpen(false);
   };
@@ -105,7 +110,7 @@ export default function Page() {
       <main className="flex-1">
         {isAddItemModalOpen && (
           <Modal onClose={() => setIsAddItemModalOpen(false)} title="Add Item">
-            <WatchlistForm onAddItem={handleAddItemSuccess} />
+            <WatchlistForm onAddItem={handleAddItem} />
           </Modal>
         )}
       </main>

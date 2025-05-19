@@ -1,5 +1,5 @@
 export type MediaType = 'movie' | 'show';
-export type WatchStatus = 'watching' | 'completed' | 'plan_to_watch' | 'dropped';
+export type WatchStatus = 'want-to-watch' | 'watching' | 'finished';
 
 export type WatchItem = {
   id: number;
@@ -11,8 +11,6 @@ export type WatchItem = {
   createdAt: Date;
   updatedAt: Date;
   userId: string;
-  notes: string | null;
-  rating: number | null;
   tmdbId: number | null;
   tmdbImdbId: string | null;
   tmdbMovieCertification: string | null;
@@ -60,12 +58,27 @@ export interface TMDBItemDetails {
   id: number;
   title?: string;
   name?: string;
-  media_type: 'movie' | 'tv';
-  poster_path: string | null;
+  media_type?: 'movie' | 'tv';
+  poster_path?: string | null;
   release_date?: string;
   first_air_date?: string;
   number_of_episodes?: number;
   number_of_seasons?: number;
+  tmdbId?: number;
+  tmdbPosterPath?: string | null;
+  tmdbOverview?: string | null;
+  tmdbTagline?: string | null;
+  tmdbImdbId?: string | null;
+  tmdbMovieRuntime?: number | null;
+  tmdbMovieReleaseYear?: number | null;
+  tmdbMovieCertification?: string | null;
+  tmdbTvFirstAirYear?: number | null;
+  tmdbTvLastAirYear?: number | null;
+  tmdbTvNetworks?: string | null;
+  tmdbTvNumberOfEpisodes?: number | null;
+  tmdbTvNumberOfSeasons?: number | null;
+  tmdbTvStatus?: string | null;
+  tmdbTvCertification?: string | null;
 }
 
 export interface WatchlistFormData {
@@ -74,8 +87,6 @@ export interface WatchlistFormData {
   status: string;
   currentSeason?: number | null;
   totalSeasons?: number | null;
-  notes?: string | null;
-  rating?: number | null;
   tmdbId?: number | null;
   tmdbImdbId?: string | null;
   tmdbMovieCertification?: string | null;

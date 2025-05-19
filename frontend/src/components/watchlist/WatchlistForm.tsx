@@ -13,11 +13,9 @@ type WatchlistFormInputs = WatchlistFormData;
 const initialFormState: WatchlistFormInputs = {
   title: '',
   type: 'movie',
-  status: 'plan_to_watch',
+  status: 'want-to-watch',
   currentSeason: null,
   totalSeasons: null,
-  notes: null,
-  rating: null,
   tmdbId: null,
   tmdbPosterPath: null,
   tmdbOverview: null,
@@ -64,8 +62,6 @@ export default function WatchlistForm({
       status: itemToEdit.status,
       currentSeason: itemToEdit.currentSeason,
       totalSeasons: itemToEdit.totalSeasons,
-      notes: itemToEdit.notes,
-      rating: itemToEdit.rating,
       tmdbId: itemToEdit.tmdbId,
       tmdbPosterPath: itemToEdit.tmdbPosterPath,
       tmdbOverview: itemToEdit.tmdbOverview,
@@ -103,19 +99,28 @@ export default function WatchlistForm({
     setShowTmdbResults(false);
     setFetchingTmdbDetails(true);
     try {
-      const response = await fetch(`/api/tmdb/details?id=${item.id}&mediaType=${item.media_type}`);
+      const response = await fetch(`/api/tmdb/details?id=${item.id}&type=${item.media_type}`);
       const details: TMDBItemDetails = await response.json();
       setSelectedTmdbItemDetails(details);
       
-      // Update form values
-      setValue('title', details.title || details.name || '');
+      // Update form values with correct field names from API response
+      setValue('title', item.title || item.name || '');
       setValue('type', details.media_type === 'tv' ? 'show' : 'movie');
-      setValue('tmdbId', details.id);
-      setValue('tmdbPosterPath', details.poster_path || null);
-      
-      if (details.media_type === 'tv' && details.number_of_episodes) {
-        setValue('tmdbTvNumberOfEpisodes', details.number_of_episodes);
-      }
+      setValue('tmdbId', details.tmdbId || details.id);
+      setValue('tmdbPosterPath', details.tmdbPosterPath || details.poster_path || null);
+      setValue('tmdbOverview', details.tmdbOverview || null);
+      setValue('tmdbTagline', details.tmdbTagline || null);
+      setValue('tmdbImdbId', details.tmdbImdbId || null);
+      setValue('tmdbMovieCertification', details.tmdbMovieCertification || null);
+      setValue('tmdbMovieReleaseYear', details.tmdbMovieReleaseYear || null);
+      setValue('tmdbMovieRuntime', details.tmdbMovieRuntime || null);
+      setValue('tmdbTvCertification', details.tmdbTvCertification || null);
+      setValue('tmdbTvFirstAirYear', details.tmdbTvFirstAirYear || null);
+      setValue('tmdbTvLastAirYear', details.tmdbTvLastAirYear || null);
+      setValue('tmdbTvNetworks', details.tmdbTvNetworks || null);
+      setValue('tmdbTvNumberOfEpisodes', details.tmdbTvNumberOfEpisodes || null);
+      setValue('tmdbTvNumberOfSeasons', details.tmdbTvNumberOfSeasons || null);
+      setValue('tmdbTvStatus', details.tmdbTvStatus || null);
     } catch (error) {
       console.error('Error fetching TMDB details:', error);
       setTmdbDetailError('Failed to fetch title details. Please try again.');
@@ -132,8 +137,6 @@ export default function WatchlistForm({
         status: itemToEdit.status,
         currentSeason: itemToEdit.currentSeason,
         totalSeasons: itemToEdit.totalSeasons,
-        notes: itemToEdit.notes,
-        rating: itemToEdit.rating,
         tmdbId: itemToEdit.tmdbId,
         tmdbPosterPath: itemToEdit.tmdbPosterPath,
         tmdbOverview: itemToEdit.tmdbOverview,
@@ -150,15 +153,6 @@ export default function WatchlistForm({
         tmdbTvNumberOfSeasons: itemToEdit.tmdbTvNumberOfSeasons,
         tmdbTvStatus: itemToEdit.tmdbTvStatus
       });
-
-      // If item has TMDB data, fetch fresh details
-      if (itemToEdit.tmdbId) {
-        handleTmdbItemSelect({
-          id: itemToEdit.tmdbId,
-          media_type: itemToEdit.type === 'movie' ? 'movie' : 'tv',
-          poster_path: itemToEdit.tmdbPosterPath || null
-        } as TMDBSearchResult);
-      }
     } else {
       reset(initialFormState);
       setSelectedTmdbItemDetails(null);
@@ -170,7 +164,7 @@ export default function WatchlistForm({
     setShowTmdbResults(false);
     setTmdbSearchError(null);
     setTmdbDetailError(null);
-  }, [itemToEdit, reset, handleTmdbItemSelect]);
+  }, [itemToEdit, reset]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -199,7 +193,7 @@ export default function WatchlistForm({
       try {
         const response = await fetch(`/api/tmdb/search?query=${encodeURIComponent(debouncedSearchQuery)}`);
         const data = await response.json();
-        setTmdbResults(data);
+        setTmdbResults(data.results || []);
         setShowTmdbResults(true);
       } catch (error) {
         console.error('Error searching TMDB:', error);
@@ -243,8 +237,14 @@ export default function WatchlistForm({
 
     try {
       if (itemToEdit) {
-        await onUpdateItem?.(itemToEdit.id, data);
+        // Make PUT request to update the item
+        await fetch('/api/watchlist', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ...data, id: itemToEdit.id }),
+        });
         setSuccessMessage('Item updated successfully!');
+        onUpdateItem?.(itemToEdit.id, data);
       } else {
         await onAddItem(data);
         setSuccessMessage('Item added successfully!');
@@ -293,15 +293,17 @@ export default function WatchlistForm({
                   onClick={() => handleTmdbItemSelect(result)}
                 >
                   <div className="flex items-center">
-                    {result.poster_path && (
-                      <Image
+                    {result.poster_path ? (
+                      <Image 
                         src={`https://image.tmdb.org/t/p/w92${result.poster_path}`}
-                        alt=""
+                        alt={result.title || result.name || ''}
                         width={45}
                         height={68}
                         className="mr-3 rounded"
                         unoptimized
                       />
+                    ) : (
+                      <div className="w-[45px] h-[68px] mr-3 bg-slate-200 rounded flex items-center justify-center text-slate-400 text-xs">No Image</div>
                     )}
                     <div>
                       <div className="font-medium">{result.title || result.name}</div>
@@ -351,10 +353,9 @@ export default function WatchlistForm({
             {...register('status')}
             className="block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 sm:text-sm"
           >
-            <option value="plan_to_watch">Plan to Watch</option>
-            <option value="watching">Currently Watching</option>
-            <option value="completed">Completed</option>
-            <option value="dropped">Dropped</option>
+            <option value="want-to-watch">Want to Watch</option>
+            <option value="watching">Watching</option>
+            <option value="finished">Finished</option>
           </select>
         </div>
 
@@ -387,43 +388,6 @@ export default function WatchlistForm({
             </div>
           </>
         )}
-
-        {/* Rating */}
-        <div>
-          <label htmlFor="rating" className="block text-sm font-medium text-gray-700 mb-1">
-            Rating (1-5)
-          </label>
-          <input
-            type="number"
-            id="rating"
-            {...register('rating', {
-              valueAsNumber: true,
-              min: { value: 1, message: 'Rating must be at least 1' },
-              max: { value: 5, message: 'Rating must be at most 5' }
-            })}
-            className="block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 sm:text-sm"
-            placeholder="e.g., 4"
-            min="1"
-            max="5"
-          />
-          {errors.rating && (
-            <p className="mt-1 text-sm text-red-600">{errors.rating.message}</p>
-          )}
-        </div>
-
-        {/* Notes */}
-        <div>
-          <label htmlFor="notes" className="block text-sm font-medium text-gray-700 mb-1">
-            Notes
-          </label>
-          <textarea
-            id="notes"
-            {...register('notes')}
-            className="block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 sm:text-sm"
-            rows={3}
-            placeholder="Add any notes about this title..."
-          />
-        </div>
 
         {/* Error and Success Messages */}
         {error && (

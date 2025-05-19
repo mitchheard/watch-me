@@ -66,7 +66,7 @@ export default function WatchlistItems() {
 
   // Dummy handler for onAddItem, as WatchlistForm expects it even in edit mode
   const handleDummyAddItem = async (newItem: WatchlistFormData) => {
-    console.log('handleDummyAddItem called from edit mode, should not happen in a real update flow', newItem);
+    // This should never be called in edit mode
   };
 
   const handleUpdateItemSuccess = async () => {

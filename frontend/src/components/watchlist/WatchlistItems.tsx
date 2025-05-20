@@ -22,6 +22,7 @@ export default function WatchlistItems() {
   // No need for isEditModalOpen, selectedItem existing will trigger the modal with WatchlistForm
   const { type, status, updateFilters } = useWatchlistFilters();
   const [hasMounted, setHasMounted] = useState(false);
+  const [expandedId, setExpandedId] = useState<number | null>(null);
 
   useEffect(() => {
     setHasMounted(true);
@@ -124,14 +125,13 @@ export default function WatchlistItems() {
           {visibleItems.map((item) => (
             <motion.li
               key={item.id}
-              layout
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
               transition={{ duration: 0.2 }}
-              className="bg-white border border-slate-200/80 shadow-sm rounded-lg p-4 transition-shadow hover:shadow-md"
+              className="bg-white border border-slate-200/80 shadow-sm rounded-lg p-4 transition-shadow hover:shadow-md relative min-h-[80px]"
             >
-              <div className="flex justify-between items-center gap-3">
+              <div className="flex justify-between items-start gap-3">
                 <div className="flex-grow min-w-0">
                   <h3 className="text-md font-semibold text-slate-800 truncate">
                     {item.title}
@@ -206,10 +206,49 @@ export default function WatchlistItems() {
                     <p className="text-xs text-slate-400 mt-2">
                       Added: {new Date(item.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
                     </p>
+                    {/* Show more/less toggle */}
+                    <button
+                      className="text-xs text-blue-500 mt-1 flex items-center gap-1 hover:underline focus:outline-none"
+                      onClick={() => setExpandedId(expandedId === item.id ? null : item.id)}
+                      aria-expanded={expandedId === item.id}
+                      aria-controls={`details-${item.id}`}
+                    >
+                      {expandedId === item.id ? (
+                        <>
+                          <span>Show less</span>
+                          {/* Up chevron */}
+                          <svg className="w-3 h-3 inline ml-0.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 15l7-7 7 7" /></svg>
+                        </>
+                      ) : (
+                        <>
+                          <span>Show more</span>
+                          {/* Down chevron */}
+                          <svg className="w-3 h-3 inline ml-0.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
+                        </>
+                      )}
+                    </button>
+                    {/* Collapsible details section */}
+                    {expandedId === item.id && (
+                      <div id={`details-${item.id}`} className="mt-2 border-t border-slate-100 pt-2 text-xs text-slate-600 bg-slate-50 rounded">
+                        {(item.type === 'movie' && item.tmdbMovieCertification) && (
+                          <div className="mb-1"><span className="font-semibold">Rating:</span> {item.tmdbMovieCertification}</div>
+                        )}
+                        {(item.type === 'show' && item.tmdbTvCertification) && (
+                          <div className="mb-1"><span className="font-semibold">Rating:</span> {item.tmdbTvCertification}</div>
+                        )}
+                        {item.tmdbTagline && (
+                          <div className="mb-1 italic text-slate-500">"{item.tmdbTagline}"</div>
+                        )}
+                        {item.tmdbOverview && (
+                          <div className="mb-1">{item.tmdbOverview}</div>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </div>
 
-                <div className="flex items-center gap-1 flex-shrink-0">
+                {/* Absolutely positioned edit/delete buttons */}
+                <div className="absolute top-2 right-2 flex items-center gap-1 z-10">
                   <button
                     onClick={() => setSelectedItem(item)}
                     className="p-2 text-slate-500 hover:text-blue-600 hover:bg-slate-100 rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-1 focus-visible:ring-offset-white"

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { createServerClient } from '@supabase/ssr';
+import { createServerClient, type CookieOptions } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import { WatchlistFormData } from '@/types/watchlist';
 
@@ -16,12 +16,11 @@ async function getUserId() {
           return cookieStore.get(name)?.value;
         },
         // Required for server-side auth to correctly set/update cookies
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        set(name: string, value: string, options: any) {
+        set(name: string, value: string, options: CookieOptions) {
           cookieStore.set({ name, value, ...options });
         },
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        remove(name: string, options: any) {
+        remove(name: string, options: CookieOptions) {
           cookieStore.delete({ name, ...options });
         },
       },

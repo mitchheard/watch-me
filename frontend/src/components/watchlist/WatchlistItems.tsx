@@ -237,7 +237,7 @@ export default function WatchlistItems() {
                           <div className="mb-1"><span className="font-semibold">Rating:</span> {item.tmdbTvCertification}</div>
                         )}
                         {item.tmdbTagline && (
-                          <div className="mb-1 italic text-slate-500">"{item.tmdbTagline}"</div>
+                          <div className="mb-1 italic text-slate-500">&quot;{item.tmdbTagline}&quot;</div>
                         )}
                         {item.tmdbOverview && (
                           <div className="mb-1">{item.tmdbOverview}</div>

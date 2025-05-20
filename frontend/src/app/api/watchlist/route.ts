@@ -19,7 +19,6 @@ async function getUserId() {
         set(name: string, value: string, options: CookieOptions) {
           cookieStore.set({ name, value, ...options });
         },
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         remove(name: string, options: CookieOptions) {
           cookieStore.delete({ name, ...options });
         },
@@ -95,9 +94,11 @@ export async function POST(request: Request) {
       'code' in error &&
       error.code === 'P2002' &&
       'meta' in error &&
-      error.meta &&
-      Array.isArray((error.meta as any).target) &&
-      (error.meta as any).target.includes('tmdbId')
+      typeof error.meta === 'object' &&
+      error.meta !== null &&
+      'target' in error.meta &&
+      Array.isArray((error.meta as { target?: unknown }).target) &&
+      ((error.meta as { target?: unknown }).target as unknown[]).includes('tmdbId')
     ) {
       return NextResponse.json(
         { error: 'This title is already in your watchlist.' },

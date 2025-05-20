@@ -38,6 +38,7 @@ interface WatchlistFormProps {
   onAddItem: (item: WatchlistFormData) => Promise<void>;
   onUpdateItem?: (id: number, item: WatchlistFormData) => Promise<void>;
   onCancelEdit?: () => void;
+  onAddSuccess?: () => void;
 }
 
 const tvKeywords = [
@@ -59,7 +60,8 @@ export default function WatchlistForm({
   itemToEdit,
   onAddItem,
   onUpdateItem,
-  onCancelEdit
+  onCancelEdit,
+  onAddSuccess
 }: WatchlistFormProps) {
   console.log('WatchlistForm FUNCTION BODY ENTERED (Phase 6 Restore - RHF Integration)');
 
@@ -279,9 +281,9 @@ export default function WatchlistForm({
           setError('An error occurred while saving the item');
           return;
         }
-        setSuccessMessage('Item added successfully!');
         reset();
         setTmdbSearchQuery('');
+        if (typeof onAddSuccess === 'function') onAddSuccess();
       }
     } catch (err) {
       setError('An error occurred while saving the item');

@@ -266,14 +266,25 @@ export default function WatchlistForm({
         setSuccessMessage('Item updated successfully!');
         onUpdateItem?.(itemToEdit.id, data);
       } else {
-        await onAddItem(data);
+        const res = await fetch('/api/watchlist', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data),
+        });
+        if (res.status === 409) {
+          const body = await res.json();
+          setError(body.error || 'This title is already in your watchlist.');
+          return;
+        } else if (!res.ok) {
+          setError('An error occurred while saving the item');
+          return;
+        }
         setSuccessMessage('Item added successfully!');
         reset();
         setTmdbSearchQuery('');
       }
     } catch (err) {
-      console.error('Form submission error:', err);
-      setError(err instanceof Error ? err.message : 'An error occurred while saving the item');
+      setError('An error occurred while saving the item');
     }
   };
   

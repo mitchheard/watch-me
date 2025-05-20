@@ -90,6 +90,21 @@ export async function POST(request: Request) {
     });
     return NextResponse.json(item);
   } catch (error) {
+    if (
+      typeof error === 'object' &&
+      error !== null &&
+      'code' in error &&
+      error.code === 'P2002' &&
+      'meta' in error &&
+      error.meta &&
+      Array.isArray((error.meta as any).target) &&
+      (error.meta as any).target.includes('tmdbId')
+    ) {
+      return NextResponse.json(
+        { error: 'This title is already in your watchlist.' },
+        { status: 409 }
+      );
+    }
     console.error('Failed to create watchlist item:', error);
     return NextResponse.json({ error: 'Failed to create watchlist item' }, { status: 500 });
   }

@@ -11,6 +11,8 @@ import { motion } from 'framer-motion';
 import Image from 'next/image';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'react-hot-toast';
+import { Menu } from '@headlessui/react';
+import { EllipsisVerticalIcon } from '@heroicons/react/24/outline';
 
 type FilterType = 'all' | 'movie' | 'show';
 type FilterStatus = 'all' | 'want-to-watch' | 'watching' | 'finished';
@@ -135,7 +137,18 @@ export default function WatchlistItems() {
             >
               <div className="flex justify-between items-start gap-3">
                 <div className="flex-grow min-w-0">
-                  <h3 className="text-md font-semibold text-slate-800 truncate">
+                  <h3
+                    className={`text-md font-semibold text-slate-800 cursor-pointer ${
+                      expandedId === item.id ? '' : 'hover:underline focus:no-underline'
+                    } ${
+                      expandedId === item.id ? '' : 'truncate max-w-[85%]'
+                    }`}
+                    title={item.title}
+                    onClick={() => setExpandedId(expandedId === item.id ? null : item.id)}
+                    tabIndex={0}
+                    role="button"
+                    aria-expanded={expandedId === item.id}
+                  >
                     {item.title}
                   </h3>
                   <div className="mt-1 flex flex-col gap-1">
@@ -249,27 +262,40 @@ export default function WatchlistItems() {
                   </div>
                 </div>
 
-                {/* Absolutely positioned edit/delete buttons */}
-                <div className="absolute top-2 right-2 flex items-center gap-1 z-10">
-                  <button
-                    onClick={() => setSelectedItem(item)}
-                    className="p-2 text-slate-500 hover:text-blue-600 hover:bg-slate-100 rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-1 focus-visible:ring-offset-white"
-                    aria-label="Edit item"
-                  >
-                    <PencilSquareIcon className="w-5 h-5" />
-                  </button>
-                  <button
-                    onClick={() => {
-                      if (confirm(`Delete "${item.title}"? This action cannot be undone.`)) {
-                        handleDelete(item.id);
-                      }
-                    }}
-                    className="p-2 text-slate-500 hover:text-red-600 hover:bg-slate-100 rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-1 focus-visible:ring-offset-white"
-                    aria-label="Delete item"
-                  >
-                    <TrashIcon className="w-5 h-5" />
-                  </button>
-                </div>
+                {/* Headless UI Menu for edit/delete */}
+                <Menu as="div" className="absolute top-2 right-2 z-10 text-left">
+                  <Menu.Button className="p-2 rounded-full text-slate-500 hover:bg-slate-100 hover:text-blue-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500">
+                    <EllipsisVerticalIcon className="w-6 h-6" aria-hidden="true" />
+                  </Menu.Button>
+                  <Menu.Items className="origin-top-right absolute right-0 mt-2 w-32 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-20">
+                    <div className="py-1">
+                      <Menu.Item>
+                        {({ active }) => (
+                          <button
+                            onClick={() => setSelectedItem(item)}
+                            className={`w-full text-left px-4 py-2 text-sm ${active ? 'bg-blue-50 text-blue-700' : 'text-slate-700'}`}
+                          >
+                            Edit
+                          </button>
+                        )}
+                      </Menu.Item>
+                      <Menu.Item>
+                        {({ active }) => (
+                          <button
+                            onClick={() => {
+                              if (confirm(`Delete \"${item.title}\"? This action cannot be undone.`)) {
+                                handleDelete(item.id);
+                              }
+                            }}
+                            className={`w-full text-left px-4 py-2 text-sm ${active ? 'bg-red-50 text-red-700' : 'text-slate-700'}`}
+                          >
+                            Delete
+                          </button>
+                        )}
+                      </Menu.Item>
+                    </div>
+                  </Menu.Items>
+                </Menu>
               </div>
             </motion.li>
           ))}

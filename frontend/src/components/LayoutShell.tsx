@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { usePathname } from 'next/navigation';
 import { Bars3Icon } from '@heroicons/react/24/outline';
-import { UserCircleIcon, ArrowRightOnRectangleIcon, Cog8ToothIcon } from '@heroicons/react/24/solid';
+import { UserCircleIcon, ArrowRightOnRectangleIcon, Cog8ToothIcon, FilmIcon } from '@heroicons/react/24/solid';
 
 const ADMIN_USER_ID = '464661fa-7ae1-406f-9975-dec0ccbc94aa';
 
@@ -60,11 +60,20 @@ export default function LayoutShell({ children }: { children: ReactNode }) {
                   {user ? (
                     <>
                       {user.email && (
-                         <div className="px-4 py-2 text-sm text-slate-700 border-b border-slate-200">
-                           <p className="font-medium">Signed in as</p>
-                           <p className="truncate">{user.email}</p>
-                         </div>
+                        <div className="px-4 py-2 text-sm text-slate-700">
+                          <p className="font-medium">Signed in as</p>
+                          <p className="truncate">{user.email}</p>
+                        </div>
                       )}
+                      <hr className="my-1 border-slate-200" />
+                      <Link
+                        href="/"
+                        onClick={() => setIsMenuOpen(false)}
+                        className="flex items-center gap-2 px-4 py-2 text-sm text-slate-700 hover:bg-slate-100 hover:text-slate-900 w-full text-left"
+                      >
+                        <FilmIcon className="h-5 w-5 text-slate-500" />
+                        Watchlist
+                      </Link>
                       {user.id === ADMIN_USER_ID && (
                         <Link
                           href="/admin"
@@ -75,6 +84,7 @@ export default function LayoutShell({ children }: { children: ReactNode }) {
                           Admin Panel
                         </Link>
                       )}
+                      <hr className="my-1 border-slate-200" />
                       <button
                         onClick={() => { logout(); setIsMenuOpen(false); }}
                         className="flex items-center gap-2 px-4 py-2 text-sm text-slate-700 hover:bg-slate-100 hover:text-slate-900 w-full text-left"

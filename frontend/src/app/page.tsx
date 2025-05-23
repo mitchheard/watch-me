@@ -6,7 +6,7 @@ import { useAuth } from '../contexts/AuthContext';
 import WatchlistForm from '@/components/watchlist/WatchlistForm';
 // import WatchlistItems from '@/components/watchlist/WatchlistItems';
 import Modal from '@/components/Modal';
-import { PlusIcon, FilmIcon, TvIcon, CheckCircleIcon } from '@heroicons/react/24/solid';
+import { FilmIcon, TvIcon, CheckCircleIcon } from '@heroicons/react/24/solid';
 import { WatchlistFormData } from '@/types/watchlist';
 import Image from 'next/image';
 

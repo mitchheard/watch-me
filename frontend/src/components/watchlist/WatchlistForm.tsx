@@ -36,7 +36,7 @@ const initialFormState: WatchlistFormInputs = {
 
 interface WatchlistFormProps {
   itemToEdit?: WatchItem;
-  onAddItem: (item: WatchlistFormData) => Promise<void>;
+  _onAddItem: (item: WatchlistFormData) => Promise<void>;
   onUpdateItem?: (id: number, item: WatchlistFormData) => Promise<void>;
   onCancelEdit?: () => void;
   onAddSuccess?: () => void;
@@ -59,7 +59,7 @@ const normalizeType = (type: string) => {
 
 export default function WatchlistForm({
   itemToEdit,
-  onAddItem,
+  _onAddItem,
   onUpdateItem,
   onCancelEdit,
   onAddSuccess
@@ -99,7 +99,6 @@ export default function WatchlistForm({
     } : initialFormState
   });
 
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const [tmdbSearchQuery, setTmdbSearchQuery] = useState('');
@@ -287,7 +286,7 @@ export default function WatchlistForm({
         setTmdbSearchQuery('');
         if (typeof onAddSuccess === 'function') onAddSuccess();
       }
-    } catch (err) {
+    } catch (_err) {
       setError('An error occurred while saving the item');
     }
   };

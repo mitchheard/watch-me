@@ -6,7 +6,7 @@ import { WatchItem, WatchlistFormData } from '@/types/watchlist';
 import WatchlistForm from './WatchlistForm'; // Import our test form
 import Modal from '@/components/Modal'; // Import Modal for WatchlistForm
 import useWatchlistFilters from '@/hooks/useWatchlistFilters';
-import { PencilSquareIcon, TrashIcon, FilmIcon, TvIcon } from '@heroicons/react/24/outline';
+import { FilmIcon, TvIcon } from '@heroicons/react/24/outline';
 import { motion } from 'framer-motion';
 import Image from 'next/image';
 import { useAuth } from '@/contexts/AuthContext';
@@ -14,7 +14,7 @@ import { toast } from 'react-hot-toast';
 import { Menu, Dialog } from '@headlessui/react';
 import { EllipsisVerticalIcon } from '@heroicons/react/24/outline';
 
-type FilterType = 'all' | 'movie' | 'show';
+// type FilterType = 'all' | 'movie' | 'show';
 type FilterStatus = 'all' | 'want-to-watch' | 'watching' | 'finished';
 
 export default function WatchlistItems() {
@@ -367,7 +367,7 @@ export default function WatchlistItems() {
                         {({ active }) => (
                           <button
                             onClick={() => {
-                              if (confirm(`Remove \"${item.title}\"? This action cannot be undone.`)) {
+                              if (confirm(`Remove &quot;${item.title}&quot;? This action cannot be undone.`)) {
                                 handleDelete(item.id);
                               }
                             }}
@@ -418,7 +418,7 @@ export default function WatchlistItems() {
           {modalStep === 'edit' && (
             <WatchlistForm 
               itemToEdit={selectedItem} 
-              onAddItem={handleDummyAddItem}
+              _onAddItem={handleDummyAddItem}
               onUpdateItem={async (id, data) => {
                 // After update, fetch the updated item to check status/rating
                 await fetch('/api/watchlist', {
@@ -480,7 +480,7 @@ export default function WatchlistItems() {
                       className="form-radio text-red-600 w-5 h-5"
                     />
                     <span className="ml-2 text-base flex items-center text-red-700 font-semibold">
-                      <span className="mr-1 text-lg">👎</span> Wasn't for me
+                      <span className="mr-1 text-lg">👎</span> Wasn&apos;t for me
                     </span>
                   </label>
                 </div>
@@ -539,7 +539,7 @@ export default function WatchlistItems() {
           title="Add Movie or TV Show"
         >
           <WatchlistForm
-            onAddItem={async () => {}}
+            _onAddItem={async () => {}}
             onAddSuccess={handleAddSuccess}
           />
         </Modal>
@@ -604,7 +604,7 @@ export default function WatchlistItems() {
                         className="form-radio text-red-600 w-5 h-5"
                       />
                       <span className="ml-2 text-base flex items-center text-red-700 font-semibold">
-                        <span className="mr-1 text-lg">👎</span> Wasn't for me
+                        <span className="mr-1 text-lg">👎</span> Wasn&apos;t for me
                       </span>
                     </label>
                   </div>

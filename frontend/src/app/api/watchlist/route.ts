@@ -43,21 +43,21 @@ async function getUserId() {
 // GET /api/watchlist or /api/watchlist?id=123
 export async function GET(request: Request) {
   try {
-    const userId = await getUserId();
+    const _userId = await getUserId();
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
 
     if (id) {
       // Return a single item by id
       const item = await prisma.watchItem.findUnique({
-        where: { id: Number(id), userId },
+        where: { id: Number(id), userId: _userId },
       });
       return NextResponse.json(item);
     }
 
     // Otherwise, return all items
     const items = await prisma.watchItem.findMany({
-      where: { userId },
+      where: { userId: _userId },
       orderBy: { updatedAt: 'desc' }
     });
     return NextResponse.json(items);
@@ -70,11 +70,11 @@ export async function GET(request: Request) {
 // POST /api/watchlist
 export async function POST(request: Request) {
   try {
-    const userId = await getUserId();
+    const _userId = await getUserId();
     const data: WatchlistFormData = await request.json();
     const item = await prisma.watchItem.create({
       data: {
-        userId,
+        userId: _userId,
         title: data.title,
         type: data.type,
         status: data.status,
@@ -125,12 +125,12 @@ export async function POST(request: Request) {
 // PUT /api/watchlist
 export async function PUT(request: Request) {
   try {
-    const userId = await getUserId();
+    const _userId = await getUserId();
     const data = await request.json();
     const { id, ...updateData } = data;
 
     // Only update fields that are present in the request
-    const updateFields: any = { updatedAt: new Date() };
+    const updateFields: Record<string, unknown> = { updatedAt: new Date() };
     for (const key in updateData) {
       if (Object.prototype.hasOwnProperty.call(updateData, key)) {
         updateFields[key] = updateData[key];
@@ -138,7 +138,7 @@ export async function PUT(request: Request) {
     }
 
     const item = await prisma.watchItem.update({
-      where: { id, userId },
+      where: { id, userId: _userId },
       data: updateFields,
     });
 
@@ -152,7 +152,7 @@ export async function PUT(request: Request) {
 // DELETE /api/watchlist
 export async function DELETE(request: Request) {
   try {
-    const userId = await getUserId();
+    const _userId = await getUserId();
     const { searchParams } = new URL(request.url);
     const id = Number(searchParams.get('id'));
     if (!id) {

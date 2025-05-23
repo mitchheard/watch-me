@@ -30,6 +30,7 @@ export default function WatchlistItems() {
   const [rateItem, setRateItem] = useState<WatchItem | null>(null);
   const [rateValue, setRateValue] = useState<string | null>(null);
   const [isRateSubmitting, setIsRateSubmitting] = useState(false);
+  const [modalStep, setModalStep] = useState<'edit' | 'rate'>('edit');
 
   useEffect(() => {
     setHasMounted(true);
@@ -76,9 +77,18 @@ export default function WatchlistItems() {
     // This should never be called in edit mode
   };
 
-  const handleUpdateItemSuccess = async () => {
+  const handleEdit = (item: WatchItem) => {
+    setSelectedItem(item);
+    setModalStep('edit');
+  };
+
+  const handleUpdateItemSuccess = async (updatedItem?: WatchItem) => {
     await fetchItems();
-    setSelectedItem(null); // Close modal on successful update
+    if (updatedItem && updatedItem.status === 'finished' && !updatedItem.rating) {
+      setModalStep('rate');
+    } else {
+      setSelectedItem(null); // Close modal on successful update
+    }
   };
 
   const handleCancelEdit = () => {
@@ -92,19 +102,24 @@ export default function WatchlistItems() {
 
   const handleRateSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!rateItem) return;
+    // Use selectedItem if modalStep === 'rate', otherwise use rateItem
+    const item = modalStep === 'rate' ? selectedItem : rateItem;
+    console.log('handleRateSubmit called', { item, rateValue });
+    if (!item) return;
     setIsRateSubmitting(true);
     try {
       await fetch('/api/watchlist', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: rateItem.id, rating: rateValue }),
+        body: JSON.stringify({ id: item.id, rating: rateValue }),
       });
+      setSelectedItem(null);
       setRateItem(null);
       setRateValue(null);
       fetchItems();
       toast.success('Rating updated!');
     } catch (err) {
+      console.error('Error updating rating:', err);
       toast.error('Failed to update rating');
     } finally {
       setIsRateSubmitting(false);
@@ -314,7 +329,7 @@ export default function WatchlistItems() {
                       <Menu.Item>
                         {({ active }) => (
                           <button
-                            onClick={() => setSelectedItem(item)}
+                            onClick={() => handleEdit(item)}
                             className={`w-full text-left px-4 py-2 text-sm ${active ? 'bg-blue-50 text-blue-700' : 'text-slate-700'}`}
                           >
                             Edit
@@ -381,19 +396,122 @@ export default function WatchlistItems() {
       {selectedItem && (
         <Modal 
           onClose={() => setSelectedItem(null)} 
-          title="Edit Item"
+          title={modalStep === 'edit' ? 'Edit Item' : (selectedItem.type === 'show' ? 'Rate TV Show' : 'Rate Movie')}
         >
-          <WatchlistForm 
-            itemToEdit={selectedItem} 
-            onAddItem={handleDummyAddItem}
-            onUpdateItem={handleUpdateItemSuccess} 
-            onCancelEdit={handleCancelEdit}
-            onAddSuccess={() => {
-              setSelectedItem(null);
-              toast.success('Item added successfully!');
-              fetchItems();
-            }}
-          />
+          {modalStep === 'edit' && (
+            <WatchlistForm 
+              itemToEdit={selectedItem} 
+              onAddItem={handleDummyAddItem}
+              onUpdateItem={async (id, data) => {
+                // After update, fetch the updated item to check status/rating
+                await fetch('/api/watchlist', {
+                  method: 'PUT',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ ...data, id }),
+                });
+                const res = await fetch(`/api/watchlist?id=${id}`);
+                const updated = await res.json();
+                console.log('Updated item after edit:', updated);
+                handleUpdateItemSuccess(updated);
+              }}
+              onCancelEdit={handleCancelEdit}
+              onAddSuccess={() => {
+                setSelectedItem(null);
+                toast.success('Item added successfully!');
+                fetchItems();
+              }}
+            />
+          )}
+          {modalStep === 'rate' && selectedItem && (
+            <form onSubmit={handleRateSubmit} className="space-y-6">
+              <div>
+                <label className="block text-base font-medium text-slate-700 mb-2 text-center">Rating</label>
+                <div className="flex flex-col gap-3 sm:flex-row sm:gap-4 justify-center">
+                  <label className={`inline-flex items-center cursor-pointer rounded-lg px-2 py-1 transition ${rateValue === 'loved' ? 'bg-green-100 ring-2 ring-green-400' : ''}`}>
+                    <input
+                      type="radio"
+                      name="rating"
+                      value="loved"
+                      checked={rateValue === 'loved'}
+                      onChange={() => setRateValue('loved')}
+                      className="form-radio text-green-600 w-5 h-5"
+                    />
+                    <span className="ml-2 text-base flex items-center text-green-700 font-semibold">
+                      <span className="mr-1 text-lg">👍👍</span> I loved it
+                    </span>
+                  </label>
+                  <label className={`inline-flex items-center cursor-pointer rounded-lg px-2 py-1 transition ${rateValue === 'liked' ? 'bg-blue-100 ring-2 ring-blue-400' : ''}`}>
+                    <input
+                      type="radio"
+                      name="rating"
+                      value="liked"
+                      checked={rateValue === 'liked'}
+                      onChange={() => setRateValue('liked')}
+                      className="form-radio text-blue-600 w-5 h-5"
+                    />
+                    <span className="ml-2 text-base flex items-center text-blue-700 font-semibold">
+                      <span className="mr-1 text-lg">👍</span> I liked it
+                    </span>
+                  </label>
+                  <label className={`inline-flex items-center cursor-pointer rounded-lg px-2 py-1 transition ${rateValue === 'not-for-me' ? 'bg-red-100 ring-2 ring-red-400' : ''}`}>
+                    <input
+                      type="radio"
+                      name="rating"
+                      value="not-for-me"
+                      checked={rateValue === 'not-for-me'}
+                      onChange={() => setRateValue('not-for-me')}
+                      className="form-radio text-red-600 w-5 h-5"
+                    />
+                    <span className="ml-2 text-base flex items-center text-red-700 font-semibold">
+                      <span className="mr-1 text-lg">👎</span> Wasn't for me
+                    </span>
+                  </label>
+                </div>
+              </div>
+              <div className="flex flex-col gap-2 sm:flex-row sm:justify-end sm:gap-3 mt-4">
+                <button
+                  type="button"
+                  onClick={() => setSelectedItem(null)}
+                  className="rounded-md border border-gray-300 bg-white px-4 py-2 text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    if (!selectedItem) return;
+                    setIsRateSubmitting(true);
+                    try {
+                      await fetch('/api/watchlist', {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ id: selectedItem.id, rating: null }),
+                      });
+                      setSelectedItem(null);
+                      setRateValue(null);
+                      fetchItems();
+                      toast.success('Rating cleared!');
+                    } catch (err) {
+                      toast.error('Failed to clear rating');
+                    } finally {
+                      setIsRateSubmitting(false);
+                    }
+                  }}
+                  className="rounded-md border border-gray-300 bg-white px-4 py-2 text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                  disabled={isRateSubmitting || !rateValue}
+                >
+                  Clear Rating
+                </button>
+                <button
+                  type="submit"
+                  disabled={isRateSubmitting || !rateValue}
+                  className="inline-flex justify-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50"
+                >
+                  {isRateSubmitting ? 'Saving...' : 'Save'}
+                </button>
+              </div>
+            </form>
+          )}
         </Modal>
       )}
 
@@ -502,6 +620,7 @@ export default function WatchlistItems() {
                         fetchItems();
                         toast.success('Rating cleared!');
                       } catch (err) {
+                        console.error('Error updating rating:', err);
                         toast.error('Failed to clear rating');
                       } finally {
                         setIsRateSubmitting(false);

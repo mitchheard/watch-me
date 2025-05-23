@@ -40,10 +40,22 @@ async function getUserId() {
   return user.id;
 }
 
-// GET /api/watchlist
-export async function GET() {
+// GET /api/watchlist or /api/watchlist?id=123
+export async function GET(request: Request) {
   try {
     const userId = await getUserId();
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get('id');
+
+    if (id) {
+      // Return a single item by id
+      const item = await prisma.watchItem.findUnique({
+        where: { id: Number(id), userId },
+      });
+      return NextResponse.json(item);
+    }
+
+    // Otherwise, return all items
     const items = await prisma.watchItem.findMany({
       where: { userId },
       orderBy: { updatedAt: 'desc' }

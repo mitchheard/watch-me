@@ -424,42 +424,6 @@ export default function WatchlistForm({
           </>
         )}
 
-        {/* Rating selector: show only if status is 'finished' */}
-        {watch('status') === 'finished' && (
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-slate-700 mb-1">Rating</label>
-            <div className="flex gap-4">
-              <label className="inline-flex items-center">
-                <input
-                  type="radio"
-                  {...register('rating')}
-                  value="loved"
-                  className="form-radio text-blue-600"
-                />
-                <span className="ml-2">I loved it</span>
-              </label>
-              <label className="inline-flex items-center">
-                <input
-                  type="radio"
-                  {...register('rating')}
-                  value="liked"
-                  className="form-radio text-blue-600"
-                />
-                <span className="ml-2">I liked it</span>
-              </label>
-              <label className="inline-flex items-center">
-                <input
-                  type="radio"
-                  {...register('rating')}
-                  value="not-for-me"
-                  className="form-radio text-blue-600"
-                />
-                <span className="ml-2">Wasn't for me</span>
-              </label>
-            </div>
-          </div>
-        )}
-
         {/* Error and Success Messages */}
         {error && (
           <div className="rounded-md bg-red-50 p-4">

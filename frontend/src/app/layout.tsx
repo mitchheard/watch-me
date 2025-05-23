@@ -4,6 +4,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 // import { Header } from "../components/Header"; // Removed Header import
 import LayoutShell from "@/components/LayoutShell"; // Added LayoutShell import
 import "./globals.css";
+import { Toaster } from 'react-hot-toast';
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -31,6 +32,7 @@ export default function RootLayout({
         <AuthProvider>
           <LayoutShell>
             {children}
+            <Toaster position="bottom-right" reverseOrder={false} />
           </LayoutShell>
         </AuthProvider>
       </body>

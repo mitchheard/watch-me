@@ -61,6 +61,7 @@ export default function WatchlistItems() {
     const res = await fetch(`/api/watchlist?id=${id}`, { method: 'DELETE' });
     if (res.ok) {
       fetchItems();
+      toast.error('Removed from list');
     }
   };
 
@@ -87,7 +88,8 @@ export default function WatchlistItems() {
     if (updatedItem && updatedItem.status === 'finished' && !updatedItem.rating) {
       setModalStep('rate');
     } else {
-      setSelectedItem(null); // Close modal on successful update
+      setSelectedItem(null); // Close modal
+      toast.success(`${getTypeLabel(updatedItem)} updated successfully!`);
     }
   };
 
@@ -117,7 +119,7 @@ export default function WatchlistItems() {
       setRateItem(null);
       setRateValue(null);
       fetchItems();
-      toast.success('Rating updated!');
+      toast.success('Rating saved');
     } catch (err) {
       console.error('Error updating rating:', err);
       toast.error('Failed to update rating');
@@ -125,6 +127,20 @@ export default function WatchlistItems() {
       setIsRateSubmitting(false);
     }
   };
+
+  const handleAddSuccess = () => {
+    setShowAddModal(false);
+    fetchItems();
+    toast.success('Added to list');
+  };
+
+  // Helper function to get label
+  function getTypeLabel(item: WatchItem | null | undefined): string {
+    if (!item) return 'Item';
+    if (item.type === 'movie') return 'Movie';
+    if (item.type === 'show') return 'TV Show';
+    return 'Item';
+  }
 
   return (
     <div className="mt-8 w-full max-w-2xl mx-auto">
@@ -346,17 +362,18 @@ export default function WatchlistItems() {
                           </button>
                         )}
                       </Menu.Item>
+                      <div className="border-t border-slate-100 my-1" />
                       <Menu.Item>
                         {({ active }) => (
                           <button
                             onClick={() => {
-                              if (confirm(`Delete \"${item.title}\"? This action cannot be undone.`)) {
+                              if (confirm(`Remove \"${item.title}\"? This action cannot be undone.`)) {
                                 handleDelete(item.id);
                               }
                             }}
-                            className={`w-full text-left px-4 py-2 text-sm ${active ? 'bg-red-50 text-red-700' : 'text-slate-700'}`}
+                            className={`w-full text-left px-4 py-2 text-sm font-semibold ${active ? 'bg-red-50 text-red-700' : 'text-red-600 hover:bg-red-50'}`}
                           >
-                            Delete
+                             Remove
                           </button>
                         )}
                       </Menu.Item>
@@ -417,7 +434,7 @@ export default function WatchlistItems() {
               onCancelEdit={handleCancelEdit}
               onAddSuccess={() => {
                 setSelectedItem(null);
-                toast.success('Item added successfully!');
+                toast.success(`${getTypeLabel(selectedItem)} updated successfully!`);
                 fetchItems();
               }}
             />
@@ -523,11 +540,7 @@ export default function WatchlistItems() {
         >
           <WatchlistForm
             onAddItem={async () => {}}
-            onAddSuccess={() => {
-              setShowAddModal(false);
-              toast.success('Item added successfully!');
-              fetchItems();
-            }}
+            onAddSuccess={handleAddSuccess}
           />
         </Modal>
       )}

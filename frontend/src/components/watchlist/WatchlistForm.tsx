@@ -181,7 +181,6 @@ export default function WatchlistForm({
     }
     setTmdbSearchQuery('');
     setError(null);
-    setSuccessMessage(null);
     setTmdbResults([]);
     setShowTmdbResults(false);
     setTmdbSearchError(null);
@@ -259,18 +258,17 @@ export default function WatchlistForm({
 
   const onSubmit = async (data: WatchlistFormData) => {
     setError(null);
-    setSuccessMessage(null);
 
     try {
       if (itemToEdit) {
         // Make PUT request to update the item
+        const updatePayload = { ...itemToEdit, ...data, id: itemToEdit.id };
         await fetch('/api/watchlist', {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ ...data, id: itemToEdit.id }),
+          body: JSON.stringify(updatePayload),
         });
-        setSuccessMessage('Item updated successfully!');
-        onUpdateItem?.(itemToEdit.id, data);
+        onUpdateItem?.(itemToEdit.id, updatePayload);
       } else {
         const res = await fetch('/api/watchlist', {
           method: 'POST',
@@ -428,12 +426,6 @@ export default function WatchlistForm({
         {error && (
           <div className="rounded-md bg-red-50 p-4">
             <div className="text-sm text-red-700">{error}</div>
-          </div>
-        )}
-
-        {successMessage && (
-          <div className="rounded-md bg-green-50 p-4">
-            <div className="text-sm text-green-700">{successMessage}</div>
           </div>
         )}
 

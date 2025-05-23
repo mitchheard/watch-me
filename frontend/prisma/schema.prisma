@@ -37,7 +37,7 @@ model WatchItem {
   updatedAt              DateTime
   userId                 String
   notes                  String?
-  rating                 Int?
+  rating                 String? // allowed: 'loved', 'liked', 'not-for-me'
   tmdbId                 Int?     @unique
   tmdbImdbId             String?
   tmdbMovieCertification String?

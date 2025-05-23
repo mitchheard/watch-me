@@ -114,34 +114,22 @@ export async function POST(request: Request) {
 export async function PUT(request: Request) {
   try {
     const userId = await getUserId();
-    const data: WatchlistFormData & { id: number } = await request.json();
+    const data = await request.json();
     const { id, ...updateData } = data;
-    
+
+    // Only update fields that are present in the request
+    const updateFields: any = { updatedAt: new Date() };
+    for (const key in updateData) {
+      if (Object.prototype.hasOwnProperty.call(updateData, key)) {
+        updateFields[key] = updateData[key];
+      }
+    }
+
     const item = await prisma.watchItem.update({
       where: { id, userId },
-      data: {
-        ...updateData,
-        currentSeason: updateData.currentSeason ? Number(updateData.currentSeason) : null,
-        totalSeasons: updateData.totalSeasons ? Number(updateData.totalSeasons) : null,
-        tmdbId: updateData.tmdbId || null,
-        tmdbPosterPath: updateData.tmdbPosterPath || null,
-        tmdbOverview: updateData.tmdbOverview || null,
-        tmdbTagline: updateData.tmdbTagline || null,
-        tmdbImdbId: updateData.tmdbImdbId || null,
-        tmdbMovieCertification: updateData.tmdbMovieCertification || null,
-        tmdbMovieReleaseYear: updateData.tmdbMovieReleaseYear || null,
-        tmdbMovieRuntime: updateData.tmdbMovieRuntime || null,
-        tmdbTvCertification: updateData.tmdbTvCertification || null,
-        tmdbTvFirstAirYear: updateData.tmdbTvFirstAirYear || null,
-        tmdbTvLastAirYear: updateData.tmdbTvLastAirYear || null,
-        tmdbTvNetworks: updateData.tmdbTvNetworks || null,
-        tmdbTvNumberOfEpisodes: updateData.tmdbTvNumberOfEpisodes || null,
-        tmdbTvNumberOfSeasons: updateData.tmdbTvNumberOfSeasons || null,
-        tmdbTvStatus: updateData.tmdbTvStatus || null,
-        updatedAt: new Date(),
-      }
+      data: updateFields,
     });
-    
+
     return NextResponse.json(item);
   } catch (error) {
     console.error('Failed to update watchlist item:', error);

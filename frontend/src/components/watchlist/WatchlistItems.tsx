@@ -11,7 +11,7 @@ import { motion } from 'framer-motion';
 import Image from 'next/image';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'react-hot-toast';
-import { Menu } from '@headlessui/react';
+import { Menu, Dialog } from '@headlessui/react';
 import { EllipsisVerticalIcon } from '@heroicons/react/24/outline';
 
 type FilterType = 'all' | 'movie' | 'show';
@@ -27,6 +27,9 @@ export default function WatchlistItems() {
   const [hasMounted, setHasMounted] = useState(false);
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
+  const [rateItem, setRateItem] = useState<WatchItem | null>(null);
+  const [rateValue, setRateValue] = useState<string | null>(null);
+  const [isRateSubmitting, setIsRateSubmitting] = useState(false);
 
   useEffect(() => {
     setHasMounted(true);
@@ -82,10 +85,34 @@ export default function WatchlistItems() {
     setSelectedItem(null); // Close modal on cancel
   };
 
+  const handleOpenRateModal = (item: WatchItem) => {
+    setRateItem(item);
+    setRateValue(item.rating ?? null);
+  };
+
+  const handleRateSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!rateItem) return;
+    setIsRateSubmitting(true);
+    try {
+      await fetch('/api/watchlist', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: rateItem.id, rating: rateValue }),
+      });
+      setRateItem(null);
+      setRateValue(null);
+      fetchItems();
+      toast.success('Rating updated!');
+    } catch (err) {
+      toast.error('Failed to update rating');
+    } finally {
+      setIsRateSubmitting(false);
+    }
+  };
+
   return (
     <div className="mt-8 w-full max-w-2xl mx-auto">
-      <h2 className="text-2xl font-semibold mb-6 text-center text-slate-800">Your Watchlist</h2>
-
       {/* Type Filters - Segmented Control Style */}
       <div className="mb-6 flex justify-center">
         <div className="inline-flex items-center bg-slate-200 p-1 rounded-lg shadow-sm">
@@ -216,6 +243,21 @@ export default function WatchlistItems() {
                             {item.status === 'want-to-watch' ? 'Want to Watch' : item.status.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
                           </span>
                         </div>
+                        {/* User Rating Display */}
+                        <div className="mt-1">
+                          {item.rating === 'loved' && (
+                            <span className="inline-block px-2 py-0.5 text-xs font-semibold rounded-full bg-pink-100 text-pink-700">Loved</span>
+                          )}
+                          {item.rating === 'liked' && (
+                            <span className="inline-block px-2 py-0.5 text-xs font-semibold rounded-full bg-blue-100 text-blue-700">Liked</span>
+                          )}
+                          {item.rating === 'not-for-me' && (
+                            <span className="inline-block px-2 py-0.5 text-xs font-semibold rounded-full bg-slate-200 text-slate-600">Not for me</span>
+                          )}
+                          {!item.rating && (
+                            <span className="inline-block px-2 py-0.5 text-xs font-normal rounded-full bg-slate-50 text-slate-400">Not rated</span>
+                          )}
+                        </div>
                       </div>
                     </div>
                     <p className="text-xs text-slate-400 mt-2">
@@ -276,6 +318,16 @@ export default function WatchlistItems() {
                             className={`w-full text-left px-4 py-2 text-sm ${active ? 'bg-blue-50 text-blue-700' : 'text-slate-700'}`}
                           >
                             Edit
+                          </button>
+                        )}
+                      </Menu.Item>
+                      <Menu.Item>
+                        {({ active }) => (
+                          <button
+                            onClick={() => handleOpenRateModal(item)}
+                            className={`w-full text-left px-4 py-2 text-sm ${active ? 'bg-green-50 text-green-700' : 'text-slate-700'}`}
+                          >
+                            {item.type === 'show' ? 'Rate TV Show' : 'Rate Movie'}
                           </button>
                         )}
                       </Menu.Item>
@@ -360,6 +412,118 @@ export default function WatchlistItems() {
             }}
           />
         </Modal>
+      )}
+
+      {/* Rate Modal */}
+      {rateItem && (
+        <Dialog open={!!rateItem} onClose={() => setRateItem(null)} className="fixed z-50 inset-0 overflow-y-auto">
+          <div className="flex items-center justify-center min-h-screen px-2 sm:px-4">
+            <div className="fixed inset-0 bg-black opacity-30" aria-hidden="true" />
+            <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-sm mx-auto p-6 sm:p-8 z-10 transition-all duration-200 scale-100">
+              <button
+                type="button"
+                onClick={() => setRateItem(null)}
+                className="absolute top-4 right-4 text-slate-400 hover:text-slate-700 focus:outline-none"
+                aria-label="Close"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+              <Dialog.Title className="text-xl font-bold mb-4 text-center">
+                {rateItem.type === 'show' ? 'Rate TV Show' : 'Rate Movie'}
+              </Dialog.Title>
+              <form onSubmit={handleRateSubmit} className="space-y-6">
+                <div>
+                  <label className="block text-base font-medium text-slate-700 mb-2 text-center">Rating</label>
+                  <div className="flex flex-col gap-3 sm:flex-row sm:gap-4 justify-center">
+                    <label className={`inline-flex items-center cursor-pointer rounded-lg px-2 py-1 transition ${rateValue === 'loved' ? 'bg-green-100 ring-2 ring-green-400' : ''}`}>
+                      <input
+                        type="radio"
+                        name="rating"
+                        value="loved"
+                        checked={rateValue === 'loved'}
+                        onChange={() => setRateValue('loved')}
+                        className="form-radio text-green-600 w-5 h-5"
+                      />
+                      <span className="ml-2 text-base flex items-center text-green-700 font-semibold">
+                        <span className="mr-1 text-lg">👍👍</span> I loved it
+                      </span>
+                    </label>
+                    <label className={`inline-flex items-center cursor-pointer rounded-lg px-2 py-1 transition ${rateValue === 'liked' ? 'bg-blue-100 ring-2 ring-blue-400' : ''}`}>
+                      <input
+                        type="radio"
+                        name="rating"
+                        value="liked"
+                        checked={rateValue === 'liked'}
+                        onChange={() => setRateValue('liked')}
+                        className="form-radio text-blue-600 w-5 h-5"
+                      />
+                      <span className="ml-2 text-base flex items-center text-blue-700 font-semibold">
+                        <span className="mr-1 text-lg">👍</span> I liked it
+                      </span>
+                    </label>
+                    <label className={`inline-flex items-center cursor-pointer rounded-lg px-2 py-1 transition ${rateValue === 'not-for-me' ? 'bg-red-100 ring-2 ring-red-400' : ''}`}>
+                      <input
+                        type="radio"
+                        name="rating"
+                        value="not-for-me"
+                        checked={rateValue === 'not-for-me'}
+                        onChange={() => setRateValue('not-for-me')}
+                        className="form-radio text-red-600 w-5 h-5"
+                      />
+                      <span className="ml-2 text-base flex items-center text-red-700 font-semibold">
+                        <span className="mr-1 text-lg">👎</span> Wasn't for me
+                      </span>
+                    </label>
+                  </div>
+                </div>
+                <div className="flex flex-col gap-2 sm:flex-row sm:justify-end sm:gap-3 mt-4">
+                  <button
+                    type="button"
+                    onClick={() => setRateItem(null)}
+                    className="rounded-md border border-gray-300 bg-white px-4 py-2 text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      if (!rateItem) return;
+                      setIsRateSubmitting(true);
+                      try {
+                        await fetch('/api/watchlist', {
+                          method: 'PUT',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ id: rateItem.id, rating: null }),
+                        });
+                        setRateItem(null);
+                        setRateValue(null);
+                        fetchItems();
+                        toast.success('Rating cleared!');
+                      } catch (err) {
+                        toast.error('Failed to clear rating');
+                      } finally {
+                        setIsRateSubmitting(false);
+                      }
+                    }}
+                    className="rounded-md border border-gray-300 bg-white px-4 py-2 text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                    disabled={isRateSubmitting || !rateValue}
+                  >
+                    Clear Rating
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isRateSubmitting || !rateValue}
+                    className="inline-flex justify-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50"
+                  >
+                    {isRateSubmitting ? 'Saving...' : 'Save'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </Dialog>
       )}
     </div>
   );

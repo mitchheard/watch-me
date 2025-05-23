@@ -30,7 +30,8 @@ const initialFormState: WatchlistFormInputs = {
   tmdbTvNetworks: null,
   tmdbTvNumberOfEpisodes: null,
   tmdbTvNumberOfSeasons: null,
-  tmdbTvStatus: null
+  tmdbTvStatus: null,
+  rating: null
 };
 
 interface WatchlistFormProps {
@@ -93,7 +94,8 @@ export default function WatchlistForm({
       tmdbTvNetworks: itemToEdit.tmdbTvNetworks,
       tmdbTvNumberOfEpisodes: itemToEdit.tmdbTvNumberOfEpisodes,
       tmdbTvNumberOfSeasons: itemToEdit.tmdbTvNumberOfSeasons,
-      tmdbTvStatus: itemToEdit.tmdbTvStatus
+      tmdbTvStatus: itemToEdit.tmdbTvStatus,
+      rating: itemToEdit.rating ?? null
     } : initialFormState
   });
 
@@ -138,6 +140,7 @@ export default function WatchlistForm({
         tmdbTvNumberOfEpisodes: details.tmdbTvNumberOfEpisodes || null,
         tmdbTvNumberOfSeasons: details.tmdbTvNumberOfSeasons || null,
         tmdbTvStatus: details.tmdbTvStatus || null,
+        rating: null
       };
       reset(newValues);
     } catch (error) {
@@ -168,7 +171,8 @@ export default function WatchlistForm({
         tmdbTvNetworks: itemToEdit.tmdbTvNetworks,
         tmdbTvNumberOfEpisodes: itemToEdit.tmdbTvNumberOfEpisodes,
         tmdbTvNumberOfSeasons: itemToEdit.tmdbTvNumberOfSeasons,
-        tmdbTvStatus: itemToEdit.tmdbTvStatus
+        tmdbTvStatus: itemToEdit.tmdbTvStatus,
+        rating: itemToEdit.rating ?? null
       });
       setIsTotalSeasonsFromTmdb(!!itemToEdit.tmdbTvNumberOfSeasons);
     } else {
@@ -418,6 +422,42 @@ export default function WatchlistForm({
               />
             </div>
           </>
+        )}
+
+        {/* Rating selector: show only if status is 'finished' */}
+        {watch('status') === 'finished' && (
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-slate-700 mb-1">Rating</label>
+            <div className="flex gap-4">
+              <label className="inline-flex items-center">
+                <input
+                  type="radio"
+                  {...register('rating')}
+                  value="loved"
+                  className="form-radio text-blue-600"
+                />
+                <span className="ml-2">I loved it</span>
+              </label>
+              <label className="inline-flex items-center">
+                <input
+                  type="radio"
+                  {...register('rating')}
+                  value="liked"
+                  className="form-radio text-blue-600"
+                />
+                <span className="ml-2">I liked it</span>
+              </label>
+              <label className="inline-flex items-center">
+                <input
+                  type="radio"
+                  {...register('rating')}
+                  value="not-for-me"
+                  className="form-radio text-blue-600"
+                />
+                <span className="ml-2">Wasn't for me</span>
+              </label>
+            </div>
+          </div>
         )}
 
         {/* Error and Success Messages */}

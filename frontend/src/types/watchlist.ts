@@ -11,6 +11,7 @@ export type WatchItem = {
   createdAt: Date;
   updatedAt: Date;
   userId: string;
+  rating: string | null;
   tmdbId: number | null;
   tmdbImdbId: string | null;
   tmdbMovieCertification: string | null;
@@ -87,6 +88,7 @@ export interface WatchlistFormData {
   status: string;
   currentSeason?: number | null;
   totalSeasons?: number | null;
+  rating?: string | null;
   tmdbId?: number | null;
   tmdbImdbId?: string | null;
   tmdbMovieCertification?: string | null;

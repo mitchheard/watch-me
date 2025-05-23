@@ -157,7 +157,7 @@ export default function Page() {
       <main className="flex-1">
         {isAddItemModalOpen && (
           <Modal onClose={() => setIsAddItemModalOpen(false)} title="Add Movie or TV Show">
-            <WatchlistForm onAddItem={handleAddItem} />
+            <WatchlistForm _onAddItem={handleAddItem} />
           </Modal>
         )}
       </main>

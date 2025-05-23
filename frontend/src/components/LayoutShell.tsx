@@ -109,7 +109,7 @@ export default function LayoutShell({ children }: { children: ReactNode }) {
         </div>
       </header>
 
-      <main className="flex-grow container mx-auto px-4 py-6">
+      <main className="flex-grow container mx-auto px-4 pt-2">
         {children}
       </main>
 

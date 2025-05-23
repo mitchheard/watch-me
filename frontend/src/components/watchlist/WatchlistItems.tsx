@@ -143,42 +143,42 @@ export default function WatchlistItems() {
   }
 
   return (
-    <div className="mt-8 w-full max-w-2xl mx-auto">
-      {/* Type Filters - Segmented Control Style */}
-      <div className="mb-6 flex justify-center">
-        <div className="inline-flex items-center bg-slate-200 p-1 rounded-lg shadow-sm">
-          {['all', 'movie', 'show'].map((t) => (
-            <button
-              key={t}
-              onClick={() => updateFilters(t as FilterType, status)}
-              className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all duration-200 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-200 ${ 
-                type === t
-                  ? 'bg-white text-blue-600 shadow-sm'
-                  : 'bg-transparent text-slate-600 hover:bg-slate-50 hover:text-slate-800'
-              }`}
-            >
-              {t === 'all' ? 'All' : t === 'movie' ? 'Movies' : 'Shows'}
-            </button>
-          ))}
+    <div className="w-full max-w-2xl mx-auto">
+      {/* Responsive Filter Bar: Type buttons always in a row, 'TV' label for compactness */}
+      <div className="flex flex-col sm:flex-row sm:justify-between items-stretch mb-4 mt-2 gap-2">
+        <div className="flex flex-row gap-1 bg-slate-100 rounded-lg p-1 h-full w-full sm:w-auto">
+          <button
+            onClick={() => updateFilters('all', status)}
+            className={`px-2 py-1 text-xs sm:px-3 sm:py-2 sm:text-sm rounded-md font-medium flex items-center transition-all h-full w-full sm:w-auto justify-center border border-slate-200 ${type === 'all' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-600 bg-white/70 hover:bg-slate-100'}`}
+          >
+            All
+          </button>
+          <button
+            onClick={() => updateFilters('movie', status)}
+            className={`px-2 py-1 text-xs sm:px-3 sm:py-2 sm:text-sm rounded-md font-medium flex items-center transition-all h-full w-full sm:w-auto justify-center border border-slate-200 ${type === 'movie' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-600 bg-white/70 hover:bg-slate-100'}`}
+          >
+            <span className="mr-1">🎬</span> Movies
+          </button>
+          <button
+            onClick={() => updateFilters('show', status)}
+            className={`px-2 py-1 text-xs sm:px-3 sm:py-2 sm:text-sm rounded-md font-medium flex items-center transition-all h-full w-full sm:w-auto justify-center border border-slate-200 ${type === 'show' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-600 bg-white/70 hover:bg-slate-100'}`}
+          >
+            <span className="mr-1">📺</span> TV
+          </button>
         </div>
-      </div>
-
-      {/* Status Filters - Updated to Segmented Control Style */}
-      <div className="mb-8 flex justify-center">
-        <div className="inline-flex flex-wrap justify-center items-center bg-slate-200 p-1 rounded-lg shadow-sm gap-1">
-          {['all', 'want-to-watch', 'watching', 'finished'].map((s) => (
-            <button
-              key={s}
-              onClick={() => updateFilters(type, s as FilterStatus)}
-              className={`px-2.5 py-1 rounded-md text-xs font-medium transition-all duration-200 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-1 focus-visible:ring-offset-slate-200 ${ 
-                status === s
-                  ? 'bg-white text-blue-600 shadow-sm'
-                  : 'bg-transparent text-slate-600 hover:bg-slate-50 hover:text-slate-800'
-              }`}
-            >
-              {s === 'all' ? 'All' : s === 'want-to-watch' ? 'Want to Watch' : s.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
-            </button>
-          ))}
+        <div className="flex items-stretch w-full sm:w-auto mt-2 sm:mt-0">
+          <label htmlFor="status-filter" className="sr-only">Status</label>
+          <select
+            id="status-filter"
+            value={status}
+            onChange={e => updateFilters(type, e.target.value as FilterStatus)}
+            className="rounded-md border border-gray-300 px-3 py-2 pr-8 shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-sm w-full sm:w-auto h-full bg-[url('data:image/svg+xml;utf8,<svg fill=\'none\' stroke=\'%236B7280\' stroke-width=\'2\' viewBox=\'0 0 24 24\' xmlns=\'http://www.w3.org/2000/svg\'><path stroke-linecap=\'round\' stroke-linejoin=\'round\' d=\'M19 9l-7 7-7-7\'></path></svg>')] bg-no-repeat bg-[right_0.75rem_center] bg-[length:1.25em_1.25em]"
+          >
+            <option value="all">All Statuses</option>
+            <option value="want-to-watch">Want to Watch</option>
+            <option value="watching">Watching</option>
+            <option value="finished">Finished</option>
+          </select>
         </div>
       </div>
 

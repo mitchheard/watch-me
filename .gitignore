@@ -44,3 +44,6 @@
     # Logs
     logs
     *.log
+
+    # Project notes and todo lists
+    FEATURES.md

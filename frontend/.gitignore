@@ -52,3 +52,6 @@ dev.db-journal
 .vscode/
 .DS_Store
 Thumbs.db
+
+# Project notes and todo lists
+FEATURES.md

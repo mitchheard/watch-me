@@ -17,6 +17,12 @@ import { EllipsisVerticalIcon } from '@heroicons/react/24/outline';
 // type FilterType = 'all' | 'movie' | 'show';
 type FilterStatus = 'all' | 'want-to-watch' | 'watching' | 'finished';
 
+// Define poster sizes for card and modal (2:3 aspect ratio)
+const CARD_POSTER_WIDTH = 56;
+const CARD_POSTER_HEIGHT = 84;
+const MODAL_POSTER_WIDTH = 80;
+const MODAL_POSTER_HEIGHT = 120;
+
 export default function WatchlistItems() {
   const { user } = useAuth();
   const [items, setItems] = useState<WatchItem[]>([]);
@@ -31,6 +37,7 @@ export default function WatchlistItems() {
   const [rateValue, setRateValue] = useState<string | null>(null);
   const [isRateSubmitting, setIsRateSubmitting] = useState(false);
   const [modalStep, setModalStep] = useState<'edit' | 'rate'>('edit');
+  const [modalItem, setModalItem] = useState<WatchItem | null>(null);
 
   useEffect(() => {
     setHasMounted(true);
@@ -191,77 +198,70 @@ export default function WatchlistItems() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
               transition={{ duration: 0.2 }}
-              className="bg-white border border-slate-200/80 shadow-sm rounded-lg p-4 transition-shadow hover:shadow-md relative min-h-[80px]"
+              className={`rounded-lg p-4 transition-shadow hover:shadow-md relative min-h-[80px] border-2
+                ${item.type === 'movie' ? 'bg-slate-50 border-slate-200' : 'bg-indigo-50 border-indigo-200'}
+              `}
+              onClick={() => setModalItem(item)}
             >
-              <div className="flex justify-between items-start gap-3">
-                <div className="flex-grow min-w-0">
-                  <h3
-                    className={`text-md font-semibold text-slate-800 cursor-pointer ${
-                      expandedId === item.id ? '' : 'hover:underline focus:no-underline'
-                    } ${
-                      expandedId === item.id ? '' : 'truncate max-w-[85%]'
-                    }`}
-                    title={item.title}
-                    onClick={() => setExpandedId(expandedId === item.id ? null : item.id)}
-                    tabIndex={0}
-                    role="button"
-                    aria-expanded={expandedId === item.id}
-                  >
-                    {item.title}
-                  </h3>
-                  <div className="mt-1 flex flex-col gap-1">
-                    <div className="flex items-start gap-2">
+              <div className="flex items-start">
+                <div className="flex-1 min-w-0">
+                  <div className="flex flex-col flex-grow min-w-0">
+                    <span className="font-semibold text-base block">{item.title}</span>
+                    <div className="flex flex-row gap-3 mt-1">
                       {item.tmdbPosterPath ? (
                         <Image
                           src={`https://image.tmdb.org/t/p/w92${item.tmdbPosterPath}`}
                           alt={`${item.title} poster`}
-                          width={40}
-                          height={60}
-                          className="rounded mr-1 flex-shrink-0 shadow-sm"
+                          width={CARD_POSTER_WIDTH}
+                          height={CARD_POSTER_HEIGHT}
+                          className="rounded flex-shrink-0 shadow-sm object-cover border border-slate-200"
+                          style={{ aspectRatio: '2/3', width: CARD_POSTER_WIDTH, height: CARD_POSTER_HEIGHT }}
                           unoptimized
                         />
                       ) : (
                         <Image
                           src="/no-image.svg"
                           alt="No poster available"
-                          width={40}
-                          height={60}
-                          className="rounded mr-1 flex-shrink-0 shadow-sm bg-slate-200"
+                          width={CARD_POSTER_WIDTH}
+                          height={CARD_POSTER_HEIGHT}
+                          className="rounded flex-shrink-0 shadow-sm bg-slate-200 object-cover border border-slate-200"
+                          style={{ aspectRatio: '2/3', width: CARD_POSTER_WIDTH, height: CARD_POSTER_HEIGHT }}
                           unoptimized
                         />
                       )}
-                      <div className="flex-grow min-w-0">
-                        <div className="flex items-center gap-1.5">
-                          {item.type === 'movie' ? 
-                            <FilmIcon className="w-4 h-4 text-blue-500 flex-shrink-0" /> : 
-                            <TvIcon className="w-4 h-4 text-blue-500 flex-shrink-0" /> 
-                          }
-                          <p className="text-sm text-slate-500">
-                            {item.type.replace(/\b\w/g, l => l.toUpperCase())}
-                            {item.type === 'movie' && item.tmdbMovieReleaseYear && (
-                              <span className="text-slate-400">{` (${item.tmdbMovieReleaseYear})`}</span>
-                            )}
-                            {item.type === 'show' && item.tmdbTvFirstAirYear && (
-                              <span className="text-slate-400">
-                                {` (`}
-                                {item.tmdbTvFirstAirYear}
-                                {item.tmdbTvLastAirYear && item.tmdbTvLastAirYear !== item.tmdbTvFirstAirYear ? `-${item.tmdbTvLastAirYear}` : ''}
-                                {`)`}
-                              </span>
-                            )}
-                          </p>
+                      <div className="flex flex-col flex-grow min-w-0">
+                        <div className="flex items-center gap-1 text-slate-500 text-xs mb-0.5">
+                          {item.type === 'movie' ? (
+                            <FilmIcon className="w-4 h-4 text-slate-400" />
+                          ) : (
+                            <TvIcon className="w-4 h-4 text-indigo-400" />
+                          )}
+                          <span>
+                            {item.type === 'movie' ? 'Movie' : 'TV Show'}
+                            {(item.type === 'movie' && item.tmdbMovieReleaseYear) || (item.type === 'show' && item.tmdbTvFirstAirYear) ? (
+                              <>
+                                {' '}
+                                {item.type === 'movie' && item.tmdbMovieReleaseYear && (
+                                  <span>({item.tmdbMovieReleaseYear})</span>
+                                )}
+                                {item.type === 'show' && item.tmdbTvFirstAirYear && item.tmdbTvLastAirYear && (
+                                  <span>({item.tmdbTvFirstAirYear}–{item.tmdbTvLastAirYear})</span>
+                                )}
+                                {item.type === 'show' && item.tmdbTvFirstAirYear && !item.tmdbTvLastAirYear && (
+                                  <span>({item.tmdbTvFirstAirYear})</span>
+                                )}
+                              </>
+                            ) : null}
+                          </span>
                         </div>
-                        {item.type === 'show' && item.tmdbTvNetworks && (
-                          <p className="text-xs text-slate-400 truncate mt-0.5">
-                            {item.tmdbTvNetworks}
-                          </p>
-                        )}
+                        {/* Season info for shows */}
                         {item.type === 'show' && item.currentSeason && (
                           <p className="text-xs text-slate-500 mt-0.5">
                             Season {item.currentSeason}
                             {item.totalSeasons ? ` of ${item.totalSeasons}` : ''}
                           </p>
                         )}
+                        {/* Status badge */}
                         <div className="mt-1">
                           <span
                             className={`px-2 py-0.5 text-xs font-medium rounded-full 
@@ -274,7 +274,7 @@ export default function WatchlistItems() {
                             {item.status === 'want-to-watch' ? 'Want to Watch' : item.status.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
                           </span>
                         </div>
-                        {/* User Rating Display */}
+                        {/* Rating badge */}
                         <div className="mt-1">
                           {item.rating === 'loved' && (
                             <span className="inline-block px-2 py-0.5 text-xs font-semibold rounded-full bg-pink-100 text-pink-700">Loved</span>
@@ -291,95 +291,8 @@ export default function WatchlistItems() {
                         </div>
                       </div>
                     </div>
-                    <p className="text-xs text-slate-400 mt-2">
-                      Added: {new Date(item.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
-                    </p>
-                    {/* Show more/less toggle */}
-                    <button
-                      className="text-xs text-blue-500 mt-1 flex items-center gap-1 hover:underline focus:outline-none"
-                      onClick={() => setExpandedId(expandedId === item.id ? null : item.id)}
-                      aria-expanded={expandedId === item.id}
-                      aria-controls={`details-${item.id}`}
-                    >
-                      {expandedId === item.id ? (
-                        <>
-                          <span>Show less</span>
-                          {/* Up chevron */}
-                          <svg className="w-3 h-3 inline ml-0.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 15l7-7 7 7" /></svg>
-                        </>
-                      ) : (
-                        <>
-                          <span>Show more</span>
-                          {/* Down chevron */}
-                          <svg className="w-3 h-3 inline ml-0.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
-                        </>
-                      )}
-                    </button>
-                    {/* Collapsible details section */}
-                    {expandedId === item.id && (
-                      <div id={`details-${item.id}`} className="mt-2 border-t border-slate-100 pt-2 text-xs text-slate-600 bg-slate-50 rounded">
-                        {(item.type === 'movie' && item.tmdbMovieCertification) && (
-                          <div className="mb-1"><span className="font-semibold">Rating:</span> {item.tmdbMovieCertification}</div>
-                        )}
-                        {(item.type === 'show' && item.tmdbTvCertification) && (
-                          <div className="mb-1"><span className="font-semibold">Rating:</span> {item.tmdbTvCertification}</div>
-                        )}
-                        {item.tmdbTagline && (
-                          <div className="mb-1 italic text-slate-500">&quot;{item.tmdbTagline}&quot;</div>
-                        )}
-                        {item.tmdbOverview && (
-                          <div className="mb-1">{item.tmdbOverview}</div>
-                        )}
-                      </div>
-                    )}
                   </div>
                 </div>
-
-                {/* Headless UI Menu for edit/delete */}
-                <Menu as="div" className="absolute top-2 right-2 z-10 text-left">
-                  <Menu.Button className="p-2 rounded-full text-slate-500 hover:bg-slate-100 hover:text-blue-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500">
-                    <EllipsisVerticalIcon className="w-6 h-6" aria-hidden="true" />
-                  </Menu.Button>
-                  <Menu.Items className="origin-top-right absolute right-0 mt-2 w-32 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-20">
-                    <div className="py-1">
-                      <Menu.Item>
-                        {({ active }) => (
-                          <button
-                            onClick={() => handleEdit(item)}
-                            className={`w-full text-left px-4 py-2 text-sm ${active ? 'bg-blue-50 text-blue-700' : 'text-slate-700'}`}
-                          >
-                            Edit
-                          </button>
-                        )}
-                      </Menu.Item>
-                      <Menu.Item>
-                        {({ active }) => (
-                          <button
-                            onClick={() => handleOpenRateModal(item)}
-                            className={`w-full text-left px-4 py-2 text-sm ${active ? 'bg-green-50 text-green-700' : 'text-slate-700'}`}
-                          >
-                            {item.type === 'show' ? 'Rate TV Show' : 'Rate Movie'}
-                          </button>
-                        )}
-                      </Menu.Item>
-                      <div className="border-t border-slate-100 my-1" />
-                      <Menu.Item>
-                        {({ active }) => (
-                          <button
-                            onClick={() => {
-                              if (confirm(`Remove &quot;${item.title}&quot;? This action cannot be undone.`)) {
-                                handleDelete(item.id);
-                              }
-                            }}
-                            className={`w-full text-left px-4 py-2 text-sm font-semibold ${active ? 'bg-red-50 text-red-700' : 'text-red-600 hover:bg-red-50'}`}
-                          >
-                             Remove
-                          </button>
-                        )}
-                      </Menu.Item>
-                    </div>
-                  </Menu.Items>
-                </Menu>
               </div>
             </motion.li>
           ))}
@@ -548,8 +461,8 @@ export default function WatchlistItems() {
       {/* Rate Modal */}
       {rateItem && (
         <Dialog open={!!rateItem} onClose={() => setRateItem(null)} className="fixed z-50 inset-0 overflow-y-auto">
-          <div className="flex items-center justify-center min-h-screen px-2 sm:px-4">
-            <div className="fixed inset-0 bg-black opacity-30" aria-hidden="true" />
+          <div className="fixed inset-0 bg-black opacity-30" aria-hidden="true" />
+          <div className="flex items-end justify-center min-h-screen px-2 sm:px-4">
             <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-sm mx-auto p-6 sm:p-8 z-10 transition-all duration-200 scale-100">
               <button
                 type="button"
@@ -578,7 +491,7 @@ export default function WatchlistItems() {
                         className="form-radio text-green-600 w-5 h-5"
                       />
                       <span className="ml-2 text-base flex items-center text-green-700 font-semibold">
-                        <span className="mr-1 text-lg">👍👍</span> I loved it
+                        <span className="mr-1 text-lg">👍��</span> I loved it
                       </span>
                     </label>
                     <label className={`inline-flex items-center cursor-pointer rounded-lg px-2 py-1 transition ${rateValue === 'liked' ? 'bg-blue-100 ring-2 ring-blue-400' : ''}`}>
@@ -654,6 +567,144 @@ export default function WatchlistItems() {
                 </div>
               </form>
             </div>
+          </div>
+        </Dialog>
+      )}
+
+      {/* Modal for bottom sheet/modal */}
+      {modalItem && (
+        <Dialog open={!!modalItem} onClose={() => setModalItem(null)} className="fixed z-50 inset-0 overflow-y-auto">
+          <div className="fixed inset-0 bg-black opacity-30" aria-hidden="true" />
+          <div className="flex items-end justify-center min-h-screen px-2 sm:px-4">
+            <Dialog.Panel
+              className="
+                fixed bottom-0 left-0 right-0 w-full rounded-t-2xl
+                sm:static sm:mx-auto sm:my-16 sm:rounded-2xl sm:max-w-lg
+                bg-white shadow-2xl p-6 sm:p-8 z-10 transition-all duration-200 scale-100
+              "
+            >
+              <button
+                type="button"
+                onClick={() => setModalItem(null)}
+                className="absolute top-4 right-4 text-slate-400 hover:text-slate-700 focus:outline-none"
+                aria-label="Close"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+              {/* Modal content: poster, title, year, platform, season, status, rating, added, tagline, overview, actions */}
+              <div className="flex gap-4 mb-4">
+                <div className="flex flex-col items-center mr-4">
+                  {modalItem.tmdbPosterPath ? (
+                    <Image
+                      src={`https://image.tmdb.org/t/p/w154${modalItem.tmdbPosterPath}`}
+                      alt={`${modalItem.title} poster`}
+                      width={MODAL_POSTER_WIDTH}
+                      height={MODAL_POSTER_HEIGHT}
+                      className="rounded shadow object-cover border border-slate-200"
+                      style={{ aspectRatio: '2/3', width: MODAL_POSTER_WIDTH, height: MODAL_POSTER_HEIGHT }}
+                      unoptimized
+                    />
+                  ) : (
+                    <Image
+                      src="/no-image.svg"
+                      alt="No poster available"
+                      width={MODAL_POSTER_WIDTH}
+                      height={MODAL_POSTER_HEIGHT}
+                      className="rounded shadow bg-slate-200 object-cover border border-slate-200"
+                      style={{ aspectRatio: '2/3', width: MODAL_POSTER_WIDTH, height: MODAL_POSTER_HEIGHT }}
+                      unoptimized
+                    />
+                  )}
+                  {modalItem.tmdbTvNetworks && (
+                    <div className="mt-2 text-xs text-slate-400 text-center max-w-[90px] truncate">{modalItem.tmdbTvNetworks}</div>
+                  )}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="font-semibold text-lg">{modalItem.title}</span>
+                  </div>
+                  <div className="flex items-center gap-1 text-slate-500 text-sm mb-1">
+                    {modalItem.type === 'movie' ? (
+                      <FilmIcon className="w-5 h-5 text-slate-400" />
+                    ) : (
+                      <TvIcon className="w-5 h-5 text-indigo-400" />
+                    )}
+                    <span>
+                      {modalItem.type === 'movie' ? 'Movie' : 'TV Show'}
+                      {(modalItem.type === 'movie' && modalItem.tmdbMovieReleaseYear) || (modalItem.type === 'show' && modalItem.tmdbTvFirstAirYear) ? (
+                        <>
+                          {' '}
+                          {modalItem.type === 'movie' && modalItem.tmdbMovieReleaseYear && (
+                            <span>({modalItem.tmdbMovieReleaseYear})</span>
+                          )}
+                          {modalItem.type === 'show' && modalItem.tmdbTvFirstAirYear && modalItem.tmdbTvLastAirYear && (
+                            <span>({modalItem.tmdbTvFirstAirYear}–{modalItem.tmdbTvLastAirYear})</span>
+                          )}
+                          {modalItem.type === 'show' && modalItem.tmdbTvFirstAirYear && !modalItem.tmdbTvLastAirYear && (
+                            <span>({modalItem.tmdbTvFirstAirYear})</span>
+                          )}
+                        </>
+                      ) : null}
+                    </span>
+                  </div>
+                  {/* Season info for shows */}
+                  {modalItem.type === 'show' && modalItem.currentSeason && (
+                    <p className="text-xs text-slate-500 mt-0.5">
+                      Season {modalItem.currentSeason}
+                      {modalItem.totalSeasons ? ` of ${modalItem.totalSeasons}` : ''}
+                    </p>
+                  )}
+                  {/* Status badge */}
+                  <div className="mt-1">
+                    <span
+                      className={`px-2 py-0.5 text-xs font-medium rounded-full 
+                        ${modalItem.status === 'want-to-watch' ? 'bg-blue-100 text-blue-700' :
+                          modalItem.status === 'watching' ? 'bg-yellow-100 text-yellow-700' :
+                          modalItem.status === 'finished' ? 'bg-green-100 text-green-700' :
+                          'bg-slate-100 text-slate-700' 
+                        }`}
+                    >
+                      {modalItem.status === 'want-to-watch' ? 'Want to Watch' : modalItem.status.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                    </span>
+                  </div>
+                  {/* Rating badge */}
+                  <div className="mt-1">
+                    {modalItem.rating === 'loved' && (
+                      <span className="inline-block px-2 py-0.5 text-xs font-semibold rounded-full bg-pink-100 text-pink-700">Loved</span>
+                    )}
+                    {modalItem.rating === 'liked' && (
+                      <span className="inline-block px-2 py-0.5 text-xs font-semibold rounded-full bg-blue-100 text-blue-700">Liked</span>
+                    )}
+                    {modalItem.rating === 'not-for-me' && (
+                      <span className="inline-block px-2 py-0.5 text-xs font-semibold rounded-full bg-slate-200 text-slate-600">Not for me</span>
+                    )}
+                    {!modalItem.rating && (
+                      <span className="inline-block px-2 py-0.5 text-xs font-normal rounded-full bg-slate-50 text-slate-400">Not rated</span>
+                    )}
+                  </div>
+                </div>
+              </div>
+              {/* Added date above tagline/overview */}
+              {modalItem.createdAt && (
+                <div className="mt-2 text-xs text-slate-400">
+                  Added: {new Date(modalItem.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
+                </div>
+              )}
+              {modalItem.tmdbTagline && (
+                <div className="mb-1 italic text-slate-500 text-sm">{modalItem.tmdbTagline}</div>
+              )}
+              {modalItem.tmdbOverview && (
+                <div className="mb-1 text-slate-700 text-sm">{modalItem.tmdbOverview}</div>
+              )}
+              {/* Actions row */}
+              <div className="flex gap-3 mt-6 justify-end">
+                <button className="px-3 py-1 rounded bg-blue-100 text-blue-700 text-sm font-medium hover:bg-blue-200">Edit</button>
+                <button className="px-3 py-1 rounded bg-green-100 text-green-700 text-sm font-medium hover:bg-green-200">Rate</button>
+                <button className="px-3 py-1 rounded bg-red-100 text-red-700 text-sm font-medium hover:bg-red-200">Remove</button>
+              </div>
+            </Dialog.Panel>
           </div>
         </Dialog>
       )}

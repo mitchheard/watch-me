@@ -482,7 +482,7 @@ export default function WatchlistItems() {
         }} className="fixed z-50 inset-0 overflow-y-auto">
           <div className="fixed inset-0 bg-black opacity-30" aria-hidden="true" />
           <div className="flex items-end sm:items-center justify-center min-h-screen px-2 sm:px-4">
-            <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-sm mx-auto p-6 sm:p-8 z-10 transition-all duration-200 scale-100">
+            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm max-h-[90vh] overflow-y-auto sm:max-w-lg sm:max-h-[90vh] mx-auto p-6 sm:p-8 z-10 transition-all duration-200 scale-100">
               <button
                 type="button"
                 onClick={() => {

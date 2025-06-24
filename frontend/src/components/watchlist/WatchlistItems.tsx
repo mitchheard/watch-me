@@ -11,8 +11,7 @@ import { motion } from 'framer-motion';
 import Image from 'next/image';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'react-hot-toast';
-import { Menu, Dialog } from '@headlessui/react';
-import { EllipsisVerticalIcon } from '@heroicons/react/24/outline';
+import { Dialog } from '@headlessui/react';
 
 // type FilterType = 'all' | 'movie' | 'show';
 type FilterStatus = 'all' | 'want-to-watch' | 'watching' | 'finished';
@@ -31,7 +30,6 @@ export default function WatchlistItems() {
   // No need for isEditModalOpen, selectedItem existing will trigger the modal with WatchlistForm
   const { type, status, updateFilters } = useWatchlistFilters();
   const [hasMounted, setHasMounted] = useState(false);
-  const [expandedId, setExpandedId] = useState<number | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
   const [rateItem, setRateItem] = useState<WatchItem | null>(null);
   const [rateValue, setRateValue] = useState<string | null>(null);
@@ -136,8 +134,7 @@ export default function WatchlistItems() {
       setRateValue(null);
       fetchItems();
       toast.success('Rating saved');
-    } catch (err) {
-      console.error('Error updating rating:', err);
+    } catch (_err) {
       toast.error('Failed to update rating');
     } finally {
       setIsRateSubmitting(false);
@@ -409,7 +406,7 @@ export default function WatchlistItems() {
                       className="form-radio text-red-600 w-5 h-5"
                     />
                     <span className="text-2xl">👎</span>
-                    <span className="font-semibold text-red-700">Wasn't for me</span>
+                    <span className="font-semibold text-red-700">Wasn&apos;t for me</span>
                   </label>
                 </div>
               </div>
@@ -439,7 +436,7 @@ export default function WatchlistItems() {
                       setRateValue(null);
                       fetchItems();
                       toast.success('Rating cleared!');
-                    } catch (err) {
+                    } catch (_err) {
                       toast.error('Failed to clear rating');
                     } finally {
                       setIsRateSubmitting(false);
@@ -550,7 +547,7 @@ export default function WatchlistItems() {
                         className="form-radio text-red-600 w-5 h-5"
                       />
                       <span className="text-2xl">👎</span>
-                      <span className="font-semibold text-red-700">Wasn't for me</span>
+                      <span className="font-semibold text-red-700">Wasn&apos;t for me</span>
                     </label>
                   </div>
                 </div>
@@ -581,8 +578,7 @@ export default function WatchlistItems() {
                         setRateValue(null);
                         fetchItems();
                         toast.success('Rating cleared!');
-                      } catch (err) {
-                        console.error('Error updating rating:', err);
+                      } catch (_err) {
                         toast.error('Failed to clear rating');
                       } finally {
                         setIsRateSubmitting(false);

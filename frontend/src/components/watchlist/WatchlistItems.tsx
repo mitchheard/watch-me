@@ -65,8 +65,10 @@ export default function WatchlistItems() {
   };
 
   const handleDelete = async (id: number) => {
+    if (!window.confirm('Are you sure you want to remove this item from your watchlist?')) return;
     const res = await fetch(`/api/watchlist?id=${id}`, { method: 'DELETE' });
     if (res.ok) {
+      setModalItem(null); // Close details modal after delete
       fetchItems();
       toast.error('Removed from list');
     }
@@ -86,8 +88,11 @@ export default function WatchlistItems() {
   };
 
   const handleEdit = (item: WatchItem) => {
-    setSelectedItem(item);
-    setModalStep('edit');
+    setModalItem(null); // Close details modal first
+    setTimeout(() => {
+      setSelectedItem(item);
+      setModalStep('edit');
+    }, 0);
   };
 
   const handleUpdateItemSuccess = async (updatedItem?: WatchItem) => {
@@ -101,12 +106,16 @@ export default function WatchlistItems() {
   };
 
   const handleCancelEdit = () => {
-    setSelectedItem(null); // Close modal on cancel
+    if (selectedItem) setModalItem(selectedItem); // Reopen details modal
+    setSelectedItem(null); // Close edit modal
   };
 
   const handleOpenRateModal = (item: WatchItem) => {
-    setRateItem(item);
-    setRateValue(item.rating ?? null);
+    setModalItem(null); // Close details modal first
+    setTimeout(() => {
+      setRateItem(item);
+      setRateValue(item.rating ?? null);
+    }, 0);
   };
 
   const handleRateSubmit = async (e: React.FormEvent) => {
@@ -356,8 +365,11 @@ export default function WatchlistItems() {
             <form onSubmit={handleRateSubmit} className="space-y-6">
               <div>
                 <label className="block text-base font-medium text-slate-700 mb-2 text-center">Rating</label>
-                <div className="flex flex-col gap-3 sm:flex-row sm:gap-4 justify-center">
-                  <label className={`inline-flex items-center cursor-pointer rounded-lg px-2 py-1 transition ${rateValue === 'loved' ? 'bg-green-100 ring-2 ring-green-400' : ''}`}>
+                <div className="space-y-3">
+                  <label
+                    className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition w-full
+                      ${rateValue === 'loved' ? 'bg-green-50 border-green-300 ring-2 ring-green-400' : 'border-slate-200 hover:bg-slate-50'}`}
+                  >
                     <input
                       type="radio"
                       name="rating"
@@ -366,11 +378,13 @@ export default function WatchlistItems() {
                       onChange={() => setRateValue('loved')}
                       className="form-radio text-green-600 w-5 h-5"
                     />
-                    <span className="ml-2 text-base flex items-center text-green-700 font-semibold">
-                      <span className="mr-1 text-lg">👍👍</span> I loved it
-                    </span>
+                    <span className="text-2xl">👍👍</span>
+                    <span className="font-semibold text-green-700">I loved it</span>
                   </label>
-                  <label className={`inline-flex items-center cursor-pointer rounded-lg px-2 py-1 transition ${rateValue === 'liked' ? 'bg-blue-100 ring-2 ring-blue-400' : ''}`}>
+                  <label
+                    className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition w-full
+                      ${rateValue === 'liked' ? 'bg-blue-50 border-blue-300 ring-2 ring-blue-400' : 'border-slate-200 hover:bg-slate-50'}`}
+                  >
                     <input
                       type="radio"
                       name="rating"
@@ -379,11 +393,13 @@ export default function WatchlistItems() {
                       onChange={() => setRateValue('liked')}
                       className="form-radio text-blue-600 w-5 h-5"
                     />
-                    <span className="ml-2 text-base flex items-center text-blue-700 font-semibold">
-                      <span className="mr-1 text-lg">👍</span> I liked it
-                    </span>
+                    <span className="text-2xl">👍</span>
+                    <span className="font-semibold text-blue-700">I liked it</span>
                   </label>
-                  <label className={`inline-flex items-center cursor-pointer rounded-lg px-2 py-1 transition ${rateValue === 'not-for-me' ? 'bg-red-100 ring-2 ring-red-400' : ''}`}>
+                  <label
+                    className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition w-full
+                      ${rateValue === 'not-for-me' ? 'bg-red-50 border-red-300 ring-2 ring-red-400' : 'border-slate-200 hover:bg-slate-50'}`}
+                  >
                     <input
                       type="radio"
                       name="rating"
@@ -392,16 +408,18 @@ export default function WatchlistItems() {
                       onChange={() => setRateValue('not-for-me')}
                       className="form-radio text-red-600 w-5 h-5"
                     />
-                    <span className="ml-2 text-base flex items-center text-red-700 font-semibold">
-                      <span className="mr-1 text-lg">👎</span> Wasn&apos;t for me
-                    </span>
+                    <span className="text-2xl">👎</span>
+                    <span className="font-semibold text-red-700">Wasn't for me</span>
                   </label>
                 </div>
               </div>
               <div className="flex flex-col gap-2 sm:flex-row sm:justify-end sm:gap-3 mt-4">
                 <button
                   type="button"
-                  onClick={() => setSelectedItem(null)}
+                  onClick={() => {
+                    if (selectedItem) setModalItem(selectedItem);
+                    setSelectedItem(null);
+                  }}
                   className="rounded-md border border-gray-300 bg-white px-4 py-2 text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
                 >
                   Cancel
@@ -460,13 +478,21 @@ export default function WatchlistItems() {
 
       {/* Rate Modal */}
       {rateItem && (
-        <Dialog open={!!rateItem} onClose={() => setRateItem(null)} className="fixed z-50 inset-0 overflow-y-auto">
+        <Dialog open={!!rateItem} onClose={() => {
+          if (rateItem) setModalItem(rateItem);
+          setRateItem(null);
+          setRateValue(null);
+        }} className="fixed z-50 inset-0 overflow-y-auto">
           <div className="fixed inset-0 bg-black opacity-30" aria-hidden="true" />
-          <div className="flex items-end justify-center min-h-screen px-2 sm:px-4">
+          <div className="flex items-end sm:items-center justify-center min-h-screen px-2 sm:px-4">
             <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-sm mx-auto p-6 sm:p-8 z-10 transition-all duration-200 scale-100">
               <button
                 type="button"
-                onClick={() => setRateItem(null)}
+                onClick={() => {
+                  if (rateItem) setModalItem(rateItem);
+                  setRateItem(null);
+                  setRateValue(null);
+                }}
                 className="absolute top-4 right-4 text-slate-400 hover:text-slate-700 focus:outline-none"
                 aria-label="Close"
               >
@@ -480,8 +506,11 @@ export default function WatchlistItems() {
               <form onSubmit={handleRateSubmit} className="space-y-6">
                 <div>
                   <label className="block text-base font-medium text-slate-700 mb-2 text-center">Rating</label>
-                  <div className="flex flex-col gap-3 sm:flex-row sm:gap-4 justify-center">
-                    <label className={`inline-flex items-center cursor-pointer rounded-lg px-2 py-1 transition ${rateValue === 'loved' ? 'bg-green-100 ring-2 ring-green-400' : ''}`}>
+                  <div className="space-y-3">
+                    <label
+                      className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition w-full
+                        ${rateValue === 'loved' ? 'bg-green-50 border-green-300 ring-2 ring-green-400' : 'border-slate-200 hover:bg-slate-50'}`}
+                    >
                       <input
                         type="radio"
                         name="rating"
@@ -490,11 +519,13 @@ export default function WatchlistItems() {
                         onChange={() => setRateValue('loved')}
                         className="form-radio text-green-600 w-5 h-5"
                       />
-                      <span className="ml-2 text-base flex items-center text-green-700 font-semibold">
-                        <span className="mr-1 text-lg">👍��</span> I loved it
-                      </span>
+                      <span className="text-2xl">👍👍</span>
+                      <span className="font-semibold text-green-700">I loved it</span>
                     </label>
-                    <label className={`inline-flex items-center cursor-pointer rounded-lg px-2 py-1 transition ${rateValue === 'liked' ? 'bg-blue-100 ring-2 ring-blue-400' : ''}`}>
+                    <label
+                      className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition w-full
+                        ${rateValue === 'liked' ? 'bg-blue-50 border-blue-300 ring-2 ring-blue-400' : 'border-slate-200 hover:bg-slate-50'}`}
+                    >
                       <input
                         type="radio"
                         name="rating"
@@ -503,11 +534,13 @@ export default function WatchlistItems() {
                         onChange={() => setRateValue('liked')}
                         className="form-radio text-blue-600 w-5 h-5"
                       />
-                      <span className="ml-2 text-base flex items-center text-blue-700 font-semibold">
-                        <span className="mr-1 text-lg">👍</span> I liked it
-                      </span>
+                      <span className="text-2xl">👍</span>
+                      <span className="font-semibold text-blue-700">I liked it</span>
                     </label>
-                    <label className={`inline-flex items-center cursor-pointer rounded-lg px-2 py-1 transition ${rateValue === 'not-for-me' ? 'bg-red-100 ring-2 ring-red-400' : ''}`}>
+                    <label
+                      className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition w-full
+                        ${rateValue === 'not-for-me' ? 'bg-red-50 border-red-300 ring-2 ring-red-400' : 'border-slate-200 hover:bg-slate-50'}`}
+                    >
                       <input
                         type="radio"
                         name="rating"
@@ -516,16 +549,19 @@ export default function WatchlistItems() {
                         onChange={() => setRateValue('not-for-me')}
                         className="form-radio text-red-600 w-5 h-5"
                       />
-                      <span className="ml-2 text-base flex items-center text-red-700 font-semibold">
-                        <span className="mr-1 text-lg">👎</span> Wasn&apos;t for me
-                      </span>
+                      <span className="text-2xl">👎</span>
+                      <span className="font-semibold text-red-700">Wasn't for me</span>
                     </label>
                   </div>
                 </div>
                 <div className="flex flex-col gap-2 sm:flex-row sm:justify-end sm:gap-3 mt-4">
                   <button
                     type="button"
-                    onClick={() => setRateItem(null)}
+                    onClick={() => {
+                      if (rateItem) setModalItem(rateItem);
+                      setRateItem(null);
+                      setRateValue(null);
+                    }}
                     className="rounded-md border border-gray-300 bg-white px-4 py-2 text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
                   >
                     Cancel
@@ -575,7 +611,7 @@ export default function WatchlistItems() {
       {modalItem && (
         <Dialog open={!!modalItem} onClose={() => setModalItem(null)} className="fixed z-50 inset-0 overflow-y-auto">
           <div className="fixed inset-0 bg-black opacity-30" aria-hidden="true" />
-          <div className="flex items-end justify-center min-h-screen px-2 sm:px-4">
+          <div className="flex items-end sm:items-center justify-center min-h-screen px-2 sm:px-4">
             <Dialog.Panel
               className="
                 fixed bottom-0 left-0 right-0 w-full rounded-t-2xl
@@ -700,9 +736,24 @@ export default function WatchlistItems() {
               )}
               {/* Actions row */}
               <div className="flex gap-3 mt-6 justify-end">
-                <button className="px-3 py-1 rounded bg-blue-100 text-blue-700 text-sm font-medium hover:bg-blue-200">Edit</button>
-                <button className="px-3 py-1 rounded bg-green-100 text-green-700 text-sm font-medium hover:bg-green-200">Rate</button>
-                <button className="px-3 py-1 rounded bg-red-100 text-red-700 text-sm font-medium hover:bg-red-200">Remove</button>
+                <button
+                  className="px-3 py-1 rounded bg-blue-100 text-blue-700 text-sm font-medium hover:bg-blue-200"
+                  onClick={() => handleEdit(modalItem)}
+                >
+                  Edit
+                </button>
+                <button
+                  className="px-3 py-1 rounded bg-green-100 text-green-700 text-sm font-medium hover:bg-green-200"
+                  onClick={() => handleOpenRateModal(modalItem)}
+                >
+                  Rate
+                </button>
+                <button
+                  className="px-3 py-1 rounded bg-red-100 text-red-700 text-sm font-medium hover:bg-red-200"
+                  onClick={() => handleDelete(modalItem.id)}
+                >
+                  Remove
+                </button>
               </div>
             </Dialog.Panel>
           </div>

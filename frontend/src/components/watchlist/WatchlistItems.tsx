@@ -681,7 +681,7 @@ export default function WatchlistItems() {
               <button
                 type="button"
                 onClick={() => setModalItem(null)}
-                className="absolute top-4 right-4 text-slate-400 hover:text-slate-700 focus:outline-none"
+                className="absolute top-4 right-4 text-slate-400 hover:text-slate-700 focus:outline-none z-10"
                 aria-label="Close"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -716,10 +716,10 @@ export default function WatchlistItems() {
                     <div className="mt-2 text-xs text-slate-400 text-center max-w-[90px] truncate">{modalItem.tmdbTvNetworks}</div>
                   )}
                 </div>
-                <div className="flex-1 min-w-0">
+                <div className="flex-1 min-w-0 pr-8">
                   {/* Title and Type Badge */}
-                  <div className="flex items-start justify-between gap-2 mb-2">
-                    <h2 className="font-semibold text-xl text-slate-900">{modalItem.title}</h2>
+                  <div className="flex items-start gap-2 mb-2">
+                    <h2 className="font-semibold text-xl text-slate-900 flex-1">{modalItem.title}</h2>
                     <span
                       className={`px-2.5 py-1 text-xs font-semibold rounded-full flex-shrink-0 inline-flex items-center
                         ${modalItem.type === 'movie' 
@@ -830,21 +830,21 @@ export default function WatchlistItems() {
                 <div className="mb-1 text-slate-700 text-sm">{modalItem.tmdbOverview}</div>
               )}
               {/* Actions row */}
-              <div className="flex gap-3 mt-6 justify-end">
+              <div className="flex gap-2 mt-6 justify-end">
                 <button
-                  className="px-3 py-1 rounded bg-blue-100 text-blue-700 text-sm font-medium hover:bg-blue-200"
+                  className="px-4 py-2 rounded-lg border border-slate-300 bg-white text-slate-700 text-sm font-medium hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
                   onClick={() => handleEdit(modalItem)}
                 >
                   Edit
                 </button>
                 <button
-                  className="px-3 py-1 rounded bg-green-100 text-green-700 text-sm font-medium hover:bg-green-200"
+                  className="px-4 py-2 rounded-lg border border-slate-300 bg-white text-slate-700 text-sm font-medium hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
                   onClick={() => handleOpenRateModal(modalItem)}
                 >
                   Rate
                 </button>
                 <button
-                  className="px-3 py-1 rounded bg-red-100 text-red-700 text-sm font-medium hover:bg-red-200"
+                  className="px-4 py-2 rounded-lg border border-red-300 bg-red-50 text-red-700 text-sm font-medium hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-colors"
                   onClick={() => handleDelete(modalItem.id)}
                 >
                   Remove

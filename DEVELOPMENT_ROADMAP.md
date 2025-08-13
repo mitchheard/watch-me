@@ -53,12 +53,22 @@ This document tracks the development progress, current priorities, and future pl
 ## 🎯 Immediate Priorities (Next 2-4 Weeks)
 
 ### High Priority
-1. **Social Features Foundation**
-   - [ ] User profile pages
-   - [ ] Public watchlist sharing
-   - [ ] Follow/unfollow functionality
+1. **New Seasons Discovery** 🆕
+   - [ ] Page to show shows with new seasons for "finished" items
+   - [ ] TMDB integration to detect new seasons automatically
+   - [ ] UX decision: How to handle ratings when re-adding shows?
 
-2. **Recommendations Engine** ✅ **COMPLETED - AI-Powered Engine**
+2. **Ratings & Reviews Hub** 🆕
+   - [ ] Dedicated page to view all loved/liked content
+   - [ ] Filter "Finished" items by rating
+   - [ ] Personal recommendations based on ratings
+
+3. **Social Features Foundation**
+   - [ ] Public watchlist sharing
+   - [ ] Friend system (add/manage friends)
+   - [ ] Shared lists for couples/roommates
+
+4. **Recommendations Engine** ✅ **COMPLETED - AI-Powered Engine**
    - [x] AI-powered recommendation system using OpenAI GPT-4o-mini
    - [x] Multiple recommendation strategies (recent additions, quick wins, deep dives, etc.)
    - [x] Robust validation and error handling
@@ -97,6 +107,36 @@ This document tracks the development progress, current priorities, and future pl
   - [ ] Content-based filtering (genre, actor, director preferences)
   - [ ] Recommendation caching and performance optimization
   - [ ] A/B testing framework for different strategies
+
+- [ ] **New Seasons Discovery**
+  - [ ] Page to show shows with new seasons for "finished" items
+  - [ ] TMDB integration to detect new seasons automatically
+  - [ ] Notification system for new season alerts
+  - [ ] **UX Decision Needed:** How to handle ratings when re-adding shows?
+    - [ ] Option A: Keep ratings by show (simpler)
+    - [ ] Option B: Season-specific ratings (more detailed)
+    - [ ] Option C: Hybrid approach (show rating + season notes)
+
+- [ ] **Ratings & Reviews Hub**
+  - [ ] Dedicated page to view all loved/liked content
+  - [ ] Filter "Finished" items by rating (Loved, Liked, Not for me)
+  - [ ] Personal recommendations based on ratings
+  - [ ] Export rated content for sharing
+
+- [ ] **Social Features**
+  - [ ] **Public Watchlist Sharing**
+    - [ ] Public profile pages with watchlists
+    - [ ] Shareable URLs for watchlists
+    - [ ] Privacy controls (public/private/friends-only)
+  - [ ] **Friend System**
+    - [ ] Add/manage friends functionality
+    - [ ] Friend discovery and suggestions
+    - [ ] Activity feed of friends' watching activity
+  - [ ] **Shared Lists**
+    - [ ] Create collaborative watchlists (couples, roommates)
+    - [ ] Invite friends to shared lists
+    - [ ] Real-time updates for shared lists
+    - [ ] Voting system for shared list items
 
 - [ ] **Watch Party Functionality**
   - [ ] Real-time synchronized watching

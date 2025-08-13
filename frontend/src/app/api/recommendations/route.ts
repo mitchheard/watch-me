@@ -438,6 +438,8 @@ Return JSON array:
 
 export async function GET(_request: NextRequest) {
   console.log('Recommendations API called');
+  let watchlist: WatchItem[] = [];
+  
   try {
     console.log('Getting user ID...');
     const userId = await getUserId();
@@ -445,7 +447,6 @@ export async function GET(_request: NextRequest) {
 
     // Get user's watchlist
     console.log('Fetching watchlist from database...');
-    let watchlist: WatchItem[];
     try {
       watchlist = await prisma.watchItem.findMany({
         where: {

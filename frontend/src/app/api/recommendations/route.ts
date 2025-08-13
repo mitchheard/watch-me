@@ -79,33 +79,14 @@ async function getOpenAIRecommendations(watchlist: WatchItem[]): Promise<Recomme
     seasons: item.tmdbTvNumberOfSeasons
   }));
 
-  const prompt = `You are a movie and TV show recommendation expert. Based on the user's watchlist below, recommend 5 items they should watch next. 
+  const prompt = `Analyze this watchlist and recommend 5 "want-to-watch" items to prioritize:
 
-User's Watchlist:
-${watchlistSummary.map(item => `
-- ${item.title} (${item.type}, ${item.status})${item.rating ? `, Rating: ${item.rating}` : ''}${item.notes ? `, Notes: ${item.notes}` : ''}${item.overview ? `, Overview: ${item.overview.substring(0, 100)}...` : ''}
-`).join('')}
+${watchlistSummary.map(item => `${item.title} (${item.type}, ${item.status})${item.rating ? `, rated: ${item.rating}` : ''}${item.notes ? `, notes: ${item.notes.substring(0, 50)}` : ''}`).join('\n')}
 
-Please analyze their preferences and recommend 5 items from their "want-to-watch" list that they should prioritize. Consider:
-1. Their ratings and notes on finished items
-2. The types of content they enjoy (movies vs shows)
-3. The genres and themes they seem to prefer
-4. The time commitment they're willing to make (movies vs multi-season shows)
-5. The recency and popularity of the content
+Consider: ratings, content type preferences, themes, time commitment, recency.
 
-For each recommendation, provide:
-1. The item ID (from the watchlist)
-2. A compelling reason why they should watch it next (2-3 sentences)
-3. A confidence score between 0.1 and 1.0
-
-Return your response as a JSON array with this exact structure:
-[
-  {
-    "id": [item_id],
-    "reason": "[compelling reason to watch this next]",
-    "confidence": [score_between_0.1_and_1.0]
-  }
-]`;
+Return JSON array:
+[{"id": [item_id], "reason": "[2-3 sentence reason]", "confidence": [0.1-1.0]}]`;
 
   try {
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -115,7 +96,7 @@ Return your response as a JSON array with this exact structure:
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4',
+        model: 'gpt-4o-mini', // Using GPT-4o-mini (formerly GPT-4o-mini) for cost efficiency
         messages: [
           {
             role: 'system',

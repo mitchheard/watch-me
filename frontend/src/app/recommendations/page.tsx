@@ -215,7 +215,7 @@ export default function RecommendationsPage() {
 
                   {/* Overview */}
                   {item.tmdbOverview && (
-                    <p className="text-gray-600 mb-4 line-clamp-3">
+                    <p className="text-gray-600 mb-4 overflow-hidden text-ellipsis" style={{ display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical' }}>
                       {item.tmdbOverview}
                     </p>
                   )}

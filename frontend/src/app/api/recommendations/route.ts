@@ -61,7 +61,11 @@ async function getUserId() {
   return user.id;
 }
 
-async function getOpenAIRecommendations(watchlist: WatchItem[]): Promise<Recommendation[]> {
+async function getOpenAIRecommendations(watchlist: WatchItem[]): Promise<{
+  recommendations: Recommendation[];
+  strategy: string;
+  strategyFocus: string;
+}> {
   console.log('OpenAI API key configured:', !!process.env.OPENAI_API_KEY);
   console.log('OpenAI API key length:', process.env.OPENAI_API_KEY?.length || 0);
   if (!process.env.OPENAI_API_KEY) {
@@ -214,8 +218,16 @@ Return JSON array:
       throw new Error('No response from OpenAI');
     }
 
-    // Parse the JSON response
-    const aiRecommendations = JSON.parse(content);
+    // Parse the JSON response - handle markdown formatting
+    let cleanContent = content.trim();
+    if (cleanContent.startsWith('```json')) {
+      cleanContent = cleanContent.replace(/^```json\n/, '').replace(/\n```$/, '');
+    } else if (cleanContent.startsWith('```')) {
+      cleanContent = cleanContent.replace(/^```\n/, '').replace(/\n```$/, '');
+    }
+    
+    console.log('Cleaned OpenAI response:', cleanContent.substring(0, 200) + '...');
+    const aiRecommendations = JSON.parse(cleanContent);
     
     // Map AI recommendations back to full watchlist items
     const recommendations: Recommendation[] = aiRecommendations.map((rec: any) => {
@@ -238,7 +250,11 @@ Return JSON array:
       };
     }).filter(Boolean);
 
-    return recommendations;
+    return {
+      recommendations,
+      strategy: randomStrategy.name,
+      strategyFocus: randomStrategy.focus,
+    };
   } catch (error) {
     console.error('OpenAI API error:', error);
     throw new Error('Failed to generate recommendations');
@@ -286,10 +302,15 @@ export async function GET(request: NextRequest) {
 
     // Get AI recommendations
     let recommendations: Recommendation[];
+    let strategyName = "fallback";
+    let strategyFocus = "recommend from your want-to-watch list";
     
     try {
       console.log('Attempting OpenAI recommendations...');
-      recommendations = await getOpenAIRecommendations(watchlist);
+      const result = await getOpenAIRecommendations(watchlist);
+      recommendations = result.recommendations;
+      strategyName = result.strategy;
+      strategyFocus = result.strategyFocus;
       console.log('OpenAI recommendations successful:', recommendations.length);
     } catch (error) {
       console.error('OpenAI recommendations failed, using fallback:', error);
@@ -320,19 +341,13 @@ export async function GET(request: NextRequest) {
         tmdbMovieRuntime: item.tmdbMovieRuntime,
         tmdbTvNumberOfSeasons: item.tmdbTvNumberOfSeasons,
       }));
-      
-      // Set fallback strategy for the response
-      randomStrategy = {
-        name: "fallback",
-        focus: "recommend from your want-to-watch list"
-      };
     }
 
     return NextResponse.json({
       recommendations,
       totalItems: watchlist.length,
-      strategy: randomStrategy.name,
-      strategyFocus: randomStrategy.focus,
+      strategy: strategyName,
+      strategyFocus: strategyFocus,
     });
 
   } catch (error) {

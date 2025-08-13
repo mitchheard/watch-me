@@ -198,7 +198,7 @@ EXAMPLE: If you want to recommend "The Expanse" (ID: 78), your response should b
 {"id": 78, "reason": "The Expanse offers an immersive sci-fi experience...", "confidence": 0.8}
 
 Return JSON array:
-[{"id": [exact_numeric_id], "reason": "[2-3 sentence reason about THIS specific item]", "confidence": [0.1-1.0]}]`;
+[{"id": [exact_numeric_id], "title": "[exact_title_from_list]", "reason": "[2-3 sentence reason about THIS specific item]", "confidence": [0.1-1.0]}]`;
 
   try {
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -270,12 +270,21 @@ Return JSON array:
     let recommendations: Recommendation[] = validRecommendations.map((rec: any) => {
       // Try to find by ID in the shuffled watchlist (the items sent to AI)
       let item = shuffledWatchlist.find(w => w.id === rec.id);
+      
+      // If not found by ID, try to find by title (case-insensitive)
+      if (!item && rec.title) {
+        item = shuffledWatchlist.find(w => w.title.toLowerCase() === rec.title.toLowerCase());
+        if (item) {
+          console.log('⚠️  Found item by title instead of ID:', item.title, 'ID:', item.id);
+        }
+      }
+      
       if (!item) {
-        console.log('❌ Could not find item for recommendation ID:', rec.id, 'in shuffled watchlist');
+        console.log('❌ Could not find item for recommendation ID:', rec.id, 'Title:', rec.title, 'in shuffled watchlist');
         return null;
       }
       
-      console.log('✅ Found item for recommendation:', item.title, 'ID:', item.id);
+      console.log('✅ Found item for recommendation:', item.title, 'ID:', item.id, 'AI Title:', rec.title);
       return {
         id: item.id,
         title: item.title,

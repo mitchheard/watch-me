@@ -6,7 +6,7 @@ import { WatchItem, WatchlistFormData } from '@/types/watchlist';
 import WatchlistForm from './WatchlistForm'; // Import our test form
 import Modal from '@/components/Modal'; // Import Modal for WatchlistForm
 import useWatchlistFilters from '@/hooks/useWatchlistFilters';
-import { FilmIcon, TvIcon } from '@heroicons/react/24/outline';
+import { FilmIcon, TvIcon, ChevronDownIcon } from '@heroicons/react/24/outline';
 import { motion } from 'framer-motion';
 import Image from 'next/image';
 import { useAuth } from '@/contexts/AuthContext';
@@ -181,17 +181,22 @@ export default function WatchlistItems() {
         </div>
         <div className="flex items-stretch w-full sm:w-auto mt-2 sm:mt-0">
           <label htmlFor="status-filter" className="sr-only">Status</label>
-          <select
-            id="status-filter"
-            value={status}
-            onChange={e => updateFilters(type, e.target.value as FilterStatus)}
-            className="rounded-md border border-gray-300 px-3 py-2 pr-8 shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-sm w-full sm:w-auto h-full bg-[url('data:image/svg+xml;utf8,<svg fill=\'none\' stroke=\'%236B7280\' stroke-width=\'2\' viewBox=\'0 0 24 24\' xmlns=\'http://www.w3.org/2000/svg\'><path stroke-linecap=\'round\' stroke-linejoin=\'round\' d=\'M19 9l-7 7-7-7\'></path></svg>')] bg-no-repeat bg-[right_0.75rem_center] bg-[length:1.25em_1.25em]"
-          >
-            <option value="all">All Statuses</option>
-            <option value="want-to-watch">Want to Watch</option>
-            <option value="watching">Watching</option>
-            <option value="finished">Finished</option>
-          </select>
+          <div className="relative w-full sm:w-auto">
+            <select
+              id="status-filter"
+              value={status}
+              onChange={e => updateFilters(type, e.target.value as FilterStatus)}
+              className="rounded-md border border-gray-300 px-3 py-2 pr-10 shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-sm w-full sm:w-auto h-full appearance-none"
+            >
+              <option value="all">All Statuses</option>
+              <option value="want-to-watch">Want to Watch</option>
+              <option value="watching">Watching</option>
+              <option value="finished">Finished</option>
+            </select>
+            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
+              <ChevronDownIcon className="h-4 w-4 text-gray-500" />
+            </div>
+          </div>
         </div>
       </div>
 

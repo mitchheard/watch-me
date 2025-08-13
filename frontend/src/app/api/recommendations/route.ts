@@ -499,6 +499,8 @@ export async function GET(_request: NextRequest) {
       console.log('OpenAI recommendations successful:', recommendations.length);
     } catch (error) {
       console.error('OpenAI recommendations failed, using fallback:', error);
+      console.error('Error details:', error.message);
+      console.error('Error stack:', error.stack);
       // Fallback: simple recommendation based on want-to-watch items with variety
       const wantToWatchItems = watchlist.filter(item => item.status === 'want-to-watch');
       const fallbackReasons = [

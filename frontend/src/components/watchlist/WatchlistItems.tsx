@@ -209,7 +209,7 @@ export default function WatchlistItems() {
               id="status-filter"
               value={status}
               onChange={e => updateFilters(type, e.target.value as FilterStatus)}
-              className="rounded-lg border border-slate-300 px-3 py-2 pr-10 shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-sm w-full sm:w-auto h-full appearance-none bg-white"
+              className="rounded-lg border border-slate-300 px-3 py-2 pr-10 shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-base w-full sm:w-auto h-full appearance-none bg-white"
             >
               <option value="all">All Statuses ({items.length})</option>
               <option value="want-to-watch">Want to Watch ({wantToWatchCount})</option>
@@ -314,7 +314,7 @@ export default function WatchlistItems() {
                           ) : item.currentSeason ? (
                             `Season ${item.currentSeason}`
                           ) : item.totalSeasons ? (
-                            `${item.totalSeasons} seasons`
+                            `${item.totalSeasons} ${item.totalSeasons === 1 ? 'season' : 'seasons'}`
                           ) : null}
                           {item.tmdbTvFirstAirYear && (
                             <>
@@ -777,7 +777,7 @@ export default function WatchlistItems() {
                           ) : modalItem.currentSeason ? (
                             `Season ${modalItem.currentSeason}`
                           ) : modalItem.totalSeasons ? (
-                            `${modalItem.totalSeasons} seasons`
+                            `${modalItem.totalSeasons} ${modalItem.totalSeasons === 1 ? 'season' : 'seasons'}`
                           ) : null}
                           {modalItem.tmdbTvFirstAirYear && (
                             <>

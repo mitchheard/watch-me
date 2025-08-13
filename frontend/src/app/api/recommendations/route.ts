@@ -176,12 +176,14 @@ async function getOpenAIRecommendations(watchlist: WatchItem[]): Promise<{
   
   const prompt = `Analyze this watchlist subset and recommend 5 "want-to-watch" items to prioritize. ${strategyFocus}. It's ${timeContext} time:
 
-${watchlistSummary.map(item => `${item.title} (${item.type}, ${item.status})${item.rating ? `, rated: ${item.rating}` : ''}${item.notes ? `, notes: ${item.notes.substring(0, 50)}` : ''}`).join('\n')}
+${watchlistSummary.map(item => `ID: ${item.id} - ${item.title} (${item.type}, ${item.status})${item.rating ? `, rated: ${item.rating}` : ''}${item.notes ? `, notes: ${item.notes.substring(0, 50)}` : ''}`).join('\n')}
 
 Strategy: ${randomStrategy.name}. Consider: ratings, content type preferences, themes, time commitment, recency, and the current time of day.
 
+IMPORTANT: Return the exact numeric ID from the list above, not the title.
+
 Return JSON array:
-[{"id": [item_id], "reason": "[2-3 sentence reason]", "confidence": [0.1-1.0]}]`;
+[{"id": [exact_numeric_id], "reason": "[2-3 sentence reason]", "confidence": [0.1-1.0]}]`;
 
   try {
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -230,10 +232,21 @@ Return JSON array:
     const aiRecommendations = JSON.parse(cleanContent);
     
     // Map AI recommendations back to full watchlist items
+    console.log('AI recommendations received:', aiRecommendations.length);
+    console.log('AI recommendation IDs:', aiRecommendations.map((rec: any) => rec.id));
+    
     const recommendations: Recommendation[] = aiRecommendations.map((rec: any) => {
-      const item = watchlist.find(w => w.id === rec.id);
-      if (!item) return null;
+      // Try to find by title first (since AI might return title instead of ID)
+      let item = watchlist.find(w => w.id === rec.id);
+      if (!item) {
+        item = watchlist.find(w => w.title.toLowerCase() === rec.id.toLowerCase());
+      }
+      if (!item) {
+        console.log('Could not find item for recommendation:', rec.id);
+        return null;
+      }
       
+      console.log('Found item for recommendation:', item.title);
       return {
         id: item.id,
         title: item.title,

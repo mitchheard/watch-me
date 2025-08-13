@@ -769,7 +769,7 @@ export default function WatchlistItems() {
                   
                   {/* Progress Info and Years - Combined */}
                   <div className="mb-2">
-                    <span className="text-sm text-slate-600">
+                    <span className="text-xs text-slate-600">
                       {modalItem.type === 'show' && (modalItem.currentSeason || modalItem.totalSeasons) ? (
                         <>
                           {modalItem.currentSeason && modalItem.totalSeasons ? (

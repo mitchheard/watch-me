@@ -186,6 +186,8 @@ ${watchlistSummary.map(item => `ID: ${item.id} - ${item.title} (${item.type}, ${
 
 Strategy: ${randomStrategy.name}. Consider: ratings, content type preferences, themes, time commitment, recency, and the current time of day.
 
+AVAILABLE TITLES: ${shuffledWatchlist.map(item => item.title).join(', ')}
+
 CRITICAL INSTRUCTIONS:
 1. You MUST return the EXACT numeric ID from the list above
 2. You MUST include the EXACT title from the list above
@@ -253,9 +255,31 @@ Return JSON array:
     console.log('Full AI response:', JSON.stringify(aiRecommendations, null, 2));
     
     // Filter out any recommendations with undefined or invalid IDs
-    const validRecommendations = aiRecommendations.filter((rec: any) => 
+    let validRecommendations = aiRecommendations.filter((rec: any) => 
       rec.id && rec.id !== "undefined" && rec.id !== undefined && !isNaN(Number(rec.id))
     );
+    
+    // Additional validation: ensure the AI's title matches an item in our shuffled watchlist
+    validRecommendations = validRecommendations.filter((rec: any) => {
+      if (!rec.title) return false;
+      
+      const matchingItem = shuffledWatchlist.find(item => 
+        item.title.toLowerCase() === rec.title.toLowerCase()
+      );
+      
+      if (!matchingItem) {
+        console.log('❌ AI title does not match any item:', rec.title);
+        return false;
+      }
+      
+      // Also verify the ID matches the title
+      if (matchingItem.id !== rec.id) {
+        console.log('❌ AI ID and title mismatch:', rec.id, 'vs', matchingItem.id, 'for title:', rec.title);
+        return false;
+      }
+      
+      return true;
+    });
     console.log('Valid recommendations after filtering:', validRecommendations.length);
     
     console.log('=== MAPPING DEBUG ===');

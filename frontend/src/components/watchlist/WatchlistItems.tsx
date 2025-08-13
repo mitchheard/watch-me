@@ -293,7 +293,7 @@ export default function WatchlistItems() {
                       className={`px-2.5 py-1 text-sm font-medium rounded-full inline-flex items-center
                         ${item.status === 'want-to-watch' ? 'bg-blue-100 text-blue-700 border border-blue-200' :
                           item.status === 'watching' ? 'bg-orange-100 text-orange-700 border border-orange-200' :
-                          item.status === 'finished' ? 'bg-green-100 text-green-700 border border-green-200' :
+                          item.status === 'finished' ? 'bg-teal-100 text-teal-700 border border-teal-200' :
                           'bg-slate-100 text-slate-700 border border-slate-200' 
                         }`}
                     >

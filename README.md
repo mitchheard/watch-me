@@ -2,89 +2,100 @@
 
 A full-stack personal watchlist app to track movies and TV shows you want to watch, are watching, or have finished.
 
-Built with:
+## 🏗️ Tech Stack
 
-- [Next.js 14](https://nextjs.org/)
-- [Tailwind CSS](https://tailwindcss.com/)
+**Frontend:**
+- [Next.js 15](https://nextjs.org/) with App Router
 - [TypeScript](https://www.typescriptlang.org/)
-- [Prisma ORM](https://www.prisma.io/)
-- [SQLite (local dev)](https://www.sqlite.org/)
-- Ready to swap to PostgreSQL and support authentication
+- [Tailwind CSS](https://tailwindcss.com/)
+- [Headless UI](https://headlessui.com/) for accessible components
+- [Framer Motion](https://www.framer.com/motion/) for animations
+- [React Hook Form](https://react-hook-form.com/) for form handling
+
+**Backend & Database:**
+- [Prisma ORM](https://www.prisma.io/) with PostgreSQL
+- [Supabase](https://supabase.com/) for authentication and database
+- [TMDB API](https://www.themoviedb.org/documentation/api) for movie/TV data
+
+**Authentication:**
+- Google OAuth via Supabase Auth
+- Session management with Supabase SSR
 
 ---
 
 ## 🚀 Getting Started
 
 ### 1. Clone the repo
-
 ```bash
 git clone https://github.com/mitchheard/watch-me.git
 cd watch-me/frontend
 ```
 
 ### 2. Install dependencies
-
 ```bash
 npm install
 ```
 
-### 3. Set up the database
-
-```bash
-npx prisma migrate dev --name init
+### 3. Set up environment variables
+Create a `.env.local` file with:
+```env
+DATABASE_URL="your_postgresql_connection_string"
+NEXT_PUBLIC_SUPABASE_URL="your_supabase_url"
+NEXT_PUBLIC_SUPABASE_ANON_KEY="your_supabase_anon_key"
+TMDB_API_KEY="your_tmdb_api_key"
 ```
 
-### 4. Run the development server
+### 4. Set up the database
+```bash
+npx prisma migrate dev --name init
+npx prisma generate
+```
 
+### 5. Run the development server
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
 Open http://localhost:3000 in your browser to see the app.
 
-You can start editing the app by modifying `src/app/page.tsx`. The page auto-updates as you edit the file.
+## ✨ Current Features
 
-## 🧪 Features
+- **User Authentication** - Google OAuth via Supabase
+- **Movie & TV Show Tracking** - Add items to your watchlist
+- **Status Management** - Track watching, finished, or want-to-watch status
+- **Rich Metadata** - Automatic data from TMDB (posters, descriptions, ratings)
+- **Season & Episode Tracking** - For TV shows
+- **User Ratings & Notes** - Rate and add personal notes to items
+- **Search & Filtering** - Find items by title, status, or type
+- **Responsive Design** - Works on desktop and mobile
+- **Real-time Updates** - Instant UI updates with optimistic rendering
 
-- Add shows and movies to your watchlist
-- Track status: watching, finished, or want-to-watch
-- Filter and organize items
-- Full CRUD API via the Next.js App Router
-- Tailwind-styled responsive UI
-
-## 🗂 Folder Structure
+## 🗂️ Project Structure
 
 ```
-/frontend      → Full Next.js app (UI + API + DB client)
-/backend       → (Optional) Scripts, tools, infra configs
+/frontend
+├── src/
+│   ├── app/                 # Next.js App Router pages
+│   ├── components/          # Reusable UI components
+│   │   ├── watchlist/       # Watchlist-specific components
+│   │   └── ui/              # Generic UI components
+│   ├── contexts/            # React contexts (Auth, etc.)
+│   ├── hooks/               # Custom React hooks
+│   ├── lib/                 # Utility functions and configs
+│   ├── types/               # TypeScript type definitions
+│   └── generated/           # Generated types (Prisma, etc.)
+├── prisma/                  # Database schema and migrations
+└── public/                  # Static assets
 ```
 
-## 🔜 Coming Soon
+## 🔜 Planned Features
 
-- Authentication (NextAuth.js)
-- PostgreSQL deployment (Render/Supabase)
-- Mobile-friendly PWA
-- User-specific watchlists
-
-## 📚 Learn More About the Stack
-
-To learn more about the tools used:
-
-- [Next.js Documentation](https://nextjs.org/docs)
-- [Learn Next.js](https://nextjs.org/learn)
-- [Tailwind CSS Docs](https://tailwindcss.com/docs)
-- [Prisma Docs](https://www.prisma.io/docs)
-- [Deploying with Vercel](https://vercel.com/docs)
-
-## 📦 Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme).
+- Social features (sharing watchlists)
+- Recommendations based on watch history
+- Export/import watchlist data
+- Multiple watchlists per user
+- Watch party functionality
+- Mobile app version
 
 ## 🧠 Author
 

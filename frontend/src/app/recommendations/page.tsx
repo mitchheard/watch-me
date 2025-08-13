@@ -117,41 +117,41 @@ export default function RecommendationsPage() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto py-8">
-      {/* Header */}
-      <div className="text-center mb-8">
-        <div className="flex items-center justify-center gap-3 mb-4">
-          <SparklesIcon className="h-8 w-8 text-blue-600" />
-          <h1 className="text-3xl font-bold text-gray-900">What Should I Watch?</h1>
+    <div className="max-w-4xl mx-auto px-4 py-4 sm:py-6">
+      {/* Compact Header */}
+      <div className="text-center mb-4 sm:mb-6">
+        <div className="flex items-center justify-center gap-2 sm:gap-3 mb-2 sm:mb-3">
+          <SparklesIcon className="h-6 w-6 sm:h-8 sm:w-8 text-blue-600" />
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">What Should I Watch?</h1>
         </div>
-        <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+        <p className="text-sm sm:text-lg text-gray-600 max-w-2xl mx-auto">
           Based on your watchlist and preferences, here are 5 things you should watch next.
         </p>
       </div>
 
-      {/* Refresh Button */}
-      <div className="flex justify-center mb-8">
+      {/* Compact Refresh Button */}
+      <div className="flex justify-center mb-4 sm:mb-6">
         <button
           onClick={fetchRecommendations}
           disabled={isLoading}
-          className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          className="flex items-center gap-2 px-4 sm:px-6 py-2 sm:py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm sm:text-base"
         >
-          <SparklesIcon className="h-5 w-5" />
-          {isLoading ? 'Generating Recommendations...' : 'Get New Recommendations'}
+          <SparklesIcon className="h-4 w-4 sm:h-5 sm:w-5" />
+          {isLoading ? 'Generating...' : 'Get New Recommendations'}
         </button>
       </div>
 
-      {/* Strategy and Last Updated */}
+      {/* Compact Strategy and Last Updated */}
       {(strategy || lastUpdated) && (
-        <div className="text-center mb-6 space-y-2">
+        <div className="text-center mb-4 sm:mb-6 space-y-1 sm:space-y-2">
           {strategy && (
-            <div className="inline-flex items-center gap-2 px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">
-              <SparklesIcon className="h-4 w-4" />
+            <div className="inline-flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-xs sm:text-sm font-medium">
+              <SparklesIcon className="h-3 w-3 sm:h-4 sm:w-4" />
               {strategy.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')} Strategy
             </div>
           )}
           {strategyFocus && (
-            <p className="text-sm text-gray-600 max-w-2xl mx-auto">
+            <p className="text-xs sm:text-sm text-gray-600 max-w-2xl mx-auto px-2">
               {strategyFocus}
             </p>
           )}
@@ -165,30 +165,30 @@ export default function RecommendationsPage() {
 
       {/* Error State */}
       {error && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
-          <p className="text-red-700">{error}</p>
+        <div className="bg-red-50 border border-red-200 rounded-lg p-3 sm:p-4 mb-4 sm:mb-6">
+          <p className="text-red-700 text-sm sm:text-base">{error}</p>
         </div>
       )}
 
       {/* Loading State */}
       {isLoading && (
-        <div className="flex items-center justify-center py-12">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        <div className="flex items-center justify-center py-8 sm:py-12">
+          <div className="animate-spin rounded-full h-8 w-8 sm:h-12 sm:w-12 border-b-2 border-blue-600"></div>
         </div>
       )}
 
       {/* Recommendations */}
       {!isLoading && !error && recommendations.length > 0 && (
-        <div className="space-y-6">
+        <div className="space-y-4 sm:space-y-6">
           {recommendations.map((item, index) => (
             <div
               key={item.id}
               className="bg-white rounded-lg shadow-md border border-gray-200 overflow-hidden hover:shadow-lg transition-shadow"
             >
-              <div className="flex flex-col md:flex-row">
+              <div className="flex flex-col sm:flex-row">
                 {/* Poster */}
-                <div className="md:w-48 md:flex-shrink-0">
-                  <div className="relative h-64 md:h-full">
+                <div className="sm:w-48 sm:flex-shrink-0">
+                  <div className="relative h-48 sm:h-full">
                     {item.tmdbPosterPath ? (
                       <Image
                         src={`https://image.tmdb.org/t/p/w500${item.tmdbPosterPath}`}
@@ -210,29 +210,29 @@ export default function RecommendationsPage() {
                 </div>
 
                 {/* Content */}
-                <div className="flex-1 p-6">
-                  <div className="flex items-start justify-between mb-3">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-2">
-                        <span className="text-2xl font-bold text-gray-900">#{index + 1}</span>
-                        <h2 className="text-xl font-semibold text-gray-900">{item.title}</h2>
+                <div className="flex-1 p-4 sm:p-6">
+                  <div className="flex items-start justify-between mb-2 sm:mb-3">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 sm:gap-3 mb-2">
+                        <span className="text-lg sm:text-2xl font-bold text-gray-900">#{index + 1}</span>
+                        <h2 className="text-lg sm:text-xl font-semibold text-gray-900 truncate">{item.title}</h2>
                       </div>
                       
-                      <div className="flex items-center gap-4 mb-3">
+                      <div className="flex flex-wrap items-center gap-2 sm:gap-4 mb-2 sm:mb-3">
                         <span className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(item.status)}`}>
                           {getStatusLabel(item.status)}
                         </span>
-                        <span className="text-sm text-gray-500 capitalize">
+                        <span className="text-xs sm:text-sm text-gray-500 capitalize">
                           {item.type}
                         </span>
                         {getYear(item) && (
-                          <span className="text-sm text-gray-500">
+                          <span className="text-xs sm:text-sm text-gray-500">
                             {getYear(item)}
                           </span>
                         )}
                         {getRuntime(item) && (
-                          <span className="text-sm text-gray-500 flex items-center gap-1">
-                            <ClockIcon className="h-4 w-4" />
+                          <span className="text-xs sm:text-sm text-gray-500 flex items-center gap-1">
+                            <ClockIcon className="h-3 w-3 sm:h-4 sm:w-4" />
                             {getRuntime(item)}
                           </span>
                         )}
@@ -240,26 +240,26 @@ export default function RecommendationsPage() {
                     </div>
                     
                     {/* Confidence Score */}
-                    <div className="flex items-center gap-1 text-sm text-gray-500">
-                      <HeartIcon className="h-4 w-4" />
+                    <div className="flex items-center gap-1 text-xs sm:text-sm text-gray-500 flex-shrink-0">
+                      <HeartIcon className="h-3 w-3 sm:h-4 sm:w-4" />
                       <span>{Math.round(item.confidence * 100)}% match</span>
                     </div>
                   </div>
 
                   {/* Overview */}
                   {item.tmdbOverview && (
-                    <p className="text-gray-600 mb-4 overflow-hidden text-ellipsis" style={{ display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical' }}>
+                    <p className="text-gray-600 mb-3 sm:mb-4 text-sm sm:text-base line-clamp-2 sm:line-clamp-3">
                       {item.tmdbOverview}
                     </p>
                   )}
 
                   {/* Reason */}
-                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 sm:p-4">
                     <div className="flex items-start gap-2">
-                      <EyeIcon className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
-                      <div>
-                        <h3 className="font-medium text-blue-900 mb-1">Why this recommendation?</h3>
-                        <p className="text-blue-800 text-sm">{item.reason}</p>
+                      <EyeIcon className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600 mt-0.5 flex-shrink-0" />
+                      <div className="min-w-0 flex-1">
+                        <h3 className="font-medium text-blue-900 mb-1 text-sm sm:text-base">Why this recommendation?</h3>
+                        <p className="text-blue-800 text-xs sm:text-sm leading-relaxed">{item.reason}</p>
                       </div>
                     </div>
                   </div>
@@ -272,15 +272,15 @@ export default function RecommendationsPage() {
 
       {/* Empty State */}
       {!isLoading && !error && recommendations.length === 0 && (
-        <div className="text-center py-12">
-          <SparklesIcon className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-gray-900 mb-2">No recommendations yet</h3>
-          <p className="text-gray-600 mb-6">
+        <div className="text-center py-8 sm:py-12">
+          <SparklesIcon className="h-12 w-12 sm:h-16 sm:w-16 text-gray-300 mx-auto mb-3 sm:mb-4" />
+          <h3 className="text-base sm:text-lg font-medium text-gray-900 mb-2">No recommendations yet</h3>
+          <p className="text-gray-600 mb-4 sm:mb-6 text-sm sm:text-base">
             Add some items to your watchlist to get personalized recommendations.
           </p>
           <a
             href="/"
-            className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            className="inline-flex items-center gap-2 px-4 sm:px-6 py-2 sm:py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm sm:text-base"
           >
             Go to Watchlist
           </a>

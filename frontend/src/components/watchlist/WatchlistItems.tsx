@@ -167,33 +167,35 @@ export default function WatchlistItems() {
       {/* Enhanced Filter Bar with Counts */}
       <div className="flex flex-col sm:flex-row sm:justify-between items-stretch mb-6 mt-2 gap-3">
         {/* Type Filters with Counts */}
-        <div className="flex flex-row gap-2 bg-slate-100 rounded-xl p-1.5 h-full w-full sm:w-auto">
+        <div className="flex flex-row gap-1.5 bg-slate-100 rounded-xl p-1 h-full w-full sm:w-auto">
           <button
             onClick={() => updateFilters('all', status)}
-            className={`px-3 py-2 text-sm rounded-lg font-medium flex items-center transition-all h-full w-full sm:w-auto justify-center ${type === 'all' ? 'bg-white text-slate-800 shadow-sm ring-1 ring-slate-200' : 'text-slate-600 bg-transparent hover:bg-white/50'}`}
+            className={`px-2 py-1.5 text-xs sm:text-sm rounded-lg font-medium flex items-center transition-all h-full w-full sm:w-auto justify-center ${type === 'all' ? 'bg-white text-slate-800 shadow-sm ring-1 ring-slate-200' : 'text-slate-600 bg-transparent hover:bg-white/50'}`}
           >
             All
-            <span className="ml-1.5 text-xs bg-slate-200 text-slate-600 px-1.5 py-0.5 rounded-full">
+            <span className="ml-1 text-xs bg-slate-200 text-slate-600 px-1 py-0.5 rounded-full">
               {items.length}
             </span>
           </button>
           <button
             onClick={() => updateFilters('movie', status)}
-            className={`px-3 py-2 text-sm rounded-lg font-medium flex items-center transition-all h-full w-full sm:w-auto justify-center ${type === 'movie' ? 'bg-blue-100 text-blue-700 shadow-sm ring-1 ring-blue-200' : 'text-slate-600 bg-transparent hover:bg-blue-50'}`}
+            className={`px-2 py-1.5 text-xs sm:text-sm rounded-lg font-medium flex items-center transition-all h-full w-full sm:w-auto justify-center ${type === 'movie' ? 'bg-blue-100 text-blue-700 shadow-sm ring-1 ring-blue-200' : 'text-slate-600 bg-transparent hover:bg-blue-50'}`}
           >
-            <FilmIcon className="w-4 h-4 mr-1.5" />
-            Movies
-            <span className="ml-1.5 text-xs bg-blue-200 text-blue-700 px-1.5 py-0.5 rounded-full">
+            <FilmIcon className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
+            <span className="hidden sm:inline">Movies</span>
+            <span className="sm:hidden">Movie</span>
+            <span className="ml-1 text-xs bg-blue-200 text-blue-700 px-1 py-0.5 rounded-full">
               {movieCount}
             </span>
           </button>
           <button
             onClick={() => updateFilters('show', status)}
-            className={`px-3 py-2 text-sm rounded-lg font-medium flex items-center transition-all h-full w-full sm:w-auto justify-center ${type === 'show' ? 'bg-green-100 text-green-700 shadow-sm ring-1 ring-green-200' : 'text-slate-600 bg-transparent hover:bg-green-50'}`}
+            className={`px-2 py-1.5 text-xs sm:text-sm rounded-lg font-medium flex items-center transition-all h-full w-full sm:w-auto justify-center ${type === 'show' ? 'bg-green-100 text-green-700 shadow-sm ring-1 ring-green-200' : 'text-slate-600 bg-transparent hover:bg-green-50'}`}
           >
-            <TvIcon className="w-4 h-4 mr-1.5" />
-            TV Shows
-            <span className="ml-1.5 text-xs bg-green-200 text-green-700 px-1.5 py-0.5 rounded-full">
+            <TvIcon className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
+            <span className="hidden sm:inline">TV Shows</span>
+            <span className="sm:hidden">TV</span>
+            <span className="ml-1 text-xs bg-green-200 text-green-700 px-1 py-0.5 rounded-full">
               {showCount}
             </span>
           </button>
@@ -222,7 +224,7 @@ export default function WatchlistItems() {
       </div>
 
       {visibleItems.length > 0 ? (
-        <motion.ul layout className="space-y-3">
+        <motion.ul layout className="space-y-2">
           {visibleItems.map((item) => (
             <motion.li
               key={item.id}
@@ -230,10 +232,10 @@ export default function WatchlistItems() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
               transition={{ duration: 0.2 }}
-              className="rounded-xl p-4 transition-all hover:shadow-lg relative border border-slate-200 bg-white hover:border-slate-300"
+              className="rounded-lg p-3 transition-all hover:shadow-md relative border border-slate-200 bg-white hover:border-slate-300"
               onClick={() => setModalItem(item)}
             >
-              <div className="flex items-start gap-4">
+              <div className="flex items-start gap-3">
                 {/* Poster */}
                 <div className="flex-shrink-0">
                   {item.tmdbPosterPath ? (
@@ -262,10 +264,10 @@ export default function WatchlistItems() {
                 {/* Content */}
                 <div className="flex-1 min-w-0">
                   {/* Title and Type Badge */}
-                  <div className="flex items-start justify-between gap-2 mb-2">
-                    <h3 className="font-semibold text-lg text-slate-900 truncate">{item.title}</h3>
+                  <div className="flex items-start justify-between gap-2 mb-1.5">
+                    <h3 className="font-semibold text-base text-slate-900 truncate">{item.title}</h3>
                     <span
-                      className={`px-2.5 py-1 text-xs font-semibold rounded-full flex-shrink-0
+                      className={`px-2 py-0.5 text-xs font-semibold rounded-full flex-shrink-0
                         ${item.type === 'movie' 
                           ? 'bg-blue-100 text-blue-700 border border-blue-200' 
                           : 'bg-green-100 text-green-700 border border-green-200'
@@ -286,9 +288,9 @@ export default function WatchlistItems() {
                   </div>
                   
                   {/* Status Badge - Most Prominent */}
-                  <div className="mb-2">
+                  <div className="mb-1.5">
                     <span
-                      className={`px-3 py-1.5 text-sm font-medium rounded-full inline-flex items-center
+                      className={`px-2.5 py-1 text-sm font-medium rounded-full inline-flex items-center
                         ${item.status === 'want-to-watch' ? 'bg-blue-100 text-blue-700 border border-blue-200' :
                           item.status === 'watching' ? 'bg-orange-100 text-orange-700 border border-orange-200' :
                           item.status === 'finished' ? 'bg-green-100 text-green-700 border border-green-200' :
@@ -304,8 +306,8 @@ export default function WatchlistItems() {
                   
                   {/* Progress Info for TV Shows */}
                   {item.type === 'show' && (item.currentSeason || item.totalSeasons) && (
-                    <div className="mb-2">
-                      <span className="text-sm text-slate-600 font-medium">
+                    <div className="mb-1">
+                      <span className="text-xs text-slate-600 font-medium">
                         {item.currentSeason && item.totalSeasons ? (
                           `Season ${item.currentSeason} of ${item.totalSeasons}`
                         ) : item.currentSeason ? (
@@ -318,8 +320,8 @@ export default function WatchlistItems() {
                   )}
                   
                   {/* Years */}
-                  <div className="mb-2">
-                    <span className="text-sm text-slate-500">
+                  <div className="mb-1">
+                    <span className="text-xs text-slate-500">
                       {(item.type === 'movie' && item.tmdbMovieReleaseYear) || (item.type === 'show' && item.tmdbTvFirstAirYear) ? (
                         <>
                           {item.type === 'movie' && item.tmdbMovieReleaseYear && (
@@ -339,22 +341,22 @@ export default function WatchlistItems() {
                   {/* Rating Badge */}
                   <div>
                     {item.rating === 'loved' && (
-                      <span className="inline-flex items-center px-2.5 py-1 text-xs font-semibold rounded-full bg-pink-100 text-pink-700 border border-pink-200">
+                      <span className="inline-flex items-center px-2 py-0.5 text-xs font-semibold rounded-full bg-pink-100 text-pink-700 border border-pink-200">
                         ❤️ Loved
                       </span>
                     )}
                     {item.rating === 'liked' && (
-                      <span className="inline-flex items-center px-2.5 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-700 border border-blue-200">
+                      <span className="inline-flex items-center px-2 py-0.5 text-xs font-semibold rounded-full bg-blue-100 text-blue-700 border border-blue-200">
                         👍 Liked
                       </span>
                     )}
                     {item.rating === 'not-for-me' && (
-                      <span className="inline-flex items-center px-2.5 py-1 text-xs font-semibold rounded-full bg-slate-200 text-slate-600 border border-slate-300">
+                      <span className="inline-flex items-center px-2 py-0.5 text-xs font-semibold rounded-full bg-slate-200 text-slate-600 border border-slate-300">
                         👎 Not for me
                       </span>
-                    )}
+                      )}
                     {!item.rating && (
-                      <span className="inline-flex items-center px-2.5 py-1 text-xs font-normal rounded-full bg-slate-50 text-slate-400 border border-slate-200">
+                      <span className="inline-flex items-center px-2 py-0.5 text-xs font-normal rounded-full bg-slate-50 text-slate-400 border border-slate-200">
                         Not rated
                       </span>
                     )}

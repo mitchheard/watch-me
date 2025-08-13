@@ -14,7 +14,7 @@ export default function useWatchlistFilters() {
   const router = useRouter();
 
   const [type, setType] = useState<FilterType>('all');
-  const [status, setStatus] = useState<FilterStatus>('all');
+  const [status, setStatus] = useState<FilterStatus>('want-to-watch');
 
   useEffect(() => {
     const rawType = searchParams.get('type');
@@ -26,7 +26,7 @@ export default function useWatchlistFilters() {
 
     const parsedStatus = VALID_STATUSES.includes(rawStatus as FilterStatus)
       ? (rawStatus as FilterStatus)
-      : 'all';
+      : 'want-to-watch';
 
     setType(parsedType);
     setStatus(parsedStatus);

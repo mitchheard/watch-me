@@ -717,66 +717,102 @@ export default function WatchlistItems() {
                   )}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="font-semibold text-lg">{modalItem.title}</span>
+                  {/* Title and Type Badge */}
+                  <div className="flex items-start justify-between gap-2 mb-2">
+                    <h2 className="font-semibold text-xl text-slate-900">{modalItem.title}</h2>
+                    <span
+                      className={`px-2.5 py-1 text-xs font-semibold rounded-full flex-shrink-0 inline-flex items-center
+                        ${modalItem.type === 'movie' 
+                          ? 'bg-purple-100 text-purple-700 border border-purple-200' 
+                          : 'bg-emerald-100 text-emerald-700 border border-emerald-200'
+                        }`}
+                    >
+                      {modalItem.type === 'movie' ? (
+                        <>
+                          <FilmIcon className="w-3 h-3 mr-1 flex-shrink-0" />
+                          Movie
+                        </>
+                      ) : (
+                        <>
+                          <TvIcon className="w-3 h-3 mr-1 flex-shrink-0" />
+                          TV
+                        </>
+                      )}
+                    </span>
                   </div>
-                  <div className="flex items-center gap-1 text-slate-500 text-sm mb-1">
-                    {modalItem.type === 'movie' ? (
-                      <FilmIcon className="w-5 h-5 text-slate-400" />
-                    ) : (
-                      <TvIcon className="w-5 h-5 text-indigo-400" />
-                    )}
-                    <span>
-                      {modalItem.type === 'movie' ? 'Movie' : 'TV Show'}
+                  
+                  {/* Status Badge - Most Prominent */}
+                  <div className="mb-2">
+                    <span
+                      className={`px-3 py-1.5 text-sm font-medium rounded-full inline-flex items-center
+                        ${modalItem.status === 'want-to-watch' ? 'bg-blue-100 text-blue-700 border border-blue-200' :
+                          modalItem.status === 'watching' ? 'bg-orange-100 text-orange-700 border border-orange-200' :
+                          modalItem.status === 'finished' ? 'bg-teal-100 text-teal-700 border border-teal-200' :
+                          'bg-slate-100 text-slate-700 border border-slate-200' 
+                        }`}
+                    >
+                      {modalItem.status === 'want-to-watch' ? 'Want to Watch' : 
+                       modalItem.status === 'watching' ? 'Watching' :
+                       modalItem.status === 'finished' ? 'Finished' :
+                       modalItem.status.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                    </span>
+                  </div>
+                  
+                  {/* Progress Info for TV Shows */}
+                  {modalItem.type === 'show' && (modalItem.currentSeason || modalItem.totalSeasons) && (
+                    <div className="mb-2">
+                      <span className="text-sm text-slate-600 font-medium">
+                        {modalItem.currentSeason && modalItem.totalSeasons ? (
+                          `Season ${modalItem.currentSeason} of ${modalItem.totalSeasons}`
+                        ) : modalItem.currentSeason ? (
+                          `Season ${modalItem.currentSeason}`
+                        ) : modalItem.totalSeasons ? (
+                          `${modalItem.totalSeasons} seasons`
+                        ) : null}
+                      </span>
+                    </div>
+                  )}
+                  
+                  {/* Years */}
+                  <div className="mb-2">
+                    <span className="text-sm text-slate-500">
                       {(modalItem.type === 'movie' && modalItem.tmdbMovieReleaseYear) || (modalItem.type === 'show' && modalItem.tmdbTvFirstAirYear) ? (
                         <>
-                          {' '}
                           {modalItem.type === 'movie' && modalItem.tmdbMovieReleaseYear && (
-                            <span>({modalItem.tmdbMovieReleaseYear})</span>
+                            <span>{modalItem.tmdbMovieReleaseYear}</span>
                           )}
                           {modalItem.type === 'show' && modalItem.tmdbTvFirstAirYear && modalItem.tmdbTvLastAirYear && (
-                            <span>({modalItem.tmdbTvFirstAirYear}–{modalItem.tmdbTvLastAirYear})</span>
+                            <span>{modalItem.tmdbTvFirstAirYear}–{modalItem.tmdbTvLastAirYear}</span>
                           )}
                           {modalItem.type === 'show' && modalItem.tmdbTvFirstAirYear && !modalItem.tmdbTvLastAirYear && (
-                            <span>({modalItem.tmdbTvFirstAirYear})</span>
+                            <span>{modalItem.tmdbTvFirstAirYear}</span>
                           )}
                         </>
                       ) : null}
                     </span>
                   </div>
-                  {/* Season info for shows */}
-                  {modalItem.type === 'show' && modalItem.currentSeason && (
-                    <p className="text-xs text-slate-500 mt-0.5">
-                      Season {modalItem.currentSeason}
-                      {modalItem.totalSeasons ? ` of ${modalItem.totalSeasons}` : ''}
-                    </p>
-                  )}
-                  {/* Status badge */}
-                  <div className="mt-1">
-                    <span
-                      className={`px-2 py-0.5 text-xs font-medium rounded-full 
-                        ${modalItem.status === 'want-to-watch' ? 'bg-blue-100 text-blue-700' :
-                          modalItem.status === 'watching' ? 'bg-yellow-100 text-yellow-700' :
-                          modalItem.status === 'finished' ? 'bg-green-100 text-green-700' :
-                          'bg-slate-100 text-slate-700' 
-                        }`}
-                    >
-                      {modalItem.status === 'want-to-watch' ? 'Want to Watch' : modalItem.status.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
-                    </span>
-                  </div>
-                  {/* Rating badge */}
-                  <div className="mt-1">
+                  
+                  {/* Rating Badge */}
+                  <div className="mb-2">
                     {modalItem.rating === 'loved' && (
-                      <span className="inline-block px-2 py-0.5 text-xs font-semibold rounded-full bg-pink-100 text-pink-700">Loved</span>
+                      <span className="inline-flex items-center px-2.5 py-1 text-xs font-semibold rounded-full bg-pink-100 text-pink-700 border border-pink-200">
+                        ❤️ Loved
+                      </span>
                     )}
                     {modalItem.rating === 'liked' && (
-                      <span className="inline-block px-2 py-0.5 text-xs font-semibold rounded-full bg-blue-100 text-blue-700">Liked</span>
+                      <span className="inline-flex items-center px-2.5 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-700 border border-blue-200">
+                        👍 Liked
+                      </span>
                     )}
                     {modalItem.rating === 'not-for-me' && (
-                      <span className="inline-block px-2 py-0.5 text-xs font-semibold rounded-full bg-slate-200 text-slate-600">Not for me</span>
+                      <span className="inline-flex items-center px-2.5 py-1 text-xs font-semibold rounded-full bg-slate-200 text-slate-600 border border-slate-300">
+                        👎 Not for me
+                      </span>
                     )}
                     {!modalItem.rating && (
-                      <span className="inline-block px-2 py-0.5 text-xs font-normal rounded-full bg-slate-50 text-slate-400">Not rated</span>
+                      <span className="inline-flex items-center px-2.5 py-1 text-xs font-normal rounded-full bg-slate-50 text-slate-400 border border-slate-200">
+                        Not rated
+                      </span>
                     )}
                   </div>
                 </div>

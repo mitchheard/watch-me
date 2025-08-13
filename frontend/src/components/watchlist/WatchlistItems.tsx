@@ -80,6 +80,13 @@ export default function WatchlistItems() {
     .filter((item) => status === 'all' || item.status === status)
     .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
+  // Calculate counts for filter badges
+  const movieCount = items.filter(item => item.type === 'movie').length;
+  const showCount = items.filter(item => item.type === 'show').length;
+  const wantToWatchCount = items.filter(item => item.status === 'want-to-watch').length;
+  const watchingCount = items.filter(item => item.status === 'watching').length;
+  const finishedCount = items.filter(item => item.status === 'finished').length;
+
   // Dummy handler for onAddItem, as WatchlistForm expects it even in edit mode
   const handleDummyAddItem = async (_newItem: WatchlistFormData) => {
     // This should never be called in edit mode
@@ -157,44 +164,58 @@ export default function WatchlistItems() {
 
   return (
     <div className="w-full max-w-2xl mx-auto">
-      {/* Responsive Filter Bar: Type buttons always in a row, 'TV' label for compactness */}
-      <div className="flex flex-col sm:flex-row sm:justify-between items-stretch mb-4 mt-2 gap-2">
-        <div className="flex flex-row gap-1 bg-slate-100 rounded-lg p-1 h-full w-full sm:w-auto">
+      {/* Enhanced Filter Bar with Counts */}
+      <div className="flex flex-col sm:flex-row sm:justify-between items-stretch mb-6 mt-2 gap-3">
+        {/* Type Filters with Counts */}
+        <div className="flex flex-row gap-2 bg-slate-100 rounded-xl p-1.5 h-full w-full sm:w-auto">
           <button
             onClick={() => updateFilters('all', status)}
-            className={`px-2 py-1 text-xs sm:px-3 sm:py-2 sm:text-sm rounded-md font-medium flex items-center transition-all h-full w-full sm:w-auto justify-center border border-slate-200 ${type === 'all' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-600 bg-white/70 hover:bg-slate-100'}`}
+            className={`px-3 py-2 text-sm rounded-lg font-medium flex items-center transition-all h-full w-full sm:w-auto justify-center ${type === 'all' ? 'bg-white text-slate-800 shadow-sm ring-1 ring-slate-200' : 'text-slate-600 bg-transparent hover:bg-white/50'}`}
           >
             All
+            <span className="ml-1.5 text-xs bg-slate-200 text-slate-600 px-1.5 py-0.5 rounded-full">
+              {items.length}
+            </span>
           </button>
           <button
             onClick={() => updateFilters('movie', status)}
-            className={`px-2 py-1 text-xs sm:px-3 sm:py-2 sm:text-sm rounded-md font-medium flex items-center transition-all h-full w-full sm:w-auto justify-center border border-slate-200 ${type === 'movie' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-600 bg-white/70 hover:bg-slate-100'}`}
+            className={`px-3 py-2 text-sm rounded-lg font-medium flex items-center transition-all h-full w-full sm:w-auto justify-center ${type === 'movie' ? 'bg-blue-100 text-blue-700 shadow-sm ring-1 ring-blue-200' : 'text-slate-600 bg-transparent hover:bg-blue-50'}`}
           >
-            <span className="mr-1">🎬</span> Movies
+            <FilmIcon className="w-4 h-4 mr-1.5" />
+            Movies
+            <span className="ml-1.5 text-xs bg-blue-200 text-blue-700 px-1.5 py-0.5 rounded-full">
+              {movieCount}
+            </span>
           </button>
           <button
             onClick={() => updateFilters('show', status)}
-            className={`px-2 py-1 text-xs sm:px-3 sm:py-2 sm:text-sm rounded-md font-medium flex items-center transition-all h-full w-full sm:w-auto justify-center border border-slate-200 ${type === 'show' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-600 bg-white/70 hover:bg-slate-100'}`}
+            className={`px-3 py-2 text-sm rounded-lg font-medium flex items-center transition-all h-full w-full sm:w-auto justify-center ${type === 'show' ? 'bg-green-100 text-green-700 shadow-sm ring-1 ring-green-200' : 'text-slate-600 bg-transparent hover:bg-green-50'}`}
           >
-            <span className="mr-1">📺</span> TV
+            <TvIcon className="w-4 h-4 mr-1.5" />
+            TV Shows
+            <span className="ml-1.5 text-xs bg-green-200 text-green-700 px-1.5 py-0.5 rounded-full">
+              {showCount}
+            </span>
           </button>
         </div>
-        <div className="flex items-stretch w-full sm:w-auto mt-2 sm:mt-0">
+        
+        {/* Status Filter with Counts */}
+        <div className="flex items-stretch w-full sm:w-auto">
           <label htmlFor="status-filter" className="sr-only">Status</label>
           <div className="relative w-full sm:w-auto">
             <select
               id="status-filter"
               value={status}
               onChange={e => updateFilters(type, e.target.value as FilterStatus)}
-              className="rounded-md border border-gray-300 px-3 py-2 pr-10 shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-sm w-full sm:w-auto h-full appearance-none"
+              className="rounded-lg border border-slate-300 px-3 py-2 pr-10 shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-sm w-full sm:w-auto h-full appearance-none bg-white"
             >
-              <option value="all">All Statuses</option>
-              <option value="want-to-watch">Want to Watch</option>
-              <option value="watching">Watching</option>
-              <option value="finished">Finished</option>
+              <option value="all">All Statuses ({items.length})</option>
+              <option value="want-to-watch">Want to Watch ({wantToWatchCount})</option>
+              <option value="watching">Watching ({watchingCount})</option>
+              <option value="finished">Finished ({finishedCount})</option>
             </select>
             <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
-              <ChevronDownIcon className="h-4 w-4 text-gray-500" />
+              <ChevronDownIcon className="h-4 w-4 text-slate-500" />
             </div>
           </div>
         </div>
@@ -209,99 +230,134 @@ export default function WatchlistItems() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
               transition={{ duration: 0.2 }}
-              className={`rounded-lg p-4 transition-shadow hover:shadow-md relative min-h-[80px] border-2
-                ${item.type === 'movie' ? 'bg-slate-50 border-slate-200' : 'bg-indigo-50 border-indigo-200'}
-              `}
+              className="rounded-xl p-4 transition-all hover:shadow-lg relative border border-slate-200 bg-white hover:border-slate-300"
               onClick={() => setModalItem(item)}
             >
-              <div className="flex items-start">
+              <div className="flex items-start gap-4">
+                {/* Poster */}
+                <div className="flex-shrink-0">
+                  {item.tmdbPosterPath ? (
+                    <Image
+                      src={`https://image.tmdb.org/t/p/w92${item.tmdbPosterPath}`}
+                      alt={`${item.title} poster`}
+                      width={CARD_POSTER_WIDTH}
+                      height={CARD_POSTER_HEIGHT}
+                      className="rounded-lg shadow-sm object-cover border border-slate-200"
+                      style={{ aspectRatio: '2/3', width: CARD_POSTER_WIDTH, height: CARD_POSTER_HEIGHT }}
+                      unoptimized
+                    />
+                  ) : (
+                    <Image
+                      src="/no-image.svg"
+                      alt="No poster available"
+                      width={CARD_POSTER_WIDTH}
+                      height={CARD_POSTER_HEIGHT}
+                      className="rounded-lg shadow-sm bg-slate-200 object-cover border border-slate-200"
+                      style={{ aspectRatio: '2/3', width: CARD_POSTER_WIDTH, height: CARD_POSTER_HEIGHT }}
+                      unoptimized
+                    />
+                  )}
+                </div>
+                
+                {/* Content */}
                 <div className="flex-1 min-w-0">
-                  <div className="flex flex-col flex-grow min-w-0">
-                    <span className="font-semibold text-base block">{item.title}</span>
-                    <div className="flex flex-row gap-3 mt-1">
-                      {item.tmdbPosterPath ? (
-                        <Image
-                          src={`https://image.tmdb.org/t/p/w92${item.tmdbPosterPath}`}
-                          alt={`${item.title} poster`}
-                          width={CARD_POSTER_WIDTH}
-                          height={CARD_POSTER_HEIGHT}
-                          className="rounded flex-shrink-0 shadow-sm object-cover border border-slate-200"
-                          style={{ aspectRatio: '2/3', width: CARD_POSTER_WIDTH, height: CARD_POSTER_HEIGHT }}
-                          unoptimized
-                        />
+                  {/* Title and Type Badge */}
+                  <div className="flex items-start justify-between gap-2 mb-2">
+                    <h3 className="font-semibold text-lg text-slate-900 truncate">{item.title}</h3>
+                    <span
+                      className={`px-2.5 py-1 text-xs font-semibold rounded-full flex-shrink-0
+                        ${item.type === 'movie' 
+                          ? 'bg-blue-100 text-blue-700 border border-blue-200' 
+                          : 'bg-green-100 text-green-700 border border-green-200'
+                        }`}
+                    >
+                      {item.type === 'movie' ? (
+                        <>
+                          <FilmIcon className="w-3 h-3 mr-1" />
+                          Movie
+                        </>
                       ) : (
-                        <Image
-                          src="/no-image.svg"
-                          alt="No poster available"
-                          width={CARD_POSTER_WIDTH}
-                          height={CARD_POSTER_HEIGHT}
-                          className="rounded flex-shrink-0 shadow-sm bg-slate-200 object-cover border border-slate-200"
-                          style={{ aspectRatio: '2/3', width: CARD_POSTER_WIDTH, height: CARD_POSTER_HEIGHT }}
-                          unoptimized
-                        />
+                        <>
+                          <TvIcon className="w-3 h-3 mr-1" />
+                          TV Show
+                        </>
                       )}
-                      <div className="flex flex-col flex-grow min-w-0">
-                        <div className="flex items-center gap-1 text-slate-500 text-xs mb-0.5">
-                          {item.type === 'movie' ? (
-                            <FilmIcon className="w-4 h-4 text-slate-400" />
-                          ) : (
-                            <TvIcon className="w-4 h-4 text-indigo-400" />
-                          )}
-                          <span>
-                            {item.type === 'movie' ? 'Movie' : 'TV Show'}
-                            {(item.type === 'movie' && item.tmdbMovieReleaseYear) || (item.type === 'show' && item.tmdbTvFirstAirYear) ? (
-                              <>
-                                {' '}
-                                {item.type === 'movie' && item.tmdbMovieReleaseYear && (
-                                  <span>({item.tmdbMovieReleaseYear})</span>
-                                )}
-                                {item.type === 'show' && item.tmdbTvFirstAirYear && item.tmdbTvLastAirYear && (
-                                  <span>({item.tmdbTvFirstAirYear}–{item.tmdbTvLastAirYear})</span>
-                                )}
-                                {item.type === 'show' && item.tmdbTvFirstAirYear && !item.tmdbTvLastAirYear && (
-                                  <span>({item.tmdbTvFirstAirYear})</span>
-                                )}
-                              </>
-                            ) : null}
-                          </span>
-                        </div>
-                        {/* Season info for shows */}
-                        {item.type === 'show' && item.currentSeason && (
-                          <p className="text-xs text-slate-500 mt-0.5">
-                            Season {item.currentSeason}
-                            {item.totalSeasons ? ` of ${item.totalSeasons}` : ''}
-                          </p>
-                        )}
-                        {/* Status badge */}
-                        <div className="mt-1">
-                          <span
-                            className={`px-2 py-0.5 text-xs font-medium rounded-full 
-                              ${item.status === 'want-to-watch' ? 'bg-blue-100 text-blue-700' :
-                                item.status === 'watching' ? 'bg-yellow-100 text-yellow-700' :
-                                item.status === 'finished' ? 'bg-green-100 text-green-700' :
-                                'bg-slate-100 text-slate-700' 
-                              }`}
-                          >
-                            {item.status === 'want-to-watch' ? 'Want to Watch' : item.status.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
-                          </span>
-                        </div>
-                        {/* Rating badge */}
-                        <div className="mt-1">
-                          {item.rating === 'loved' && (
-                            <span className="inline-block px-2 py-0.5 text-xs font-semibold rounded-full bg-pink-100 text-pink-700">Loved</span>
-                          )}
-                          {item.rating === 'liked' && (
-                            <span className="inline-block px-2 py-0.5 text-xs font-semibold rounded-full bg-blue-100 text-blue-700">Liked</span>
-                          )}
-                          {item.rating === 'not-for-me' && (
-                            <span className="inline-block px-2 py-0.5 text-xs font-semibold rounded-full bg-slate-200 text-slate-600">Not for me</span>
-                          )}
-                          {!item.rating && (
-                            <span className="inline-block px-2 py-0.5 text-xs font-normal rounded-full bg-slate-50 text-slate-400">Not rated</span>
-                          )}
-                        </div>
-                      </div>
+                    </span>
+                  </div>
+                  
+                  {/* Status Badge - Most Prominent */}
+                  <div className="mb-2">
+                    <span
+                      className={`px-3 py-1.5 text-sm font-medium rounded-full inline-flex items-center
+                        ${item.status === 'want-to-watch' ? 'bg-blue-100 text-blue-700 border border-blue-200' :
+                          item.status === 'watching' ? 'bg-orange-100 text-orange-700 border border-orange-200' :
+                          item.status === 'finished' ? 'bg-green-100 text-green-700 border border-green-200' :
+                          'bg-slate-100 text-slate-700 border border-slate-200' 
+                        }`}
+                    >
+                      {item.status === 'want-to-watch' ? 'Want to Watch' : 
+                       item.status === 'watching' ? 'Watching' :
+                       item.status === 'finished' ? 'Finished' :
+                       item.status.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                    </span>
+                  </div>
+                  
+                  {/* Progress Info for TV Shows */}
+                  {item.type === 'show' && (item.currentSeason || item.totalSeasons) && (
+                    <div className="mb-2">
+                      <span className="text-sm text-slate-600 font-medium">
+                        {item.currentSeason && item.totalSeasons ? (
+                          `Season ${item.currentSeason} of ${item.totalSeasons}`
+                        ) : item.currentSeason ? (
+                          `Season ${item.currentSeason}`
+                        ) : item.totalSeasons ? (
+                          `${item.totalSeasons} seasons`
+                        ) : null}
+                      </span>
                     </div>
+                  )}
+                  
+                  {/* Years */}
+                  <div className="mb-2">
+                    <span className="text-sm text-slate-500">
+                      {(item.type === 'movie' && item.tmdbMovieReleaseYear) || (item.type === 'show' && item.tmdbTvFirstAirYear) ? (
+                        <>
+                          {item.type === 'movie' && item.tmdbMovieReleaseYear && (
+                            <span>{item.tmdbMovieReleaseYear}</span>
+                          )}
+                          {item.type === 'show' && item.tmdbTvFirstAirYear && item.tmdbTvLastAirYear && (
+                            <span>{item.tmdbTvFirstAirYear}–{item.tmdbTvLastAirYear}</span>
+                          )}
+                          {item.type === 'show' && item.tmdbTvFirstAirYear && !item.tmdbTvLastAirYear && (
+                            <span>{item.tmdbTvFirstAirYear}</span>
+                          )}
+                        </>
+                      ) : null}
+                    </span>
+                  </div>
+                  
+                  {/* Rating Badge */}
+                  <div>
+                    {item.rating === 'loved' && (
+                      <span className="inline-flex items-center px-2.5 py-1 text-xs font-semibold rounded-full bg-pink-100 text-pink-700 border border-pink-200">
+                        ❤️ Loved
+                      </span>
+                    )}
+                    {item.rating === 'liked' && (
+                      <span className="inline-flex items-center px-2.5 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-700 border border-blue-200">
+                        👍 Liked
+                      </span>
+                    )}
+                    {item.rating === 'not-for-me' && (
+                      <span className="inline-flex items-center px-2.5 py-1 text-xs font-semibold rounded-full bg-slate-200 text-slate-600 border border-slate-300">
+                        👎 Not for me
+                      </span>
+                    )}
+                    {!item.rating && (
+                      <span className="inline-flex items-center px-2.5 py-1 text-xs font-normal rounded-full bg-slate-50 text-slate-400 border border-slate-200">
+                        Not rated
+                      </span>
+                    )}
                   </div>
                 </div>
               </div>

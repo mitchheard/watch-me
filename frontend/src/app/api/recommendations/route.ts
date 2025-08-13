@@ -188,14 +188,15 @@ Strategy: ${randomStrategy.name}. Consider: ratings, content type preferences, t
 
 CRITICAL INSTRUCTIONS:
 1. You MUST return the EXACT numeric ID from the list above
-2. Your reason MUST describe the specific item you are recommending (the one with that ID)
-3. Do NOT mention other items in your reason
-4. Do NOT return "undefined" or titles
-5. Do NOT make up sequential IDs (1,2,3,4,5)
-6. Only use the numeric IDs shown in the list: ${shuffledWatchlist.map(item => item.id).join(', ')}
+2. You MUST include the EXACT title from the list above
+3. Your reason MUST describe the specific item you are recommending (the one with that ID)
+4. Do NOT mention other items in your reason
+5. Do NOT return "undefined" or titles
+6. Do NOT make up sequential IDs (1,2,3,4,5)
+7. Only use the numeric IDs shown in the list: ${shuffledWatchlist.map(item => item.id).join(', ')}
 
 EXAMPLE: If you want to recommend "The Expanse" (ID: 78), your response should be:
-{"id": 78, "reason": "The Expanse offers an immersive sci-fi experience...", "confidence": 0.8}
+{"id": 78, "title": "The Expanse", "reason": "The Expanse offers an immersive sci-fi experience...", "confidence": 0.8}
 
 Return JSON array:
 [{"id": [exact_numeric_id], "title": "[exact_title_from_list]", "reason": "[2-3 sentence reason about THIS specific item]", "confidence": [0.1-1.0]}]`;

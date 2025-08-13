@@ -63,6 +63,7 @@ async function getUserId() {
 
 async function getOpenAIRecommendations(watchlist: WatchItem[]): Promise<Recommendation[]> {
   console.log('OpenAI API key configured:', !!process.env.OPENAI_API_KEY);
+  console.log('OpenAI API key length:', process.env.OPENAI_API_KEY?.length || 0);
   if (!process.env.OPENAI_API_KEY) {
     throw new Error('OpenAI API key not configured');
   }
@@ -319,6 +320,12 @@ export async function GET(request: NextRequest) {
         tmdbMovieRuntime: item.tmdbMovieRuntime,
         tmdbTvNumberOfSeasons: item.tmdbTvNumberOfSeasons,
       }));
+      
+      // Set fallback strategy for the response
+      randomStrategy = {
+        name: "fallback",
+        focus: "recommend from your want-to-watch list"
+      };
     }
 
     return NextResponse.json({

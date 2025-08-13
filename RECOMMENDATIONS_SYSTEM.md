@@ -1,8 +1,8 @@
-# AI-Powered Recommendations System
+# AI-Powered Recommendations Engine
 
 ## Overview
 
-The Watch Me app features an intelligent recommendation system that uses OpenAI's GPT-4o-mini to suggest personalized content from your watchlist. The system combines multiple strategies, smart data filtering, and robust fallback mechanisms to provide varied and relevant recommendations.
+The Watch Me app features an intelligent recommendations engine that uses OpenAI's GPT-4o-mini to suggest personalized content from your watchlist. The engine combines multiple strategies, smart data filtering, and robust fallback mechanisms to provide varied and relevant recommendations.
 
 ## How It Works
 
@@ -24,6 +24,7 @@ The system randomly selects from 6 different recommendation strategies:
 | **Deep Dives** | Immersive, longer content | Shows >2 seasons + movies >120min | Extended viewing sessions |
 | **Mood Boosters** | Uplifting entertainment | Want-to-watch items | Positive mood enhancement |
 | **Hidden Gems** | Underrated/overlooked content | Shuffled want-to-watch items | Discovery of lesser-known content |
+| **Continue Watching** | Shows with unwatched seasons | In-progress shows + finished shows with more seasons | Remind users to continue series they've started |
 
 ### 3. Data Processing Pipeline
 
@@ -41,7 +42,7 @@ const timestamp = Date.now(); // Unique request identifier
 
 ### 4. AI Prompt Engineering
 
-The system constructs detailed prompts that include:
+The engine constructs detailed prompts that include:
 
 - **Strategy Context**: Which strategy is being used and its focus
 - **Time Context**: Current time of day for mood-appropriate suggestions
@@ -148,7 +149,7 @@ validRecommendations = validRecommendations.filter((rec: any) => {
 
 ### 6. Response Enhancement
 
-The system enriches recommendations with:
+The engine enriches recommendations with:
 - **TMDB Metadata**: Posters, descriptions, release years, runtime, seasons
 - **Confidence Scores**: AI-generated confidence levels (0.1-1.0)
 - **Strategy Information**: Which strategy was used and its focus
@@ -202,6 +203,7 @@ const strategies = [
 - **Content-Based Filtering**: Analyze genres, themes, and metadata
 - **Seasonal Recommendations**: Time-based content suggestions
 - **Mood-Based Filtering**: User mood input for contextual recommendations
+- **Continue Watching Enhancement**: Track current season progress and suggest next episodes
 
 ### Technical Roadmap
 - **Caching Layer**: Redis for frequently requested recommendations
@@ -213,7 +215,7 @@ const strategies = [
 ## Monitoring & Debugging
 
 ### Logging
-The system provides comprehensive logging:
+The engine provides comprehensive logging:
 - Strategy selection and data filtering
 - AI prompt construction and response parsing
 - Item matching success/failure rates
@@ -225,6 +227,7 @@ The system provides comprehensive logging:
 - **Strategy Distribution**: Which strategies are most effective
 - **Response Time**: API performance monitoring
 - **User Engagement**: Which recommendations users interact with
+- **Continue Watching Success**: How often users follow up on season continuation suggestions
 
 ## Troubleshooting
 
@@ -236,6 +239,7 @@ The system provides comprehensive logging:
 5. **Title/Reason Mismatches**: Check AI title validation and prompt examples
 6. **AI Using Non-existent Titles**: Verify available titles list in prompt
 7. **Auto-refresh Issues**: Check useEffect dependencies and initialization logic
+8. **Continue Watching Not Triggering**: Verify show has multiple seasons and correct status
 
 ### Debug Commands
 ```bash

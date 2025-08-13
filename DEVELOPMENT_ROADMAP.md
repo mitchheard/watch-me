@@ -38,7 +38,7 @@ This document tracks the development progress, current priorities, and future pl
 **Current Branch:** `main` (recently merged `ui-polish-modal-card`)
 
 ### Recent Accomplishments
-- ✅ **AI-Powered Recommendations System** - Fully functional "What Should I Watch?" feature
+- ✅ **AI-Powered Recommendations Engine** - Fully functional "What Should I Watch?" feature
 - ✅ Merged UI polish improvements into main branch
 - ✅ Fixed responsive modal behavior
 - ✅ Improved card layouts and visual hierarchy
@@ -58,7 +58,7 @@ This document tracks the development progress, current priorities, and future pl
    - [ ] Public watchlist sharing
    - [ ] Follow/unfollow functionality
 
-2. **Recommendations Engine** ✅ **COMPLETED - AI-Powered System**
+2. **Recommendations Engine** ✅ **COMPLETED - AI-Powered Engine**
    - [x] AI-powered recommendation system using OpenAI GPT-4o-mini
    - [x] Multiple recommendation strategies (recent additions, quick wins, deep dives, etc.)
    - [x] Robust validation and error handling
@@ -90,7 +90,7 @@ This document tracks the development progress, current priorities, and future pl
 ## 🚀 Future Features (Next 2-6 Months)
 
 ### User Experience Enhancements
-- [ ] **Advanced Recommendations Engine**
+- [ ] **Advanced Recommendations Engine Enhancements**
   - [ ] User feedback system (rate recommendation helpfulness)
   - [ ] Seasonal and mood-based recommendations
   - [ ] Collaborative filtering (recommendations from similar users)

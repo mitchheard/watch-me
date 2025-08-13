@@ -320,7 +320,7 @@ Return JSON array:
       console.log(`  ID ${item.id}: ${item.title}`);
     });
     console.log('AI recommendations to map:');
-    validRecommendations.forEach(rec => {
+    validRecommendations.forEach((rec: AIRecommendation) => {
       console.log(`  AI wants ID ${rec.id}: "${rec.reason.substring(0, 50)}..."`);
     });
     

@@ -84,7 +84,7 @@ export default function RecommendationsPage() {
       setHasInitialized(true);
       fetchRecommendations();
     }
-  }, [user?.id, hasInitialized, fetchRecommendations]); // Include fetchRecommendations in dependencies
+  }, [user, hasInitialized, fetchRecommendations]); // Include user in dependencies
 
   const getStatusColor = (status: string) => {
     switch (status) {

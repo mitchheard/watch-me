@@ -178,6 +178,7 @@ async function getOpenAIRecommendations(watchlist: WatchItem[]): Promise<{
     filteredWatchlist = watchlist.filter(item => item.status === 'want-to-watch').slice(0, 10);
     randomStrategy = {
       name: "fallback",
+      filter: (items: WatchItem[]) => items.filter(item => item.status === 'want-to-watch').slice(0, 10),
       focus: "recommend from your want-to-watch list"
     };
   }

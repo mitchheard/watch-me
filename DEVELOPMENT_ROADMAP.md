@@ -35,7 +35,7 @@ This document tracks the development progress, current priorities, and future pl
 ## 🔄 Current Development Status
 
 **Last Updated:** January 2025
-**Current Branch:** `main` (recently merged `ui-polish-modal-card`)
+**Current Branch:** `styling-experiments` (UI improvements in progress)
 
 ### Recent Accomplishments
 - ✅ **AI-Powered Recommendations Engine** - Fully functional "What Should I Watch?" feature
@@ -53,10 +53,11 @@ This document tracks the development progress, current priorities, and future pl
 ## 🎯 Immediate Priorities (Next 2-4 Weeks)
 
 ### High Priority
-1. **New Seasons Discovery** 🆕
+1. **New Seasons Discovery** 🎯 **NEXT PRIORITY AFTER UI STYLING**
    - [ ] Page to show shows with new seasons for "finished" items
    - [ ] TMDB integration to detect new seasons automatically
-   - [ ] UX decision: How to handle ratings when re-adding shows?
+   - [ ] Simple UX: Re-add to "Want to Watch" → Rate when finished
+   - [ ] Rating history for AI recommendations
 
 2. **Ratings & Reviews Hub** 🆕
    - [ ] Dedicated page to view all loved/liked content
@@ -108,14 +109,16 @@ This document tracks the development progress, current priorities, and future pl
   - [ ] Recommendation caching and performance optimization
   - [ ] A/B testing framework for different strategies
 
-- [ ] **New Seasons Discovery**
+- [ ] **New Seasons Discovery** 🎯 **NEXT PRIORITY**
   - [ ] Page to show shows with new seasons for "finished" items
   - [ ] TMDB integration to detect new seasons automatically
   - [ ] Notification system for new season alerts
-  - [ ] **UX Decision Needed:** How to handle ratings when re-adding shows?
-    - [ ] Option A: Keep ratings by show (simpler)
-    - [ ] Option B: Season-specific ratings (more detailed)
-    - [ ] Option C: Hybrid approach (show rating + season notes)
+  - [ ] **Refined UX Flow:**
+    - [ ] User sees new season notification
+    - [ ] User can re-add show to "Want to Watch"
+    - [ ] When finished, rating modal appears (can update rating)
+    - [ ] Maintain rating history for AI recommendations
+    - [ ] Structured data: `{currentRating, ratingHistory: [{season, rating, date}]}`
 
 - [ ] **Ratings & Reviews Hub**
   - [ ] Dedicated page to view all loved/liked content

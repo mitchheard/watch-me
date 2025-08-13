@@ -62,6 +62,7 @@ async function getUserId() {
 }
 
 async function getOpenAIRecommendations(watchlist: WatchItem[]): Promise<Recommendation[]> {
+  console.log('OpenAI API key configured:', !!process.env.OPENAI_API_KEY);
   if (!process.env.OPENAI_API_KEY) {
     throw new Error('OpenAI API key not configured');
   }
@@ -119,8 +120,34 @@ async function getOpenAIRecommendations(watchlist: WatchItem[]): Promise<Recomme
     }
   ];
 
-  const randomStrategy = strategies[Math.floor(Math.random() * strategies.length)];
-  const filteredWatchlist = randomStrategy.filter(watchlist);
+  // Try strategies until we find one with data
+  let randomStrategy = strategies[Math.floor(Math.random() * strategies.length)];
+  let filteredWatchlist = randomStrategy.filter(watchlist);
+  
+  // If the first strategy returns no data, try others
+  if (filteredWatchlist.length === 0) {
+    for (const strategy of strategies) {
+      const testFilter = strategy.filter(watchlist);
+      if (testFilter.length > 0) {
+        randomStrategy = strategy;
+        filteredWatchlist = testFilter;
+        break;
+      }
+    }
+  }
+  
+  // If still no data, use a simple fallback
+  if (filteredWatchlist.length === 0) {
+    filteredWatchlist = watchlist.filter(item => item.status === 'want-to-watch').slice(0, 10);
+    randomStrategy = {
+      name: "fallback",
+      focus: "recommend from your want-to-watch list"
+    };
+  }
+  
+  console.log('Selected strategy:', randomStrategy.name);
+  console.log('Filtered watchlist length:', filteredWatchlist.length);
+  
   const shuffledWatchlist = [...filteredWatchlist].sort(() => Math.random() - 0.5);
   
   const watchlistSummary = shuffledWatchlist.map(item => ({
@@ -220,6 +247,7 @@ Return JSON array:
 export async function GET(request: NextRequest) {
   try {
     const userId = await getUserId();
+    console.log('User ID:', userId);
 
     // Get user's watchlist
     const watchlist = await prisma.watchItem.findMany({
@@ -239,12 +267,14 @@ export async function GET(request: NextRequest) {
         tmdbMovieRuntime: true,
         tmdbTvNumberOfSeasons: true,
         tmdbPosterPath: true,
-        notes: true,
       },
       orderBy: {
         createdAt: 'desc',
       },
     });
+
+    console.log('Watchlist items found:', watchlist.length);
+    console.log('Watchlist statuses:', watchlist.map(item => item.status));
 
     if (watchlist.length === 0) {
       return NextResponse.json({ 
@@ -257,7 +287,9 @@ export async function GET(request: NextRequest) {
     let recommendations: Recommendation[];
     
     try {
+      console.log('Attempting OpenAI recommendations...');
       recommendations = await getOpenAIRecommendations(watchlist);
+      console.log('OpenAI recommendations successful:', recommendations.length);
     } catch (error) {
       console.error('OpenAI recommendations failed, using fallback:', error);
       // Fallback: simple recommendation based on want-to-watch items with variety

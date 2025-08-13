@@ -262,11 +262,14 @@ Return JSON array:
 }
 
 export async function GET(request: NextRequest) {
+  console.log('Recommendations API called');
   try {
+    console.log('Getting user ID...');
     const userId = await getUserId();
     console.log('User ID:', userId);
 
     // Get user's watchlist
+    console.log('Fetching watchlist from database...');
     const watchlist = await prisma.watchItem.findMany({
       where: {
         userId: userId,
@@ -352,9 +355,37 @@ export async function GET(request: NextRequest) {
 
   } catch (error) {
     console.error('Recommendations API error:', error);
-    return NextResponse.json(
-      { error: 'Failed to generate recommendations' },
-      { status: 500 }
-    );
+    
+    // Always return some recommendations, even if there's an error
+    const wantToWatchItems = watchlist.filter(item => item.status === 'want-to-watch').slice(0, 5);
+    const fallbackReasons = [
+      "This looks like a perfect choice for your next viewing session.",
+      "Based on your watchlist, this could be exactly what you're in the mood for.",
+      "This one seems to align well with your viewing preferences.",
+      "You've had this on your list for a while - maybe it's time to give it a shot!",
+      "This could be a great change of pace from your usual viewing habits.",
+    ];
+    
+    const recommendations = wantToWatchItems.map((item, index) => ({
+      id: item.id,
+      title: item.title,
+      type: item.type,
+      status: item.status,
+      reason: fallbackReasons[index % fallbackReasons.length],
+      confidence: 0.8 - (index * 0.1),
+      tmdbPosterPath: item.tmdbPosterPath,
+      tmdbOverview: item.tmdbOverview,
+      tmdbMovieReleaseYear: item.tmdbMovieReleaseYear,
+      tmdbTvFirstAirYear: item.tmdbTvFirstAirYear,
+      tmdbMovieRuntime: item.tmdbMovieRuntime,
+      tmdbTvNumberOfSeasons: item.tmdbTvNumberOfSeasons,
+    }));
+    
+    return NextResponse.json({
+      recommendations,
+      totalItems: watchlist.length,
+      strategy: "error-fallback",
+      strategyFocus: "recommendations from your want-to-watch list due to an error",
+    });
   }
 }

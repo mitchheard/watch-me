@@ -21,12 +21,21 @@ interface Recommendation {
   tmdbTvNumberOfSeasons?: number | null;
 }
 
+interface RecommendationsResponse {
+  recommendations: Recommendation[];
+  totalItems: number;
+  strategy?: string;
+  strategyFocus?: string;
+}
+
 export default function RecommendationsPage() {
   const { user } = useAuth();
   const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+  const [strategy, setStrategy] = useState<string>('');
+  const [strategyFocus, setStrategyFocus] = useState<string>('');
 
   const fetchRecommendations = async () => {
     if (!user) return;
@@ -42,8 +51,10 @@ export default function RecommendationsPage() {
         throw new Error('Failed to fetch recommendations');
       }
       
-      const data = await response.json();
+      const data: RecommendationsResponse = await response.json();
       setRecommendations(data.recommendations);
+      setStrategy(data.strategy || '');
+      setStrategyFocus(data.strategyFocus || '');
       setLastUpdated(new Date());
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
@@ -121,12 +132,25 @@ export default function RecommendationsPage() {
         </button>
       </div>
 
-      {/* Last Updated */}
-      {lastUpdated && (
-        <div className="text-center mb-6">
-          <p className="text-sm text-gray-500">
-            Last updated: {lastUpdated.toLocaleString()}
-          </p>
+      {/* Strategy and Last Updated */}
+      {(strategy || lastUpdated) && (
+        <div className="text-center mb-6 space-y-2">
+          {strategy && (
+            <div className="inline-flex items-center gap-2 px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">
+              <SparklesIcon className="h-4 w-4" />
+              {strategy.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')} Strategy
+            </div>
+          )}
+          {strategyFocus && (
+            <p className="text-sm text-gray-600 max-w-2xl mx-auto">
+              {strategyFocus}
+            </p>
+          )}
+          {lastUpdated && (
+            <p className="text-xs text-gray-500">
+              Last updated: {lastUpdated.toLocaleString()}
+            </p>
+          )}
         </div>
       )}
 

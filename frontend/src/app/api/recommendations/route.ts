@@ -66,8 +66,63 @@ async function getOpenAIRecommendations(watchlist: WatchItem[]): Promise<Recomme
     throw new Error('OpenAI API key not configured');
   }
 
-  // Prepare watchlist data for AI analysis with some randomization
-  const shuffledWatchlist = [...watchlist].sort(() => Math.random() - 0.5);
+  // Create different recommendation strategies with limited data subsets
+  const strategies = [
+    {
+      name: "recent additions",
+      filter: (items: WatchItem[]) => items.filter(item => item.status === 'want-to-watch').slice(0, 10),
+      focus: "focus on your most recently added items"
+    },
+    {
+      name: "highly rated similar",
+      filter: (items: WatchItem[]) => {
+        const finished = items.filter(item => item.status === 'finished' && item.rating === 'loved');
+        const wantToWatch = items.filter(item => item.status === 'want-to-watch');
+        return wantToWatch.slice(0, 8);
+      },
+      focus: "prioritize items similar to what you've loved"
+    },
+    {
+      name: "quick wins",
+      filter: (items: WatchItem[]) => {
+        const movies = items.filter(item => item.status === 'want-to-watch' && item.type === 'movie');
+        const shortShows = items.filter(item => item.status === 'want-to-watch' && item.type === 'show' && (item.tmdbTvNumberOfSeasons || 0) <= 2);
+        return [...movies, ...shortShows].slice(0, 8);
+      },
+      focus: "suggest quick, satisfying content you can finish soon"
+    },
+    {
+      name: "deep dives",
+      filter: (items: WatchItem[]) => {
+        const longShows = items.filter(item => item.status === 'want-to-watch' && item.type === 'show' && (item.tmdbTvNumberOfSeasons || 0) > 2);
+        const complexMovies = items.filter(item => item.status === 'want-to-watch' && item.type === 'movie' && (item.tmdbMovieRuntime || 0) > 120);
+        return [...longShows, ...complexMovies].slice(0, 8);
+      },
+      focus: "recommend immersive, longer-form content for deeper engagement"
+    },
+    {
+      name: "mood boosters",
+      filter: (items: WatchItem[]) => {
+        const wantToWatch = items.filter(item => item.status === 'want-to-watch');
+        return wantToWatch.slice(0, 6);
+      },
+      focus: "suggest uplifting and entertaining content to improve your mood"
+    },
+    {
+      name: "hidden gems",
+      filter: (items: WatchItem[]) => {
+        const wantToWatch = items.filter(item => item.status === 'want-to-watch');
+        // Shuffle and take items that might be less obvious choices
+        return wantToWatch.sort(() => Math.random() - 0.5).slice(0, 8);
+      },
+      focus: "highlight underrated or overlooked content in your list"
+    }
+  ];
+
+  const randomStrategy = strategies[Math.floor(Math.random() * strategies.length)];
+  const filteredWatchlist = randomStrategy.filter(watchlist);
+  const shuffledWatchlist = [...filteredWatchlist].sort(() => Math.random() - 0.5);
+  
   const watchlistSummary = shuffledWatchlist.map(item => ({
     title: item.title,
     type: item.type,
@@ -80,29 +135,18 @@ async function getOpenAIRecommendations(watchlist: WatchItem[]): Promise<Recomme
     seasons: item.tmdbTvNumberOfSeasons
   }));
 
-  // Add variety to recommendations by using different approaches
-  const recommendationStyles = [
-    "focus on mood and emotional appeal",
-    "consider time of day and energy levels", 
-    "prioritize cultural significance and awards",
-    "emphasize entertainment value and fun",
-    "highlight thought-provoking and challenging content",
-    "consider seasonal appropriateness",
-    "focus on trending and popular choices",
-    "emphasize hidden gems and underrated content"
-  ];
-  
-  const randomStyle = recommendationStyles[Math.floor(Math.random() * recommendationStyles.length)];
+  // Use the strategy focus instead of random styles
+  const strategyFocus = randomStrategy.focus;
   
   const currentTime = new Date();
   const hour = currentTime.getHours();
   const timeContext = hour < 12 ? "morning" : hour < 17 ? "afternoon" : hour < 21 ? "evening" : "night";
   
-  const prompt = `Analyze this watchlist and recommend 5 "want-to-watch" items to prioritize. ${randomStyle}. It's ${timeContext} time:
+  const prompt = `Analyze this watchlist subset and recommend 5 "want-to-watch" items to prioritize. ${strategyFocus}. It's ${timeContext} time:
 
 ${watchlistSummary.map(item => `${item.title} (${item.type}, ${item.status})${item.rating ? `, rated: ${item.rating}` : ''}${item.notes ? `, notes: ${item.notes.substring(0, 50)}` : ''}`).join('\n')}
 
-Consider: ratings, content type preferences, themes, time commitment, recency, and the current time of day.
+Strategy: ${randomStrategy.name}. Consider: ratings, content type preferences, themes, time commitment, recency, and the current time of day.
 
 Return JSON array:
 [{"id": [item_id], "reason": "[2-3 sentence reason]", "confidence": [0.1-1.0]}]`;
@@ -248,6 +292,8 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       recommendations,
       totalItems: watchlist.length,
+      strategy: randomStrategy.name,
+      strategyFocus: randomStrategy.focus,
     });
 
   } catch (error) {

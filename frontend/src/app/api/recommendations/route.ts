@@ -122,6 +122,29 @@ async function getOpenAIRecommendations(watchlist: WatchItem[]): Promise<{
         return wantToWatch.sort(() => Math.random() - 0.5).slice(0, 8);
       },
       focus: "highlight underrated or overlooked content in your list"
+    },
+    {
+      name: "continue watching",
+      filter: (items: WatchItem[]) => {
+        // Find shows that are "watching" status (in progress)
+        const inProgressShows = items.filter(item => 
+          item.status === 'watching' && 
+          item.type === 'show' && 
+          item.tmdbTvNumberOfSeasons && 
+          item.tmdbTvNumberOfSeasons > 1
+        );
+        
+        // Also include shows that are "finished" but have more seasons available
+        const finishedWithMoreSeasons = items.filter(item => 
+          item.status === 'finished' && 
+          item.type === 'show' && 
+          item.tmdbTvNumberOfSeasons && 
+          item.tmdbTvNumberOfSeasons > 1
+        );
+        
+        return [...inProgressShows, ...finishedWithMoreSeasons].slice(0, 8);
+      },
+      focus: "suggest shows you've started or finished that have more seasons to continue"
     }
   ];
 

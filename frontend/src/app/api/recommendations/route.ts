@@ -186,10 +186,19 @@ ${watchlistSummary.map(item => `ID: ${item.id} - ${item.title} (${item.type}, ${
 
 Strategy: ${randomStrategy.name}. Consider: ratings, content type preferences, themes, time commitment, recency, and the current time of day.
 
-CRITICAL: You MUST return the EXACT numeric ID from the list above. For example, if you want to recommend "The Expanse", you must return {"id": 78, "reason": "...", "confidence": 0.8}. Do NOT return "undefined" or titles. Do NOT make up sequential IDs (1,2,3,4,5). Only use the numeric IDs shown in the list. The available IDs are: ${shuffledWatchlist.map(item => item.id).join(', ')}.
+CRITICAL INSTRUCTIONS:
+1. You MUST return the EXACT numeric ID from the list above
+2. Your reason MUST describe the specific item you are recommending (the one with that ID)
+3. Do NOT mention other items in your reason
+4. Do NOT return "undefined" or titles
+5. Do NOT make up sequential IDs (1,2,3,4,5)
+6. Only use the numeric IDs shown in the list: ${shuffledWatchlist.map(item => item.id).join(', ')}
+
+EXAMPLE: If you want to recommend "The Expanse" (ID: 78), your response should be:
+{"id": 78, "reason": "The Expanse offers an immersive sci-fi experience...", "confidence": 0.8}
 
 Return JSON array:
-[{"id": [exact_numeric_id], "reason": "[2-3 sentence reason]", "confidence": [0.1-1.0]}]`;
+[{"id": [exact_numeric_id], "reason": "[2-3 sentence reason about THIS specific item]", "confidence": [0.1-1.0]}]`;
 
   try {
     const response = await fetch('https://api.openai.com/v1/chat/completions', {

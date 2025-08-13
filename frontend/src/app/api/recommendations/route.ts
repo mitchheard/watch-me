@@ -249,16 +249,10 @@ Return JSON array:
     console.log('Valid recommendations after filtering:', validRecommendations.length);
     
     let recommendations: Recommendation[] = validRecommendations.map((rec: any) => {
-      // Try to find by ID first
-      let item = watchlist.find(w => w.id === rec.id);
+      // Try to find by ID in the shuffled watchlist (the items sent to AI)
+      let item = shuffledWatchlist.find(w => w.id === rec.id);
       if (!item) {
-        // If rec.id is a number but not found, try to find by title
-        // Convert rec.id to string for title comparison
-        const recIdString = String(rec.id);
-        item = watchlist.find(w => w.title.toLowerCase() === recIdString.toLowerCase());
-      }
-      if (!item) {
-        console.log('Could not find item for recommendation:', rec.id);
+        console.log('Could not find item for recommendation ID:', rec.id, 'in shuffled watchlist');
         return null;
       }
       
@@ -288,9 +282,9 @@ Return JSON array:
       );
       
       for (const aiRec of remainingAiRecs) {
-        // Try to find an item that matches the AI's reasoning
-        const availableItems = watchlist.filter(item => 
-          !usedIds.has(item.id) && item.status === 'want-to-watch'
+        // Try to find an item from the shuffled watchlist that wasn't used
+        const availableItems = shuffledWatchlist.filter(item => 
+          !usedIds.has(item.id)
         );
         
         if (availableItems.length > 0) {

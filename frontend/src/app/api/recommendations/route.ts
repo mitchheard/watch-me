@@ -445,7 +445,7 @@ export async function GET(_request: NextRequest) {
 
     // Get user's watchlist
     console.log('Fetching watchlist from database...');
-    let watchlist;
+    let watchlist: WatchItem[];
     try {
       watchlist = await prisma.watchItem.findMany({
         where: {

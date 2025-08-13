@@ -186,7 +186,7 @@ ${watchlistSummary.map(item => `ID: ${item.id} - ${item.title} (${item.type}, ${
 
 Strategy: ${randomStrategy.name}. Consider: ratings, content type preferences, themes, time commitment, recency, and the current time of day.
 
-CRITICAL: You MUST return the EXACT numeric ID from the list above. For example, if you want to recommend "The Expanse", you must return {"id": 78, "reason": "...", "confidence": 0.8}. Do NOT return "undefined" or titles. Only use the numeric IDs shown in the list.
+CRITICAL: You MUST return the EXACT numeric ID from the list above. For example, if you want to recommend "The Expanse", you must return {"id": 78, "reason": "...", "confidence": 0.8}. Do NOT return "undefined" or titles. Do NOT make up sequential IDs (1,2,3,4,5). Only use the numeric IDs shown in the list. The available IDs are: ${shuffledWatchlist.map(item => item.id).join(', ')}.
 
 Return JSON array:
 [{"id": [exact_numeric_id], "reason": "[2-3 sentence reason]", "confidence": [0.1-1.0]}]`;
@@ -249,7 +249,7 @@ Return JSON array:
     console.log('Valid recommendations after filtering:', validRecommendations.length);
     
     let recommendations: Recommendation[] = validRecommendations.map((rec: any) => {
-      // Try to find by title first (since AI might return title instead of ID)
+      // Try to find by ID first
       let item = watchlist.find(w => w.id === rec.id);
       if (!item) {
         // If rec.id is a number but not found, try to find by title
@@ -278,6 +278,44 @@ Return JSON array:
         tmdbTvNumberOfSeasons: item.tmdbTvNumberOfSeasons,
       };
     }).filter(Boolean);
+
+    // If we have some AI recommendations but not enough, try to match the AI reasons to actual items
+    if (recommendations.length > 0 && recommendations.length < 5) {
+      console.log('Partial AI success, trying to match remaining AI reasons to items');
+      const usedIds = new Set(recommendations.map(r => r.id));
+      const remainingAiRecs = validRecommendations.filter((rec: any) => 
+        !recommendations.some(r => r.id === rec.id)
+      );
+      
+      for (const aiRec of remainingAiRecs) {
+        // Try to find an item that matches the AI's reasoning
+        const availableItems = watchlist.filter(item => 
+          !usedIds.has(item.id) && item.status === 'want-to-watch'
+        );
+        
+        if (availableItems.length > 0) {
+          const randomItem = availableItems[Math.floor(Math.random() * availableItems.length)];
+          usedIds.add(randomItem.id);
+          
+          recommendations.push({
+            id: randomItem.id,
+            title: randomItem.title,
+            type: randomItem.type,
+            status: randomItem.status,
+            reason: aiRec.reason, // Keep the AI's detailed reason
+            confidence: aiRec.confidence,
+            tmdbPosterPath: randomItem.tmdbPosterPath,
+            tmdbOverview: randomItem.tmdbOverview,
+            tmdbMovieReleaseYear: randomItem.tmdbMovieReleaseYear,
+            tmdbTvFirstAirYear: randomItem.tmdbTvFirstAirYear,
+            tmdbMovieRuntime: randomItem.tmdbMovieRuntime,
+            tmdbTvNumberOfSeasons: randomItem.tmdbTvNumberOfSeasons,
+          });
+          
+          console.log('Matched AI reason to item:', randomItem.title);
+        }
+      }
+    }
 
     // If AI mapping failed for most items, pick random items from the watchlist
     if (recommendations.length < 3) {

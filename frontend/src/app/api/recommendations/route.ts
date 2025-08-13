@@ -186,7 +186,7 @@ ${watchlistSummary.map(item => `ID: ${item.id} - ${item.title} (${item.type}, ${
 
 Strategy: ${randomStrategy.name}. Consider: ratings, content type preferences, themes, time commitment, recency, and the current time of day.
 
-IMPORTANT: You MUST return the exact numeric ID from the list above. Do NOT make up IDs or use titles. Only use the IDs that are shown in the list. Make sure to select different items than previous recommendations.
+CRITICAL: You MUST return the EXACT numeric ID from the list above. For example, if you want to recommend "The Expanse", you must return {"id": 78, "reason": "...", "confidence": 0.8}. Do NOT return "undefined" or titles. Only use the numeric IDs shown in the list.
 
 Return JSON array:
 [{"id": [exact_numeric_id], "reason": "[2-3 sentence reason]", "confidence": [0.1-1.0]}]`;
@@ -242,7 +242,13 @@ Return JSON array:
     console.log('AI recommendation IDs:', aiRecommendations.map((rec: any) => rec.id));
     console.log('Full AI response:', JSON.stringify(aiRecommendations, null, 2));
     
-    const recommendations: Recommendation[] = aiRecommendations.map((rec: any) => {
+    // Filter out any recommendations with undefined or invalid IDs
+    const validRecommendations = aiRecommendations.filter((rec: any) => 
+      rec.id && rec.id !== "undefined" && rec.id !== undefined && !isNaN(Number(rec.id))
+    );
+    console.log('Valid recommendations after filtering:', validRecommendations.length);
+    
+    let recommendations: Recommendation[] = validRecommendations.map((rec: any) => {
       // Try to find by title first (since AI might return title instead of ID)
       let item = watchlist.find(w => w.id === rec.id);
       if (!item) {

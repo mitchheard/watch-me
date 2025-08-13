@@ -267,7 +267,7 @@ export default function WatchlistItems() {
                   <div className="flex items-start justify-between gap-2 mb-1.5">
                     <h3 className="font-semibold text-base text-slate-900 truncate">{item.title}</h3>
                     <span
-                      className={`px-2 py-0.5 text-xs font-semibold rounded-full flex-shrink-0
+                      className={`px-2 py-0.5 text-xs font-semibold rounded-full flex-shrink-0 inline-flex items-center
                         ${item.type === 'movie' 
                           ? 'bg-blue-100 text-blue-700 border border-blue-200' 
                           : 'bg-green-100 text-green-700 border border-green-200'
@@ -275,13 +275,13 @@ export default function WatchlistItems() {
                     >
                       {item.type === 'movie' ? (
                         <>
-                          <FilmIcon className="w-3 h-3 mr-1" />
+                          <FilmIcon className="w-3 h-3 mr-1 flex-shrink-0" />
                           Movie
                         </>
                       ) : (
                         <>
-                          <TvIcon className="w-3 h-3 mr-1" />
-                          TV Show
+                          <TvIcon className="w-3 h-3 mr-1 flex-shrink-0" />
+                          TV
                         </>
                       )}
                     </span>

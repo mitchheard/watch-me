@@ -32,6 +32,13 @@ interface Recommendation {
   tmdbTvNumberOfSeasons?: number | null;
 }
 
+interface AIRecommendation {
+  id: number;
+  title: string;
+  reason: string;
+  confidence: number;
+}
+
 async function getUserId() {
   const cookieStore = await cookies();
   const supabase = createServerClient(
@@ -82,7 +89,7 @@ async function getOpenAIRecommendations(watchlist: WatchItem[]): Promise<{
     {
       name: "highly rated similar",
       filter: (items: WatchItem[]) => {
-        const finished = items.filter(item => item.status === 'finished' && item.rating === 'loved');
+        const _finished = items.filter(item => item.status === 'finished' && item.rating === 'loved');
         const wantToWatch = items.filter(item => item.status === 'want-to-watch');
         return wantToWatch.slice(0, 8);
       },
@@ -274,16 +281,16 @@ Return JSON array:
     
     // Map AI recommendations back to full watchlist items
     console.log('AI recommendations received:', aiRecommendations.length);
-    console.log('AI recommendation IDs:', aiRecommendations.map((rec: any) => rec.id));
+    console.log('AI recommendation IDs:', aiRecommendations.map((rec: AIRecommendation) => rec.id));
     console.log('Full AI response:', JSON.stringify(aiRecommendations, null, 2));
     
     // Filter out any recommendations with undefined or invalid IDs
-    let validRecommendations = aiRecommendations.filter((rec: any) => 
+    let validRecommendations = aiRecommendations.filter((rec: AIRecommendation) => 
       rec.id && rec.id !== "undefined" && rec.id !== undefined && !isNaN(Number(rec.id))
     );
     
     // Additional validation: ensure the AI's title matches an item in our shuffled watchlist
-    validRecommendations = validRecommendations.filter((rec: any) => {
+    validRecommendations = validRecommendations.filter((rec: AIRecommendation) => {
       if (!rec.title) return false;
       
       const matchingItem = shuffledWatchlist.find(item => 
@@ -315,7 +322,7 @@ Return JSON array:
       console.log(`  AI wants ID ${rec.id}: "${rec.reason.substring(0, 50)}..."`);
     });
     
-    let recommendations: Recommendation[] = validRecommendations.map((rec: any) => {
+    let recommendations: Recommendation[] = validRecommendations.map((rec: AIRecommendation) => {
       // Try to find by ID in the shuffled watchlist (the items sent to AI)
       let item = shuffledWatchlist.find(w => w.id === rec.id);
       
@@ -353,7 +360,7 @@ Return JSON array:
     if (recommendations.length > 0 && recommendations.length < 5) {
       console.log('Partial AI success, trying to match remaining AI reasons to items');
       const usedIds = new Set(recommendations.map(r => r.id));
-      const remainingAiRecs = validRecommendations.filter((rec: any) => 
+      const remainingAiRecs = validRecommendations.filter((rec: AIRecommendation) => 
         !recommendations.some(r => r.id === rec.id)
       );
       
@@ -426,7 +433,7 @@ Return JSON array:
   }
 }
 
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   console.log('Recommendations API called');
   try {
     console.log('Getting user ID...');

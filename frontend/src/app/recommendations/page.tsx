@@ -1,10 +1,11 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { WatchItem } from '@/types/watchlist';
+// import { WatchItem } from '@/types/watchlist'; // Unused import
 import { SparklesIcon, ClockIcon, HeartIcon, EyeIcon } from '@heroicons/react/24/outline';
 import Image from 'next/image';
+import Link from 'next/link';
 
 interface Recommendation {
   id: number;
@@ -43,7 +44,7 @@ export default function RecommendationsPage() {
     console.log('Recommendations state changed:', recommendations.length);
   }, [recommendations]);
 
-  const fetchRecommendations = async (resetState = false) => {
+  const fetchRecommendations = useCallback(async (resetState = false) => {
     if (!user) return;
     
     console.log('Fetching recommendations...', resetState ? '(manual refresh)' : '(initial load)');
@@ -76,14 +77,14 @@ export default function RecommendationsPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [user]);
 
   useEffect(() => {
     if (user && !hasInitialized) {
       setHasInitialized(true);
       fetchRecommendations();
     }
-  }, [user?.id, hasInitialized]); // Only depend on user ID and initialization flag
+  }, [user?.id, hasInitialized, fetchRecommendations]); // Include fetchRecommendations in dependencies
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -287,12 +288,12 @@ export default function RecommendationsPage() {
           <p className="text-gray-600 mb-4 sm:mb-6 text-sm sm:text-base">
             Add some items to your watchlist to get personalized recommendations.
           </p>
-          <a
+          <Link
             href="/"
             className="inline-flex items-center gap-2 px-4 sm:px-6 py-2 sm:py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm sm:text-base"
           >
             Go to Watchlist
-          </a>
+          </Link>
         </div>
       )}
     </div>

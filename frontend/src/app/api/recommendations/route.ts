@@ -248,15 +248,25 @@ Return JSON array:
     );
     console.log('Valid recommendations after filtering:', validRecommendations.length);
     
+    console.log('=== MAPPING DEBUG ===');
+    console.log('Shuffled watchlist items and IDs:');
+    shuffledWatchlist.forEach(item => {
+      console.log(`  ID ${item.id}: ${item.title}`);
+    });
+    console.log('AI recommendations to map:');
+    validRecommendations.forEach(rec => {
+      console.log(`  AI wants ID ${rec.id}: "${rec.reason.substring(0, 50)}..."`);
+    });
+    
     let recommendations: Recommendation[] = validRecommendations.map((rec: any) => {
       // Try to find by ID in the shuffled watchlist (the items sent to AI)
       let item = shuffledWatchlist.find(w => w.id === rec.id);
       if (!item) {
-        console.log('Could not find item for recommendation ID:', rec.id, 'in shuffled watchlist');
+        console.log('❌ Could not find item for recommendation ID:', rec.id, 'in shuffled watchlist');
         return null;
       }
       
-      console.log('Found item for recommendation:', item.title, 'ID:', item.id);
+      console.log('✅ Found item for recommendation:', item.title, 'ID:', item.id);
       return {
         id: item.id,
         title: item.title,

@@ -192,6 +192,7 @@ async function getOpenAIRecommendations(watchlist: WatchItem[]): Promise<{
   console.log('Available IDs in shuffled watchlist:', shuffledWatchlist.map(item => item.id));
   
   const watchlistSummary = shuffledWatchlist.map(item => ({
+    id: item.id,
     title: item.title,
     type: item.type,
     status: item.status,

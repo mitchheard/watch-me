@@ -304,25 +304,30 @@ export default function WatchlistItems() {
                     </span>
                   </div>
                   
-                  {/* Progress Info for TV Shows */}
-                  {item.type === 'show' && (item.currentSeason || item.totalSeasons) && (
-                    <div className="mb-1">
-                      <span className="text-xs text-slate-600 font-medium">
-                        {item.currentSeason && item.totalSeasons ? (
-                          `Season ${item.currentSeason} of ${item.totalSeasons}`
-                        ) : item.currentSeason ? (
-                          `Season ${item.currentSeason}`
-                        ) : item.totalSeasons ? (
-                          `${item.totalSeasons} seasons`
-                        ) : null}
-                      </span>
-                    </div>
-                  )}
-                  
-                  {/* Years */}
+                  {/* Progress Info and Years - Combined */}
                   <div className="mb-1">
-                    <span className="text-xs text-slate-500">
-                      {(item.type === 'movie' && item.tmdbMovieReleaseYear) || (item.type === 'show' && item.tmdbTvFirstAirYear) ? (
+                    <span className="text-xs text-slate-600">
+                      {item.type === 'show' && (item.currentSeason || item.totalSeasons) ? (
+                        <>
+                          {item.currentSeason && item.totalSeasons ? (
+                            `Season ${item.currentSeason} of ${item.totalSeasons}`
+                          ) : item.currentSeason ? (
+                            `Season ${item.currentSeason}`
+                          ) : item.totalSeasons ? (
+                            `${item.totalSeasons} seasons`
+                          ) : null}
+                          {item.tmdbTvFirstAirYear && (
+                            <>
+                              {' • '}
+                              {item.tmdbTvLastAirYear ? (
+                                `${item.tmdbTvFirstAirYear}–${item.tmdbTvLastAirYear}`
+                              ) : (
+                                item.tmdbTvFirstAirYear
+                              )}
+                            </>
+                          )}
+                        </>
+                      ) : (
                         <>
                           {item.type === 'movie' && item.tmdbMovieReleaseYear && (
                             <span>{item.tmdbMovieReleaseYear}</span>
@@ -334,7 +339,7 @@ export default function WatchlistItems() {
                             <span>{item.tmdbTvFirstAirYear}</span>
                           )}
                         </>
-                      ) : null}
+                      )}
                     </span>
                   </div>
                   
@@ -762,25 +767,30 @@ export default function WatchlistItems() {
                     </span>
                   </div>
                   
-                  {/* Progress Info for TV Shows */}
-                  {modalItem.type === 'show' && (modalItem.currentSeason || modalItem.totalSeasons) && (
-                    <div className="mb-2">
-                      <span className="text-sm text-slate-600 font-medium">
-                        {modalItem.currentSeason && modalItem.totalSeasons ? (
-                          `Season ${modalItem.currentSeason} of ${modalItem.totalSeasons}`
-                        ) : modalItem.currentSeason ? (
-                          `Season ${modalItem.currentSeason}`
-                        ) : modalItem.totalSeasons ? (
-                          `${modalItem.totalSeasons} seasons`
-                        ) : null}
-                      </span>
-                    </div>
-                  )}
-                  
-                  {/* Years */}
+                  {/* Progress Info and Years - Combined */}
                   <div className="mb-2">
-                    <span className="text-sm text-slate-500">
-                      {(modalItem.type === 'movie' && modalItem.tmdbMovieReleaseYear) || (modalItem.type === 'show' && modalItem.tmdbTvFirstAirYear) ? (
+                    <span className="text-sm text-slate-600">
+                      {modalItem.type === 'show' && (modalItem.currentSeason || modalItem.totalSeasons) ? (
+                        <>
+                          {modalItem.currentSeason && modalItem.totalSeasons ? (
+                            `Season ${modalItem.currentSeason} of ${modalItem.totalSeasons}`
+                          ) : modalItem.currentSeason ? (
+                            `Season ${modalItem.currentSeason}`
+                          ) : modalItem.totalSeasons ? (
+                            `${modalItem.totalSeasons} seasons`
+                          ) : null}
+                          {modalItem.tmdbTvFirstAirYear && (
+                            <>
+                              {' • '}
+                              {modalItem.tmdbTvLastAirYear ? (
+                                `${modalItem.tmdbTvFirstAirYear}–${modalItem.tmdbTvLastAirYear}`
+                              ) : (
+                                modalItem.tmdbTvFirstAirYear
+                              )}
+                            </>
+                          )}
+                        </>
+                      ) : (
                         <>
                           {modalItem.type === 'movie' && modalItem.tmdbMovieReleaseYear && (
                             <span>{modalItem.tmdbMovieReleaseYear}</span>
@@ -792,7 +802,7 @@ export default function WatchlistItems() {
                             <span>{modalItem.tmdbTvFirstAirYear}</span>
                           )}
                         </>
-                      ) : null}
+                      )}
                     </span>
                   </div>
                   

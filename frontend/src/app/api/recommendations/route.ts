@@ -270,31 +270,37 @@ export async function GET(request: NextRequest) {
 
     // Get user's watchlist
     console.log('Fetching watchlist from database...');
-    const watchlist = await prisma.watchItem.findMany({
-      where: {
-        userId: userId,
-      },
-      select: {
-        id: true,
-        title: true,
-        type: true,
-        status: true,
-        rating: true,
-        notes: true,
-        tmdbOverview: true,
-        tmdbMovieReleaseYear: true,
-        tmdbTvFirstAirYear: true,
-        tmdbMovieRuntime: true,
-        tmdbTvNumberOfSeasons: true,
-        tmdbPosterPath: true,
-      },
-      orderBy: {
-        createdAt: 'desc',
-      },
-    });
+    let watchlist;
+    try {
+      watchlist = await prisma.watchItem.findMany({
+        where: {
+          userId: userId,
+        },
+        select: {
+          id: true,
+          title: true,
+          type: true,
+          status: true,
+          rating: true,
+          notes: true,
+          tmdbOverview: true,
+          tmdbMovieReleaseYear: true,
+          tmdbTvFirstAirYear: true,
+          tmdbMovieRuntime: true,
+          tmdbTvNumberOfSeasons: true,
+          tmdbPosterPath: true,
+        },
+        orderBy: {
+          createdAt: 'desc',
+        },
+      });
 
-    console.log('Watchlist items found:', watchlist.length);
-    console.log('Watchlist statuses:', watchlist.map(item => item.status));
+      console.log('Watchlist items found:', watchlist.length);
+      console.log('Watchlist statuses:', watchlist.map(item => item.status));
+    } catch (dbError) {
+      console.error('Database connection error:', dbError);
+      watchlist = []; // Set empty array if database fails
+    }
 
     if (watchlist.length === 0) {
       return NextResponse.json({ 
@@ -357,7 +363,8 @@ export async function GET(request: NextRequest) {
     console.error('Recommendations API error:', error);
     
     // Always return some recommendations, even if there's an error
-    const wantToWatchItems = watchlist.filter(item => item.status === 'want-to-watch').slice(0, 5);
+    // If watchlist is not available due to database error, return empty recommendations
+    const wantToWatchItems = (watchlist || []).filter(item => item.status === 'want-to-watch').slice(0, 5);
     const fallbackReasons = [
       "This looks like a perfect choice for your next viewing session.",
       "Based on your watchlist, this could be exactly what you're in the mood for.",
@@ -383,7 +390,7 @@ export async function GET(request: NextRequest) {
     
     return NextResponse.json({
       recommendations,
-      totalItems: watchlist.length,
+      totalItems: (watchlist || []).length,
       strategy: "error-fallback",
       strategyFocus: "recommendations from your want-to-watch list due to an error",
     });

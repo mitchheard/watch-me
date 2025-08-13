@@ -32,21 +32,19 @@ export async function GET(request: NextRequest) {
   }
 
   if (code) {
-    const cookieStore = cookies() as ReturnType<typeof cookies>; 
+    const cookieStore = await cookies();
     const supabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
       {
         cookies: {
           get(name: string) {
-            // @ts-expect-error TypeScript compiler seems to incorrectly infer Promise here
             const value = cookieStore.get(name)?.value;
             console.log(`[AuthCallback] Cookie GET: ${name} = ${value ? 'found' : 'not found'}`);
             return value;
           },
           set(name: string, value: string, options: CookieOptions) {
             console.log(`[AuthCallback] Cookie SET: ${name}`);
-            // @ts-expect-error TypeScript compiler seems to incorrectly infer Promise here
             cookieStore.set(name, value, options);
           },
           remove(name: string, options: CookieOptions) {
@@ -54,7 +52,6 @@ export async function GET(request: NextRequest) {
             const deleteOpts: { name: string; path?: string; domain?: string } = { name };
             if (options.path) deleteOpts.path = options.path;
             if (options.domain) deleteOpts.domain = options.domain;
-            // @ts-expect-error TypeScript compiler seems to incorrectly infer Promise here
             cookieStore.delete(deleteOpts);
           },
         },

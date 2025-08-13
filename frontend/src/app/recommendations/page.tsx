@@ -36,18 +36,26 @@ export default function RecommendationsPage() {
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [strategy, setStrategy] = useState<string>('');
   const [strategyFocus, setStrategyFocus] = useState<string>('');
+  const [hasInitialized, setHasInitialized] = useState(false);
   
   // Debug logging for state changes
   useEffect(() => {
     console.log('Recommendations state changed:', recommendations.length);
   }, [recommendations]);
 
-  const fetchRecommendations = async () => {
+  const fetchRecommendations = async (resetState = false) => {
     if (!user) return;
     
-    console.log('Fetching recommendations...');
+    console.log('Fetching recommendations...', resetState ? '(manual refresh)' : '(initial load)');
     setIsLoading(true);
     setError(null);
+    
+    if (resetState) {
+      setRecommendations([]);
+      setStrategy('');
+      setStrategyFocus('');
+      setLastUpdated(null);
+    }
     
     try {
       const response = await fetch('/api/recommendations', {
@@ -71,10 +79,11 @@ export default function RecommendationsPage() {
   };
 
   useEffect(() => {
-    if (user && recommendations.length === 0) {
+    if (user && !hasInitialized) {
+      setHasInitialized(true);
       fetchRecommendations();
     }
-  }, [user?.id]); // Only depend on user ID, not the entire user object
+  }, [user?.id, hasInitialized]); // Only depend on user ID and initialization flag
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -132,7 +141,7 @@ export default function RecommendationsPage() {
       {/* Compact Refresh Button */}
       <div className="flex justify-center mb-4 sm:mb-6">
         <button
-          onClick={fetchRecommendations}
+          onClick={() => fetchRecommendations(true)}
           disabled={isLoading}
           className="flex items-center gap-2 px-4 sm:px-6 py-2 sm:py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm sm:text-base"
         >

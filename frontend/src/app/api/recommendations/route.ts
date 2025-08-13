@@ -126,7 +126,9 @@ async function getOpenAIRecommendations(watchlist: WatchItem[]): Promise<{
   ];
 
   // Try strategies until we find one with data
-  let randomStrategy = strategies[Math.floor(Math.random() * strategies.length)];
+  const randomIndex = Math.floor(Math.random() * strategies.length);
+  let randomStrategy = strategies[randomIndex];
+  console.log('Selected strategy index:', randomIndex, 'Strategy:', randomStrategy.name);
   let filteredWatchlist = randomStrategy.filter(watchlist);
   
   // If the first strategy returns no data, try others
@@ -153,7 +155,9 @@ async function getOpenAIRecommendations(watchlist: WatchItem[]): Promise<{
   console.log('Selected strategy:', randomStrategy.name);
   console.log('Filtered watchlist length:', filteredWatchlist.length);
   
+  // Shuffle the filtered watchlist to get different data each time
   const shuffledWatchlist = [...filteredWatchlist].sort(() => Math.random() - 0.5);
+  console.log('Shuffled watchlist items:', shuffledWatchlist.map(item => item.title).slice(0, 5));
   
   const watchlistSummary = shuffledWatchlist.map(item => ({
     title: item.title,
@@ -174,13 +178,14 @@ async function getOpenAIRecommendations(watchlist: WatchItem[]): Promise<{
   const hour = currentTime.getHours();
   const timeContext = hour < 12 ? "morning" : hour < 17 ? "afternoon" : hour < 21 ? "evening" : "night";
   
-  const prompt = `Analyze this watchlist subset and recommend 5 "want-to-watch" items to prioritize. ${strategyFocus}. It's ${timeContext} time:
+  const timestamp = Date.now();
+  const prompt = `Analyze this watchlist subset and recommend 5 "want-to-watch" items to prioritize. ${strategyFocus}. It's ${timeContext} time (timestamp: ${timestamp}):
 
 ${watchlistSummary.map(item => `ID: ${item.id} - ${item.title} (${item.type}, ${item.status})${item.rating ? `, rated: ${item.rating}` : ''}${item.notes ? `, notes: ${item.notes.substring(0, 50)}` : ''}`).join('\n')}
 
 Strategy: ${randomStrategy.name}. Consider: ratings, content type preferences, themes, time commitment, recency, and the current time of day.
 
-IMPORTANT: Return the exact numeric ID from the list above, not the title.
+IMPORTANT: Return the exact numeric ID from the list above, not the title. Make sure to select different items than previous recommendations.
 
 Return JSON array:
 [{"id": [exact_numeric_id], "reason": "[2-3 sentence reason]", "confidence": [0.1-1.0]}]`;
@@ -234,6 +239,7 @@ Return JSON array:
     // Map AI recommendations back to full watchlist items
     console.log('AI recommendations received:', aiRecommendations.length);
     console.log('AI recommendation IDs:', aiRecommendations.map((rec: any) => rec.id));
+    console.log('Full AI response:', JSON.stringify(aiRecommendations, null, 2));
     
     const recommendations: Recommendation[] = aiRecommendations.map((rec: any) => {
       // Try to find by title first (since AI might return title instead of ID)
@@ -246,7 +252,7 @@ Return JSON array:
         return null;
       }
       
-      console.log('Found item for recommendation:', item.title);
+      console.log('Found item for recommendation:', item.title, 'ID:', item.id);
       return {
         id: item.id,
         title: item.title,

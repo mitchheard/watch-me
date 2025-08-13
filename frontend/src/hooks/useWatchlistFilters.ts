@@ -36,6 +36,8 @@ export default function useWatchlistFilters() {
     const params = new URLSearchParams();
     if (newType !== 'all') params.set('type', newType);
     if (newStatus !== 'all') params.set('status', newStatus);
+    // Always include status in URL to prevent defaulting to 'want-to-watch'
+    if (newStatus === 'all') params.set('status', 'all');
     router.push(`?${params.toString()}`);
   };
 

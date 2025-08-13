@@ -179,23 +179,23 @@ export default function WatchlistItems() {
           </button>
           <button
             onClick={() => updateFilters('movie', status)}
-            className={`px-2 py-1.5 text-xs sm:text-sm rounded-lg font-medium flex items-center transition-all h-full w-full sm:w-auto justify-center ${type === 'movie' ? 'bg-blue-100 text-blue-700 shadow-sm ring-1 ring-blue-200' : 'text-slate-600 bg-transparent hover:bg-blue-50'}`}
+            className={`px-2 py-1.5 text-xs sm:text-sm rounded-lg font-medium flex items-center transition-all h-full w-full sm:w-auto justify-center ${type === 'movie' ? 'bg-purple-100 text-purple-700 shadow-sm ring-1 ring-purple-200' : 'text-slate-600 bg-transparent hover:bg-purple-50'}`}
           >
             <FilmIcon className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
             <span className="hidden sm:inline">Movies</span>
             <span className="sm:hidden">Movie</span>
-            <span className="ml-1 text-xs bg-blue-200 text-blue-700 px-1 py-0.5 rounded-full">
+            <span className="ml-1 text-xs bg-purple-200 text-purple-700 px-1 py-0.5 rounded-full">
               {movieCount}
             </span>
           </button>
           <button
             onClick={() => updateFilters('show', status)}
-            className={`px-2 py-1.5 text-xs sm:text-sm rounded-lg font-medium flex items-center transition-all h-full w-full sm:w-auto justify-center ${type === 'show' ? 'bg-green-100 text-green-700 shadow-sm ring-1 ring-green-200' : 'text-slate-600 bg-transparent hover:bg-green-50'}`}
+            className={`px-2 py-1.5 text-xs sm:text-sm rounded-lg font-medium flex items-center transition-all h-full w-full sm:w-auto justify-center ${type === 'show' ? 'bg-emerald-100 text-emerald-700 shadow-sm ring-1 ring-emerald-200' : 'text-slate-600 bg-transparent hover:bg-emerald-50'}`}
           >
             <TvIcon className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
             <span className="hidden sm:inline">TV Shows</span>
             <span className="sm:hidden">TV</span>
-            <span className="ml-1 text-xs bg-green-200 text-green-700 px-1 py-0.5 rounded-full">
+            <span className="ml-1 text-xs bg-emerald-200 text-emerald-700 px-1 py-0.5 rounded-full">
               {showCount}
             </span>
           </button>
@@ -269,8 +269,8 @@ export default function WatchlistItems() {
                     <span
                       className={`px-2 py-0.5 text-xs font-semibold rounded-full flex-shrink-0 inline-flex items-center
                         ${item.type === 'movie' 
-                          ? 'bg-blue-100 text-blue-700 border border-blue-200' 
-                          : 'bg-green-100 text-green-700 border border-green-200'
+                          ? 'bg-purple-100 text-purple-700 border border-purple-200' 
+                          : 'bg-emerald-100 text-emerald-700 border border-emerald-200'
                         }`}
                     >
                       {item.type === 'movie' ? (

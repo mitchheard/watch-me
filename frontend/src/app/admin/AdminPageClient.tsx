@@ -7,6 +7,8 @@ const ADMIN_USER_ID = '464661fa-7ae1-406f-9975-dec0ccbc94aa';
 
 const SORT_OPTIONS = [
   { value: 'createdAt', label: 'Signup Date' },
+  { value: 'lastSignInAt', label: 'Last Login' },
+  { value: 'lastItemAddedAt', label: 'Last Item Added' },
   { value: 'itemCount', label: 'Total Items' },
   { value: 'sessionCount', label: 'Sessions' },
 ];
@@ -26,7 +28,7 @@ export default function AdminPageClient() {
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [sortBy, setSortBy] = useState('createdAt');
+  const [sortBy, setSortBy] = useState('lastItemAddedAt');
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
 
   useEffect(() => {
@@ -58,6 +60,14 @@ export default function AdminPageClient() {
         aVal = a.createdAt ? new Date(a.createdAt).getTime() : 0;
         bVal = b.createdAt ? new Date(b.createdAt).getTime() : 0;
         break;
+      case 'lastSignInAt':
+        aVal = a.lastSignInAt ? new Date(a.lastSignInAt).getTime() : 0;
+        bVal = b.lastSignInAt ? new Date(b.lastSignInAt).getTime() : 0;
+        break;
+      case 'lastItemAddedAt':
+        aVal = a.lastItemAddedAt ? new Date(a.lastItemAddedAt).getTime() : 0;
+        bVal = b.lastItemAddedAt ? new Date(b.lastItemAddedAt).getTime() : 0;
+        break;
       case 'itemCount':
         aVal = a.itemCount;
         bVal = b.itemCount;
@@ -85,19 +95,19 @@ export default function AdminPageClient() {
   };
 
   return (
-    <div className="max-w-3xl mx-auto py-10 px-4">
-      <h1 className="text-2xl font-bold mb-2">Admin: User Overview</h1>
-      <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-        <div className="text-slate-500 text-sm font-medium">
-          Total users: <span className="font-bold text-blue-600">{users.length}</span>
+    <div className="max-w-6xl mx-auto py-8 px-4">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-900">Admin Dashboard</h1>
+          <p className="text-slate-500 text-sm mt-1">
+            {users.length} total users
+          </p>
         </div>
-        <div className="flex items-center gap-2">
-          <label htmlFor="sortBy" className="text-xs text-slate-500 font-medium">Sort by:</label>
+        <div className="flex items-center gap-3">
           <select
-            id="sortBy"
             value={sortBy}
             onChange={e => setSortBy(e.target.value)}
-            className="border border-slate-200 rounded px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="border border-slate-200 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
           >
             {SORT_OPTIONS.map(opt => (
               <option key={opt.value} value={opt.value}>{opt.label}</option>
@@ -105,49 +115,110 @@ export default function AdminPageClient() {
           </select>
           <button
             onClick={() => setSortDir(d => d === 'asc' ? 'desc' : 'asc')}
-            className="ml-1 px-2 py-1 rounded border border-slate-200 bg-white text-xs text-slate-600 hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="p-2 rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
             title={`Sort ${sortDir === 'asc' ? 'descending' : 'ascending'}`}
           >
             {sortDir === 'asc' ? '↑' : '↓'}
           </button>
         </div>
       </div>
+      
       {loading ? (
-        <div>Loading users...</div>
+        <div className="text-center py-8 text-slate-500">Loading users...</div>
       ) : error ? (
-        <div className="text-red-600">{error}</div>
+        <div className="text-red-600 text-center py-8">{error}</div>
       ) : (
-        <div className="flex flex-col gap-6">
-          {sortedUsers.map((u) => (
-            <div
-              key={u.id}
-              className="group rounded-xl border border-slate-200 bg-white shadow-sm p-4 sm:p-6 flex flex-col sm:flex-row sm:justify-between items-stretch sm:items-start gap-4 sm:gap-6 transition-all duration-200 ease-in-out hover:shadow-md hover:border-slate-300"
-            >
-              <div className="flex flex-col w-full sm:flex-grow">
-                <div className="font-semibold text-slate-800 text-lg truncate mb-1 text-left">{u.email}</div>
-                <div className="text-xs text-slate-400 text-left">
-                  Signup: {u.createdAt ? new Date(u.createdAt).toLocaleDateString() : 'Unknown'}
-                </div>
-                <div className="text-xs text-slate-400 text-left">
-                  Last login: {u.lastSignInAt ? new Date(u.lastSignInAt).toLocaleString(undefined, dateTimeFormatOptions) : 'Never'}
-                </div>
-                <div className="text-xs text-slate-400 text-left">
-                  Last item added: {u.lastItemAddedAt ? new Date(u.lastItemAddedAt).toLocaleString(undefined, dateTimeFormatOptions) : 'No items added'}
-                </div>
-              </div>
-              <div className="flex flex-row sm:flex-col justify-around sm:items-end gap-4 sm:gap-3 w-full sm:w-auto mt-3 sm:mt-0 sm:flex-shrink-0 sm:pt-1">
-                <div className="flex flex-col items-center sm:items-end">
-                  <span className="text-xs text-slate-500">Watchlist Items</span>
-                  <span className="text-2xl font-bold text-blue-600">{u.itemCount}</span>
-                </div>
-                <div className="flex flex-col items-center sm:items-end">
-                  <span className="text-xs text-slate-500">Sessions</span>
-                  <span className="text-2xl font-bold text-green-600">{u.sessionCount}</span>
-                </div>
-              </div>
+        <>
+          {/* Desktop Table View */}
+          <div className="hidden md:block bg-white rounded-xl border border-slate-200 overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-slate-50 border-b border-slate-200">
+                  <tr>
+                    <th className="text-left py-3 px-4 font-medium text-slate-700">User</th>
+                    <th className="text-left py-3 px-4 font-medium text-slate-700">Joined</th>
+                    <th className="text-left py-3 px-4 font-medium text-slate-700">Last Login</th>
+                    <th className="text-left py-3 px-4 font-medium text-slate-700">Last Added</th>
+                    <th className="text-center py-3 px-4 font-medium text-slate-700">Items</th>
+                    <th className="text-center py-3 px-4 font-medium text-slate-700">Sessions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {sortedUsers.map((u) => (
+                    <tr key={u.id} className="hover:bg-slate-50 transition-colors">
+                      <td className="py-3 px-4">
+                        <div className="font-medium text-slate-900">{u.email}</div>
+                      </td>
+                      <td className="py-3 px-4">
+                        <div className="text-sm text-slate-700">
+                          {u.createdAt ? new Date(u.createdAt).toLocaleDateString() : 'Unknown'}
+                        </div>
+                      </td>
+                      <td className="py-3 px-4">
+                        <div className="text-sm text-slate-700">
+                          {u.lastSignInAt ? new Date(u.lastSignInAt).toLocaleDateString() : 'Never'}
+                        </div>
+                      </td>
+                      <td className="py-3 px-4">
+                        <div className="text-sm text-slate-700">
+                          {u.lastItemAddedAt ? new Date(u.lastItemAddedAt).toLocaleDateString() : 'No items'}
+                        </div>
+                      </td>
+                      <td className="py-3 px-4 text-center">
+                        <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-blue-100 text-blue-700 font-semibold text-sm">
+                          {u.itemCount}
+                        </span>
+                      </td>
+                      <td className="py-3 px-4 text-center">
+                        <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-green-100 text-green-700 font-semibold text-sm">
+                          {u.sessionCount}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
-          ))}
-        </div>
+          </div>
+
+          {/* Mobile Card View */}
+          <div className="md:hidden space-y-3">
+            {sortedUsers.map((u) => (
+              <div key={u.id} className="bg-white rounded-lg border border-slate-200 p-4 hover:border-slate-300 transition-colors">
+                <div className="flex items-start justify-between mb-3">
+                  <div className="flex-1 min-w-0">
+                    <div className="font-medium text-slate-900 truncate">{u.email}</div>
+                    <div className="text-xs text-slate-500 mt-1">
+                      Joined {u.createdAt ? new Date(u.createdAt).toLocaleDateString() : 'Unknown'}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 ml-3">
+                    <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-blue-100 text-blue-700 font-semibold text-xs">
+                      {u.itemCount}
+                    </span>
+                    <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-green-100 text-green-700 font-semibold text-xs">
+                      {u.sessionCount}
+                    </span>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-3 text-sm">
+                  <div>
+                    <div className="text-slate-500 text-xs font-medium">Last Login</div>
+                    <div className="text-slate-700">
+                      {u.lastSignInAt ? new Date(u.lastSignInAt).toLocaleDateString() : 'Never'}
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-slate-500 text-xs font-medium">Last Added</div>
+                    <div className="text-slate-700">
+                      {u.lastItemAddedAt ? new Date(u.lastItemAddedAt).toLocaleDateString() : 'No items'}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </>
       )}
     </div>
   );

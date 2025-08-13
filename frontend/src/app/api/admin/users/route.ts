@@ -8,14 +8,13 @@ import { createClient } from '@supabase/supabase-js';
 const ADMIN_USER_ID = '464661fa-7ae1-406f-9975-dec0ccbc94aa';
 
 async function getUserId() {
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
       cookies: {
         async get(name: string) {
-          // @ts-expect-error TypeScript compiler may incorrectly infer Promise here
           const cookie = await cookieStore.get(name);
           return cookie?.value;
         },

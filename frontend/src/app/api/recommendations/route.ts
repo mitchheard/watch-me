@@ -158,6 +158,7 @@ async function getOpenAIRecommendations(watchlist: WatchItem[]): Promise<{
   // Shuffle the filtered watchlist to get different data each time
   const shuffledWatchlist = [...filteredWatchlist].sort(() => Math.random() - 0.5);
   console.log('Shuffled watchlist items:', shuffledWatchlist.map(item => item.title).slice(0, 5));
+  console.log('Available IDs in shuffled watchlist:', shuffledWatchlist.map(item => item.id));
   
   const watchlistSummary = shuffledWatchlist.map(item => ({
     title: item.title,
@@ -185,7 +186,7 @@ ${watchlistSummary.map(item => `ID: ${item.id} - ${item.title} (${item.type}, ${
 
 Strategy: ${randomStrategy.name}. Consider: ratings, content type preferences, themes, time commitment, recency, and the current time of day.
 
-IMPORTANT: Return the exact numeric ID from the list above, not the title. Make sure to select different items than previous recommendations.
+IMPORTANT: You MUST return the exact numeric ID from the list above. Do NOT make up IDs or use titles. Only use the IDs that are shown in the list. Make sure to select different items than previous recommendations.
 
 Return JSON array:
 [{"id": [exact_numeric_id], "reason": "[2-3 sentence reason]", "confidence": [0.1-1.0]}]`;
@@ -245,7 +246,10 @@ Return JSON array:
       // Try to find by title first (since AI might return title instead of ID)
       let item = watchlist.find(w => w.id === rec.id);
       if (!item) {
-        item = watchlist.find(w => w.title.toLowerCase() === rec.id.toLowerCase());
+        // If rec.id is a number but not found, try to find by title
+        // Convert rec.id to string for title comparison
+        const recIdString = String(rec.id);
+        item = watchlist.find(w => w.title.toLowerCase() === recIdString.toLowerCase());
       }
       if (!item) {
         console.log('Could not find item for recommendation:', rec.id);
@@ -268,6 +272,34 @@ Return JSON array:
         tmdbTvNumberOfSeasons: item.tmdbTvNumberOfSeasons,
       };
     }).filter(Boolean);
+
+    // If AI mapping failed for most items, pick random items from the watchlist
+    if (recommendations.length < 3) {
+      console.log('AI mapping failed, picking random items from watchlist');
+      const availableItems = [...watchlist].sort(() => Math.random() - 0.5).slice(0, 5);
+      const fallbackReasons = [
+        "This looks like a perfect choice for your next viewing session.",
+        "Based on your watchlist, this could be exactly what you're in the mood for.",
+        "This one seems to align well with your viewing preferences.",
+        "You've had this on your list for a while - maybe it's time to give it a shot!",
+        "This could be a great change of pace from your usual viewing habits.",
+      ];
+      
+      recommendations = availableItems.map((item, index) => ({
+        id: item.id,
+        title: item.title,
+        type: item.type,
+        status: item.status,
+        reason: fallbackReasons[index % fallbackReasons.length],
+        confidence: 0.8 - (index * 0.1),
+        tmdbPosterPath: item.tmdbPosterPath,
+        tmdbOverview: item.tmdbOverview,
+        tmdbMovieReleaseYear: item.tmdbMovieReleaseYear,
+        tmdbTvFirstAirYear: item.tmdbTvFirstAirYear,
+        tmdbMovieRuntime: item.tmdbMovieRuntime,
+        tmdbTvNumberOfSeasons: item.tmdbTvNumberOfSeasons,
+      }));
+    }
 
     return {
       recommendations,

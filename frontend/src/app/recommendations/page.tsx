@@ -36,10 +36,16 @@ export default function RecommendationsPage() {
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [strategy, setStrategy] = useState<string>('');
   const [strategyFocus, setStrategyFocus] = useState<string>('');
+  
+  // Debug logging for state changes
+  useEffect(() => {
+    console.log('Recommendations state changed:', recommendations.length);
+  }, [recommendations]);
 
   const fetchRecommendations = async () => {
     if (!user) return;
     
+    console.log('Fetching recommendations...');
     setIsLoading(true);
     setError(null);
     
@@ -52,6 +58,7 @@ export default function RecommendationsPage() {
       }
       
       const data: RecommendationsResponse = await response.json();
+      console.log('Received recommendations:', data.recommendations.length);
       setRecommendations(data.recommendations);
       setStrategy(data.strategy || '');
       setStrategyFocus(data.strategyFocus || '');
@@ -64,8 +71,10 @@ export default function RecommendationsPage() {
   };
 
   useEffect(() => {
-    fetchRecommendations();
-  }, [user]);
+    if (user && recommendations.length === 0) {
+      fetchRecommendations();
+    }
+  }, [user?.id]); // Only depend on user ID, not the entire user object
 
   const getStatusColor = (status: string) => {
     switch (status) {

@@ -47,7 +47,9 @@ The system constructs detailed prompts that include:
 - **Time Context**: Current time of day for mood-appropriate suggestions
 - **Item Details**: ID, title, type, status, rating, notes (truncated)
 - **Available IDs**: Explicit list of valid IDs to prevent AI from making up sequential numbers
+- **Available Titles**: Explicit list of valid titles to prevent AI from using non-existent titles
 - **Instructions**: Clear guidance on response format and ID usage
+- **Examples**: Concrete examples showing exact expected response format
 
 **Example Prompt Structure:**
 ```
@@ -60,21 +62,78 @@ ID: 77 - Silo (show, want-to-watch)
 
 Strategy: deep dives. Consider: ratings, content type preferences, themes, time commitment, recency, and the current time of day.
 
-CRITICAL: You MUST return the EXACT numeric ID from the list above. 
-The available IDs are: 78, 77, 76, 75, 74, 73, 72, 71.
+AVAILABLE TITLES: The Expanse, Silo, Mr. Robot, Six Feet Under, This Is the End
+
+CRITICAL INSTRUCTIONS:
+1. You MUST return the EXACT numeric ID from the list above
+2. You MUST include the EXACT title from the list above
+3. Your reason MUST describe the specific item you are recommending (the one with that ID)
+4. Do NOT mention other items in your reason
+5. Do NOT return "undefined" or titles
+6. Do NOT make up sequential IDs (1,2,3,4,5)
+7. Only use the numeric IDs shown in the list: 78, 77, 76, 75, 74, 73, 72, 71
+
+EXAMPLE: If you want to recommend "The Expanse" (ID: 78), your response should be:
+{"id": 78, "title": "The Expanse", "reason": "The Expanse offers an immersive sci-fi experience...", "confidence": 0.8}
 
 Return JSON array:
-[{"id": [exact_numeric_id], "reason": "[2-3 sentence reason]", "confidence": [0.1-1.0]}]
+[{"id": [exact_numeric_id], "title": "[exact_title_from_list]", "reason": "[2-3 sentence reason about THIS specific item]", "confidence": [0.1-1.0]}]
 ```
+
+#### Prompt Engineering Best Practices
+
+**✅ DO:**
+- **Include explicit examples** showing the exact format expected
+- **List available options** (IDs and titles) to prevent AI from making up data
+- **Use numbered instructions** for clarity and emphasis
+- **Provide context** (time of day, strategy focus) for better recommendations
+- **Include timestamps** to prevent AI caching of identical requests
+- **Use clear, specific language** ("MUST", "EXACT", "CRITICAL")
+
+**❌ DON'T:**
+- **Rely on implicit instructions** - be explicit about requirements
+- **Use vague language** like "try to" or "maybe"
+- **Assume AI will follow format** without examples
+- **Forget to validate** AI responses against source data
+- **Use generic examples** - use real data from the current request
+
+**🔧 Key Improvements Made:**
+1. **Added title requirement** to prevent ID/title mismatches
+2. **Included available titles list** to constrain AI choices
+3. **Enhanced validation** to catch and filter invalid responses
+4. **Added concrete examples** showing exact expected format
+5. **Improved error logging** for debugging mismatches
 
 ### 5. AI Response Processing
 
 #### Response Validation
 ```typescript
 // Filter out invalid responses
-const validRecommendations = aiRecommendations.filter((rec: any) => 
+let validRecommendations = aiRecommendations.filter((rec: any) => 
   rec.id && rec.id !== "undefined" && rec.id !== undefined && !isNaN(Number(rec.id))
 );
+
+// Additional validation: ensure the AI's title matches an item in our shuffled watchlist
+validRecommendations = validRecommendations.filter((rec: any) => {
+  if (!rec.title) return false;
+  
+  const matchingItem = shuffledWatchlist.find(item => 
+    item.title.toLowerCase() === rec.title.toLowerCase()
+  );
+  
+  if (!matchingItem) {
+    console.log('❌ AI title does not match any item:', rec.title);
+    return false;
+  }
+  
+  // Also verify the ID matches the title
+  if (matchingItem.id !== rec.id) {
+    console.log('❌ AI ID and title mismatch:', rec.id, 'vs', matchingItem.id, 'for title:', rec.title);
+    return false;
+  }
+  
+  return true;
+});
 ```
 
 #### Item Matching Algorithm
@@ -174,6 +233,9 @@ The system provides comprehensive logging:
 2. **Generic Reasons**: Verify AI response parsing and fallback logic
 3. **Slow Response**: Monitor OpenAI API performance and caching
 4. **Mapping Failures**: Review AI prompt clarity and ID validation
+5. **Title/Reason Mismatches**: Check AI title validation and prompt examples
+6. **AI Using Non-existent Titles**: Verify available titles list in prompt
+7. **Auto-refresh Issues**: Check useEffect dependencies and initialization logic
 
 ### Debug Commands
 ```bash
@@ -184,6 +246,41 @@ curl -H "Authorization: Bearer $OPENAI_API_KEY" https://api.openai.com/v1/models
 curl -H "Cookie: [session_cookie]" http://localhost:3001/api/recommendations
 ```
 
+### Avoiding Prompt-Related Issues
+
+**🔍 Common AI Prompt Problems & Solutions:**
+
+1. **AI Ignores Format Instructions**
+   - **Problem**: AI returns wrong format despite instructions
+   - **Solution**: Include concrete examples with real data from the current request
+   - **Example**: Show exact JSON structure with actual IDs and titles
+
+2. **AI Uses Non-existent Data**
+   - **Problem**: AI makes up IDs, titles, or other data not in source
+   - **Solution**: Explicitly list all available options (IDs, titles, etc.)
+   - **Example**: `AVAILABLE TITLES: The Expanse, Silo, Mr. Robot`
+
+3. **AI Confuses Similar Items**
+   - **Problem**: AI recommends one item but describes another
+   - **Solution**: Require AI to include both ID and title, validate consistency
+   - **Example**: Check that ID 50 matches title "The Smashing Machine"
+
+4. **AI Returns Generic Responses**
+   - **Problem**: AI gives vague reasons that could apply to any item
+   - **Solution**: Explicitly instruct AI to describe the specific item being recommended
+   - **Example**: "Your reason MUST describe the specific item you are recommending"
+
+5. **AI Caches Responses**
+   - **Problem**: AI returns same recommendations for identical requests
+   - **Solution**: Include unique timestamps and random temperature values
+   - **Example**: `timestamp: ${Date.now()}` and `temperature: 0.8 + (Math.random() * 0.2)`
+
+**🧪 Testing Prompt Changes:**
+- Always test with real data from your watchlist
+- Check server logs for validation messages
+- Verify title/reason consistency in UI
+- Test multiple recommendation requests to ensure variety
+
 ---
 
-*This documentation should be updated as the recommendation system evolves. Last updated: August 2025*
+*This documentation should be updated as the recommendation system evolves. Last updated: December 2024*

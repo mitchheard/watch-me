@@ -288,7 +288,7 @@ Return JSON array:
     
     // Filter out any recommendations with undefined or invalid IDs
     let validRecommendations = aiRecommendations.filter((rec: AIRecommendation) => 
-      rec.id && rec.id !== "undefined" && rec.id !== undefined && !isNaN(Number(rec.id))
+      rec.id && rec.id !== undefined && !isNaN(Number(rec.id))
     );
     
     // Additional validation: ensure the AI's title matches an item in our shuffled watchlist

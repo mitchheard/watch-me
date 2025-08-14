@@ -294,6 +294,18 @@ export default function RecommendationsPage() {
                             )}
                           </span>
                         )}
+                        {/* Rating pill inline with other metadata */}
+                        {item.rating && (
+                          <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${
+                            item.rating === 'loved' ? 'bg-pink-100 text-pink-700' :
+                            item.rating === 'liked' ? 'bg-blue-100 text-blue-700' :
+                            'bg-gray-100 text-gray-700'
+                          }`}>
+                            {item.rating === 'loved' ? '❤️ Loved' : 
+                             item.rating === 'liked' ? '👍 Liked' : 
+                             '👎 Disliked'}
+                          </span>
+                        )}
                       </div>
                       
                       {/* Date added - subtle */}

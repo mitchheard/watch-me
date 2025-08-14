@@ -451,6 +451,7 @@ export async function GET(_request: NextRequest) {
           tmdbMovieRuntime: true,
           tmdbTvNumberOfSeasons: true,
           tmdbPosterPath: true,
+          createdAt: true,
         },
         orderBy: {
           createdAt: 'desc',

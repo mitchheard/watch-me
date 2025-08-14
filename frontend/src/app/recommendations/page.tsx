@@ -317,7 +317,8 @@ export default function RecommendationsPage() {
                       <p className={`text-gray-600 text-sm sm:text-base ${expandedDescriptions.has(item.id) ? '' : 'line-clamp-2 sm:line-clamp-3'}`}>
                         {item.tmdbOverview}
                       </p>
-                      {item.tmdbOverview.length > 150 && (
+                      {/* Only show "See more" if description is long enough to be truncated */}
+                      {item.tmdbOverview.length > 200 && (
                         <button
                           onClick={() => toggleDescription(item.id)}
                           className="text-blue-600 hover:text-blue-700 text-xs sm:text-sm font-medium mt-1"

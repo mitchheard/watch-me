@@ -20,6 +20,7 @@ interface Recommendation {
   tmdbTvFirstAirYear?: number | null;
   tmdbMovieRuntime?: number | null;
   tmdbTvNumberOfSeasons?: number | null;
+  createdAt?: string | null;
 }
 
 interface RecommendationsResponse {
@@ -38,6 +39,7 @@ export default function RecommendationsPage() {
   const [strategy, setStrategy] = useState<string>('');
   const [strategyFocus, setStrategyFocus] = useState<string>('');
   const [hasInitialized, setHasInitialized] = useState(false);
+  const [expandedDescriptions, setExpandedDescriptions] = useState<Set<number>>(new Set());
   
   // Debug logging for state changes
   useEffect(() => {
@@ -116,6 +118,45 @@ export default function RecommendationsPage() {
       return `${item.tmdbTvNumberOfSeasons} season${item.tmdbTvNumberOfSeasons > 1 ? 's' : ''}`;
     }
     return null;
+  };
+
+  const toggleDescription = (id: number) => {
+    setExpandedDescriptions(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(id)) {
+        newSet.delete(id);
+      } else {
+        newSet.add(id);
+      }
+      return newSet;
+    });
+  };
+
+  const updateItemStatus = async (id: number, newStatus: string) => {
+    try {
+      const response = await fetch('/api/watchlist', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          id,
+          status: newStatus,
+        }),
+      });
+      
+      if (response.ok) {
+        // Update local state to reflect the change
+        setRecommendations(prev => 
+          prev.map(item => 
+            item.id === id ? { ...item, status: newStatus } : item
+          )
+        );
+      }
+    } catch (error) {
+      console.error('Failed to update status:', error);
+    }
   };
 
   if (!user) {
@@ -225,7 +266,7 @@ export default function RecommendationsPage() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 sm:gap-3 mb-2">
                         <span className="text-lg sm:text-2xl font-bold text-gray-900">#{index + 1}</span>
-                        <h2 className="text-lg sm:text-xl font-semibold text-gray-900 truncate">{item.title}</h2>
+                        <h2 className="text-lg sm:text-xl font-semibold text-gray-900">{item.title}</h2>
                       </div>
                       
                       <div className="flex flex-wrap items-center gap-2 sm:gap-4 mb-2 sm:mb-3">
@@ -235,18 +276,32 @@ export default function RecommendationsPage() {
                         <span className="text-xs sm:text-sm text-gray-500 capitalize">
                           {item.type}
                         </span>
-                        {getYear(item) && (
+                        {/* Combined year and seasons info like in watchlist */}
+                        {(getYear(item) || getRuntime(item)) && (
                           <span className="text-xs sm:text-sm text-gray-500">
-                            {getYear(item)}
-                          </span>
-                        )}
-                        {getRuntime(item) && (
-                          <span className="text-xs sm:text-sm text-gray-500 flex items-center gap-1">
-                            <ClockIcon className="h-3 w-3 sm:h-4 sm:w-4" />
-                            {getRuntime(item)}
+                            {item.type === 'show' && item.tmdbTvNumberOfSeasons ? (
+                              <>
+                                {item.tmdbTvNumberOfSeasons} {item.tmdbTvNumberOfSeasons === 1 ? 'season' : 'seasons'}
+                                {getYear(item) && (
+                                  <>
+                                    {' • '}
+                                    {getYear(item)}
+                                  </>
+                                )}
+                              </>
+                            ) : (
+                              getYear(item)
+                            )}
                           </span>
                         )}
                       </div>
+                      
+                      {/* Date added - subtle */}
+                      {item.createdAt && (
+                        <p className="text-xs text-gray-400 mb-2">
+                          Added {new Date(item.createdAt).toLocaleDateString()}
+                        </p>
+                      )}
                     </div>
                     
                     {/* Confidence Score */}
@@ -256,11 +311,21 @@ export default function RecommendationsPage() {
                     </div>
                   </div>
 
-                  {/* Overview */}
+                  {/* Overview with expandable description */}
                   {item.tmdbOverview && (
-                    <p className="text-gray-600 mb-3 sm:mb-4 text-sm sm:text-base line-clamp-2 sm:line-clamp-3">
-                      {item.tmdbOverview}
-                    </p>
+                    <div className="mb-3 sm:mb-4">
+                      <p className={`text-gray-600 text-sm sm:text-base ${expandedDescriptions.has(item.id) ? '' : 'line-clamp-2 sm:line-clamp-3'}`}>
+                        {item.tmdbOverview}
+                      </p>
+                      {item.tmdbOverview.length > 150 && (
+                        <button
+                          onClick={() => toggleDescription(item.id)}
+                          className="text-blue-600 hover:text-blue-700 text-xs sm:text-sm font-medium mt-1"
+                        >
+                          {expandedDescriptions.has(item.id) ? 'See less' : 'See more'}
+                        </button>
+                      )}
+                    </div>
                   )}
 
                   {/* Reason */}
@@ -273,6 +338,18 @@ export default function RecommendationsPage() {
                       </div>
                     </div>
                   </div>
+
+                  {/* Call to Action */}
+                  {item.status === 'want-to-watch' && (
+                    <div className="mt-3 sm:mt-4">
+                      <button
+                        onClick={() => updateItemStatus(item.id, 'watching')}
+                        className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm font-medium"
+                      >
+                        Start Watching
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

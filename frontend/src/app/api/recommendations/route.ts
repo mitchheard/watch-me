@@ -80,19 +80,18 @@ async function getOpenAIRecommendations(watchlist: WatchItem[]): Promise<{
     throw new Error('OpenAI API key not configured');
   }
 
-  // Create different recommendation strategies with limited data subsets
+  // Create different recommendation strategies with limited data subsets (optimized for speed)
   const strategies = [
     {
       name: "recent additions",
-      filter: (items: WatchItem[]) => items.filter(item => item.status === 'want-to-watch').slice(0, 10),
+      filter: (items: WatchItem[]) => items.filter(item => item.status === 'want-to-watch').slice(0, 8),
       focus: "focus on your most recently added items"
     },
     {
       name: "highly rated similar",
       filter: (items: WatchItem[]) => {
-        const _finished = items.filter(item => item.status === 'finished' && item.rating === 'loved');
         const wantToWatch = items.filter(item => item.status === 'want-to-watch');
-        return wantToWatch.slice(0, 8);
+        return wantToWatch.slice(0, 6);
       },
       focus: "prioritize items similar to what you've loved"
     },
@@ -101,7 +100,7 @@ async function getOpenAIRecommendations(watchlist: WatchItem[]): Promise<{
       filter: (items: WatchItem[]) => {
         const movies = items.filter(item => item.status === 'want-to-watch' && item.type === 'movie');
         const shortShows = items.filter(item => item.status === 'want-to-watch' && item.type === 'show' && (item.tmdbTvNumberOfSeasons || 0) <= 2);
-        return [...movies, ...shortShows].slice(0, 8);
+        return [...movies, ...shortShows].slice(0, 6);
       },
       focus: "suggest quick, satisfying content you can finish soon"
     },
@@ -110,7 +109,7 @@ async function getOpenAIRecommendations(watchlist: WatchItem[]): Promise<{
       filter: (items: WatchItem[]) => {
         const longShows = items.filter(item => item.status === 'want-to-watch' && item.type === 'show' && (item.tmdbTvNumberOfSeasons || 0) > 2);
         const complexMovies = items.filter(item => item.status === 'want-to-watch' && item.type === 'movie' && (item.tmdbMovieRuntime || 0) > 120);
-        return [...longShows, ...complexMovies].slice(0, 8);
+        return [...longShows, ...complexMovies].slice(0, 6);
       },
       focus: "recommend immersive, longer-form content for deeper engagement"
     },
@@ -118,7 +117,7 @@ async function getOpenAIRecommendations(watchlist: WatchItem[]): Promise<{
       name: "mood boosters",
       filter: (items: WatchItem[]) => {
         const wantToWatch = items.filter(item => item.status === 'want-to-watch');
-        return wantToWatch.slice(0, 6);
+        return wantToWatch.slice(0, 5);
       },
       focus: "suggest uplifting and entertaining content to improve your mood"
     },
@@ -127,7 +126,7 @@ async function getOpenAIRecommendations(watchlist: WatchItem[]): Promise<{
       filter: (items: WatchItem[]) => {
         const wantToWatch = items.filter(item => item.status === 'want-to-watch');
         // Shuffle and take items that might be less obvious choices
-        return wantToWatch.sort(() => Math.random() - 0.5).slice(0, 8);
+        return wantToWatch.sort(() => Math.random() - 0.5).slice(0, 6);
       },
       focus: "highlight underrated or overlooked content in your list"
     },
@@ -150,7 +149,7 @@ async function getOpenAIRecommendations(watchlist: WatchItem[]): Promise<{
           item.tmdbTvNumberOfSeasons > 1
         );
         
-        return [...inProgressShows, ...finishedWithMoreSeasons].slice(0, 8);
+        return [...inProgressShows, ...finishedWithMoreSeasons].slice(0, 6);
       },
       focus: "suggest shows you've started or finished that have more seasons to continue"
     }
@@ -192,46 +191,31 @@ async function getOpenAIRecommendations(watchlist: WatchItem[]): Promise<{
   console.log('Shuffled watchlist items:', shuffledWatchlist.map(item => item.title).slice(0, 5));
   console.log('Available IDs in shuffled watchlist:', shuffledWatchlist.map(item => item.id));
   
+  // Optimized watchlist summary - only essential data for faster processing
   const watchlistSummary = shuffledWatchlist.map(item => ({
     id: item.id,
     title: item.title,
     type: item.type,
-    status: item.status,
     rating: item.rating,
-    notes: item.notes,
-    overview: item.tmdbOverview,
     year: item.tmdbMovieReleaseYear || item.tmdbTvFirstAirYear,
-    runtime: item.tmdbMovieRuntime,
     seasons: item.tmdbTvNumberOfSeasons
   }));
 
-  // Use the strategy focus instead of random styles
   const strategyFocus = randomStrategy.focus;
-  
   const currentTime = new Date();
   const hour = currentTime.getHours();
   const timeContext = hour < 12 ? "morning" : hour < 17 ? "afternoon" : hour < 21 ? "evening" : "night";
   
   const timestamp = Date.now();
-  const prompt = `Analyze this watchlist subset and recommend 5 "want-to-watch" items to prioritize. ${strategyFocus}. It's ${timeContext} time (timestamp: ${timestamp}):
+  const prompt = `Recommend 5 items from this list. ${strategyFocus}. It's ${timeContext} time:
 
-${watchlistSummary.map(item => `ID: ${item.id} - ${item.title} (${item.type}, ${item.status})${item.rating ? `, rated: ${item.rating}` : ''}${item.notes ? `, notes: ${item.notes.substring(0, 50)}` : ''}`).join('\n')}
+${watchlistSummary.map(item => `ID: ${item.id} - ${item.title} (${item.type})${item.rating ? `, rated: ${item.rating}` : ''}${item.year ? `, ${item.year}` : ''}${item.seasons ? `, ${item.seasons}s` : ''}`).join('\n')}
 
-Strategy: ${randomStrategy.name}. Consider: ratings, content type preferences, themes, time commitment, recency, and the current time of day.
+Strategy: ${randomStrategy.name}. Consider ratings, type preferences, and time of day.
 
-AVAILABLE TITLES: ${shuffledWatchlist.map(item => item.title).join(', ')}
+AVAILABLE IDs: ${shuffledWatchlist.map(item => item.id).join(', ')}
 
-CRITICAL INSTRUCTIONS:
-1. You MUST return the EXACT numeric ID from the list above
-2. You MUST include the EXACT title from the list above
-3. Your reason MUST describe the specific item you are recommending (the one with that ID)
-4. Do NOT mention other items in your reason
-5. Do NOT return "undefined" or titles
-6. Do NOT make up sequential IDs (1,2,3,4,5)
-7. Only use the numeric IDs shown in the list: ${shuffledWatchlist.map(item => item.id).join(', ')}
-
-EXAMPLE: If you want to recommend "The Expanse" (ID: 78), your response should be:
-{"id": 78, "title": "The Expanse", "reason": "The Expanse offers an immersive sci-fi experience...", "confidence": 0.8}
+CRITICAL: Return EXACT numeric IDs from the list above. Your reason must describe the specific item being recommended.
 
 Return JSON array:
 [{"id": [exact_numeric_id], "title": "[exact_title_from_list]", "reason": "[2-3 sentence reason about THIS specific item]", "confidence": [0.1-1.0]}]`;
@@ -256,7 +240,7 @@ Return JSON array:
           }
         ],
         temperature: 0.8 + (Math.random() * 0.2), // Random temperature between 0.8-1.0 for more variety
-        max_tokens: 1000,
+        max_tokens: 600, // Reduced for faster response
       }),
     });
 
@@ -356,6 +340,7 @@ Return JSON array:
         tmdbTvFirstAirYear: item.tmdbTvFirstAirYear,
         tmdbMovieRuntime: item.tmdbMovieRuntime,
         tmdbTvNumberOfSeasons: item.tmdbTvNumberOfSeasons,
+        createdAt: item.createdAt?.toISOString(),
       };
     }).filter(Boolean);
 
@@ -390,6 +375,7 @@ Return JSON array:
             tmdbTvFirstAirYear: randomItem.tmdbTvFirstAirYear,
             tmdbMovieRuntime: randomItem.tmdbMovieRuntime,
             tmdbTvNumberOfSeasons: randomItem.tmdbTvNumberOfSeasons,
+            createdAt: randomItem.createdAt?.toISOString(),
           });
           
           console.log('Matched AI reason to item:', randomItem.title);

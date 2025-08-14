@@ -135,7 +135,7 @@ export default function RecommendationsPage() {
   const updateItemStatus = async (id: number, newStatus: string) => {
     try {
       const response = await fetch('/api/watchlist', {
-        method: 'PATCH',
+        method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
         },

@@ -304,8 +304,8 @@ export default function WatchlistItems() {
                     </span>
                   </div>
                   
-                  {/* Progress Info and Years - Combined */}
-                  <div className="mb-1">
+                  {/* Progress Info, Years, and Rating - Combined */}
+                  <div className="mb-1 flex flex-wrap items-center gap-2">
                     <span className="text-xs text-slate-600">
                       {item.type === 'show' && (item.currentSeason || item.totalSeasons) ? (
                         <>
@@ -341,10 +341,8 @@ export default function WatchlistItems() {
                         </>
                       )}
                     </span>
-                  </div>
-                  
-                  {/* Rating Badge */}
-                  <div>
+                    
+                    {/* Rating Badge - Inline */}
                     {item.rating === 'loved' && (
                       <span className="inline-flex items-center px-2 py-0.5 text-xs font-semibold rounded-full bg-pink-100 text-pink-700 border border-pink-200">
                         ❤️ Loved
@@ -359,7 +357,7 @@ export default function WatchlistItems() {
                       <span className="inline-flex items-center px-2 py-0.5 text-xs font-semibold rounded-full bg-slate-200 text-slate-600 border border-slate-300">
                         👎 Not for me
                       </span>
-                      )}
+                    )}
                     {!item.rating && (
                       <span className="inline-flex items-center px-2 py-0.5 text-xs font-normal rounded-full bg-slate-50 text-slate-400 border border-slate-200">
                         Not rated

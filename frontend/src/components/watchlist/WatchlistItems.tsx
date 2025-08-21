@@ -804,8 +804,8 @@ export default function WatchlistItems() {
                     </span>
                   </div>
                   
-                  {/* Rating Badge */}
-                  <div className="mb-2">
+                  {/* Rating Badge and Date - Combined */}
+                  <div className="mb-2 flex flex-wrap items-center gap-2">
                     {modalItem.rating === 'loved' && (
                       <span className="inline-flex items-center px-2.5 py-1 text-xs font-semibold rounded-full bg-pink-100 text-pink-700 border border-pink-200">
                         ❤️ Loved
@@ -826,15 +826,16 @@ export default function WatchlistItems() {
                         Not rated
                       </span>
                     )}
+                    
+                    {/* Date added - inline */}
+                    {modalItem.createdAt && (
+                      <span className="text-xs text-slate-400">
+                        Added: {new Date(modalItem.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
+                      </span>
+                    )}
                   </div>
                 </div>
               </div>
-              {/* Added date above tagline/overview */}
-              {modalItem.createdAt && (
-                <div className="mt-2 text-xs text-slate-400">
-                  Added: {new Date(modalItem.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
-                </div>
-              )}
               {modalItem.tmdbTagline && (
                 <div className="mb-1 italic text-slate-500 text-sm">{modalItem.tmdbTagline}</div>
               )}

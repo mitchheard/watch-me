@@ -720,15 +720,11 @@ export default function WatchlistItems() {
                   )}
                 </div>
                 <div className="flex-1 min-w-0 pr-8">
-                  {/* Title - Full Width */}
-                  <div className="mb-2">
-                    <h2 className="font-semibold text-xl text-slate-900">{modalItem.title}</h2>
-                  </div>
-                  
-                  {/* Type Badge - Below Title */}
-                  <div className="mb-2">
+                  {/* Title and Type Badge - Inline */}
+                  <div className="mb-2 flex items-center gap-3">
+                    <h2 className="font-semibold text-xl text-slate-900 flex-1">{modalItem.title}</h2>
                     <span
-                      className={`px-2.5 py-1 text-xs font-semibold rounded-full inline-flex items-center
+                      className={`px-2.5 py-1 text-xs font-semibold rounded-full inline-flex items-center flex-shrink-0
                         ${modalItem.type === 'movie' 
                           ? 'bg-purple-100 text-purple-700 border border-purple-200' 
                           : 'bg-emerald-100 text-emerald-700 border border-emerald-200'

@@ -245,7 +245,7 @@ export default function RecommendationsPage() {
                         src={`https://image.tmdb.org/t/p/w342${item.tmdbPosterPath}`}
                         alt={item.title}
                         fill
-                        className="object-scale-down sm:object-cover object-center"
+                        className="object-cover object-center"
                         sizes="(max-width: 640px) 100vw, 192px"
                         priority={index < 2}
                         onError={(e) => {
@@ -259,17 +259,25 @@ export default function RecommendationsPage() {
                         <span className="text-gray-400">No Image</span>
                       </div>
                     )}
+                    
+                    {/* Confidence Score - Overlay on Poster */}
+                    <div className="absolute top-2 right-2 bg-black bg-opacity-75 text-white px-2 py-1 rounded-full text-xs font-medium">
+                      <div className="flex items-center gap-1">
+                        <HeartIcon className="h-3 w-3" />
+                        <span>{Math.round(item.confidence * 100)}%</span>
+                      </div>
+                    </div>
                   </div>
                 </div>
 
                 {/* Content */}
                 <div className="flex-1 p-4 sm:p-6">
-                  <div className="flex items-start justify-between mb-2 sm:mb-3">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 sm:gap-3 mb-2">
-                        <span className="text-lg sm:text-2xl font-bold text-gray-900">#{index + 1}</span>
-                        <h2 className="text-lg sm:text-xl font-semibold text-gray-900">{item.title}</h2>
-                      </div>
+                  <div className="mb-2 sm:mb-3">
+                    {/* Title */}
+                    <div className="flex items-baseline gap-2 sm:gap-3">
+                      <span className="text-lg sm:text-2xl font-bold text-gray-900 flex-shrink-0">#{index + 1}</span>
+                      <h2 className="text-lg sm:text-xl font-semibold text-gray-900">{item.title}</h2>
+                    </div>
                       
                       <div className="flex flex-wrap items-center gap-2 sm:gap-4 mb-2 sm:mb-3">
                         <span className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(item.status)}`}>
@@ -335,13 +343,6 @@ export default function RecommendationsPage() {
                         </p>
                       )}
                     </div>
-                    
-                    {/* Confidence Score */}
-                    <div className="flex items-center gap-1 text-xs sm:text-sm text-gray-500 flex-shrink-0">
-                      <HeartIcon className="h-3 w-3 sm:h-4 sm:w-4" />
-                      <span>{Math.round(item.confidence * 100)}% match</span>
-                    </div>
-                  </div>
 
                   {/* Overview with expandable description */}
                   {item.tmdbOverview && (

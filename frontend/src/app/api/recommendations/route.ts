@@ -421,7 +421,7 @@ Return: [{"id": [exact_id], "title": "[exact_title]", "reason": "[2-3 sentence r
   }
 }
 
-export async function GET(_request: NextRequest) {
+export async function GET(request: NextRequest) {
   console.log('Recommendations API called');
   let watchlist: WatchItem[] = [];
   
@@ -430,10 +430,14 @@ export async function GET(_request: NextRequest) {
     const userId = await getUserId();
     console.log('User ID:', userId);
 
-    // Check cache first
+    // Check for cache busting parameter
+    const { searchParams } = new URL(request.url);
+    const forceRefresh = searchParams.get('refresh') === 'true';
+    
+    // Check cache first (unless force refresh is requested)
     const cacheKey = `recommendations_${userId}`;
     const cached = recommendationCache.get(cacheKey);
-    if (cached && (Date.now() - cached.timestamp) < CACHE_DURATION) {
+    if (!forceRefresh && cached && (Date.now() - cached.timestamp) < CACHE_DURATION) {
       console.log('Returning cached recommendations');
       return NextResponse.json(cached.data);
     }

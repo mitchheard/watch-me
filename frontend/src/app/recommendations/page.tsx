@@ -61,7 +61,8 @@ export default function RecommendationsPage() {
     }
     
     try {
-      const response = await fetch('/api/recommendations', {
+      const url = resetState ? '/api/recommendations?refresh=true' : '/api/recommendations';
+      const response = await fetch(url, {
         credentials: 'include', // Include cookies for authentication
       });
       if (!response.ok) {

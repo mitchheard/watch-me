@@ -40,6 +40,7 @@ export default function RecommendationsPage() {
   const [strategyFocus, setStrategyFocus] = useState<string>('');
   const [hasInitialized, setHasInitialized] = useState(false);
   const [expandedDescriptions, setExpandedDescriptions] = useState<Set<number>>(new Set());
+  const [loadingStage, setLoadingStage] = useState(0);
   
   // Debug logging for state changes
   useEffect(() => {
@@ -51,6 +52,7 @@ export default function RecommendationsPage() {
     
     console.log('Fetching recommendations...', resetState ? '(manual refresh)' : '(initial load)');
     setIsLoading(true);
+    setLoadingStage(0);
     setError(null);
     
     if (resetState) {
@@ -59,6 +61,11 @@ export default function RecommendationsPage() {
       setStrategyFocus('');
       setLastUpdated(null);
     }
+    
+    // Simulate progress stages
+    const progressInterval = setInterval(() => {
+      setLoadingStage(prev => Math.min(prev + 1, 3));
+    }, 800);
     
     try {
       const url = resetState ? '/api/recommendations?refresh=true' : '/api/recommendations';
@@ -78,7 +85,9 @@ export default function RecommendationsPage() {
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
     } finally {
+      clearInterval(progressInterval);
       setIsLoading(false);
+      setLoadingStage(0);
     }
   }, [user]);
 
@@ -224,8 +233,28 @@ export default function RecommendationsPage() {
 
       {/* Loading State */}
       {isLoading && (
-        <div className="flex items-center justify-center py-8 sm:py-12">
-          <div className="animate-spin rounded-full h-8 w-8 sm:h-12 sm:w-12 border-b-2 border-blue-600"></div>
+        <div className="flex flex-col items-center justify-center py-8 sm:py-12 space-y-4">
+          <div className="w-full max-w-md">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm font-medium text-gray-700">Generating recommendations...</span>
+              <span className="text-sm text-gray-500">{Math.round((loadingStage / 3) * 100)}%</span>
+            </div>
+            <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
+              <div 
+                className="bg-blue-600 h-2 rounded-full transition-all duration-500 ease-out"
+                style={{ width: `${(loadingStage / 3) * 100}%` }}
+              ></div>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 text-sm text-gray-600">
+            <SparklesIcon className="h-4 w-4 animate-pulse" />
+            <span>
+              {loadingStage === 0 && "Analyzing your watchlist..."}
+              {loadingStage === 1 && "Selecting best strategy..."}
+              {loadingStage === 2 && "Generating personalized recommendations..."}
+              {loadingStage === 3 && "Finalizing your picks..."}
+            </span>
+          </div>
         </div>
       )}
 

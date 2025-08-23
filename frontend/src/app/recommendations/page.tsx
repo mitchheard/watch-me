@@ -239,13 +239,13 @@ export default function RecommendationsPage() {
               <div className="flex flex-col sm:flex-row">
                 {/* Poster */}
                 <div className="sm:w-48 sm:flex-shrink-0">
-                  <div className="relative h-48 sm:h-full overflow-hidden rounded-l-lg sm:rounded-l-none sm:rounded-t-lg">
+                  <div className="relative h-56 sm:h-full overflow-hidden rounded-l-lg sm:rounded-l-none sm:rounded-t-lg">
                     {item.tmdbPosterPath ? (
                       <Image
                         src={`https://image.tmdb.org/t/p/w342${item.tmdbPosterPath}`}
                         alt={item.title}
                         fill
-                        className="object-cover object-top"
+                        className="object-scale-down sm:object-cover object-center"
                         sizes="(max-width: 640px) 100vw, 192px"
                         priority={index < 2}
                         onError={(e) => {

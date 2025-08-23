@@ -96,7 +96,7 @@ export default function RecommendationsPage() {
       setHasInitialized(true);
       fetchRecommendations();
     }
-  }, [user, hasInitialized, fetchRecommendations]); // Include user in dependencies
+  }, [user, hasInitialized]); // Remove fetchRecommendations from dependencies
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -202,24 +202,25 @@ export default function RecommendationsPage() {
         </button>
       </div>
 
-      {/* Compact Strategy and Last Updated */}
+      {/* Strategy Info */}
       {(strategy || lastUpdated) && (
-        <div className="text-center mb-4 sm:mb-6 space-y-1 sm:space-y-2">
+        <div className="text-center mb-4 sm:mb-6 space-y-2">
           {strategy && (
-            <div className="inline-flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-xs sm:text-sm font-medium">
-              <SparklesIcon className="h-3 w-3 sm:h-4 sm:w-4" />
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">
+              <SparklesIcon className="h-4 w-4" />
               {strategy.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')} Strategy
             </div>
           )}
           {strategyFocus && (
-            <p className="text-xs sm:text-sm text-gray-600 max-w-2xl mx-auto px-2">
+            <p className="text-sm text-gray-600 max-w-2xl mx-auto px-4">
               {strategyFocus}
             </p>
           )}
           {lastUpdated && (
-            <p className="text-xs text-gray-500">
-              Last updated: {lastUpdated.toLocaleString()}
-            </p>
+            <div className="flex items-center justify-center gap-1 text-xs text-gray-500">
+              <ClockIcon className="h-3 w-3" />
+              <span>Updated {lastUpdated.toLocaleString()}</span>
+            </div>
           )}
         </div>
       )}

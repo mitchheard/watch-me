@@ -94,14 +94,22 @@ export default function AdminPageClient() {
     hour12: true,
   };
 
+  // Calculate total items across all users
+  const totalItems = users.reduce((sum, user) => sum + user.itemCount, 0);
+
   return (
     <div className="max-w-6xl mx-auto py-8 px-4">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
         <div>
           <h1 className="text-2xl font-bold text-slate-900">Admin Dashboard</h1>
-          <p className="text-slate-500 text-sm mt-1">
-            {users.length} total users
-          </p>
+          <div className="flex items-center gap-4 mt-1">
+            <p className="text-slate-500 text-sm">
+              {users.length} total users
+            </p>
+            <p className="text-slate-500 text-sm">
+              {totalItems} total items
+            </p>
+          </div>
         </div>
         <div className="flex items-center gap-3">
           <select

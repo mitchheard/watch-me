@@ -245,7 +245,8 @@ export default function RecommendationsPage() {
                         src={`https://image.tmdb.org/t/p/w500${item.tmdbPosterPath}`}
                         alt={item.title}
                         fill
-                        className="object-cover"
+                        className="object-cover object-center"
+                        sizes="(max-width: 640px) 100vw, 192px"
                         onError={(e) => {
                           const target = e.target as HTMLImageElement;
                           target.onerror = null;
@@ -273,8 +274,26 @@ export default function RecommendationsPage() {
                         <span className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(item.status)}`}>
                           {getStatusLabel(item.status)}
                         </span>
-                        <span className="text-xs sm:text-sm text-gray-500 capitalize">
-                          {item.type}
+                        <span className={`text-xs sm:text-sm font-medium inline-flex items-center gap-1 ${
+                          item.type === 'movie' 
+                            ? 'text-purple-600' 
+                            : 'text-emerald-600'
+                        }`}>
+                          {item.type === 'movie' ? (
+                            <>
+                              <svg className="w-3 h-3 sm:w-4 sm:h-4" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M18 4l2 4h-3l-2-4h-2l2 4h-3l-2-4H8l2 4H7L5 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V4h-4z"/>
+                              </svg>
+                              Movie
+                            </>
+                          ) : (
+                            <>
+                              <svg className="w-3 h-3 sm:w-4 sm:h-4" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M21 3H3c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h5l-1 1v2h8v-2l-1-1h5c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 12H3V5h18v10z"/>
+                              </svg>
+                              TV
+                            </>
+                          )}
                         </span>
                         {/* Combined year and seasons info like in watchlist */}
                         {(getYear(item) || getRuntime(item)) && (

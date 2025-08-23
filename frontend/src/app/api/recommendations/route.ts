@@ -3,6 +3,10 @@ import { prisma } from '@/lib/prisma';
 import { createServerClient, type CookieOptions } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 
+// Simple in-memory cache (in production, use Redis or similar)
+const recommendationCache = new Map<string, { data: any; timestamp: number }>();
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+
 interface WatchItem {
   id: number;
   title: string;
@@ -207,18 +211,13 @@ async function getOpenAIRecommendations(watchlist: WatchItem[]): Promise<{
   const timeContext = hour < 12 ? "morning" : hour < 17 ? "afternoon" : hour < 21 ? "evening" : "night";
   
   const timestamp = Date.now();
-  const prompt = `Recommend 5 items from this list. ${strategyFocus}. It's ${timeContext} time:
+  const prompt = `Pick 5 from: ${strategyFocus}. Time: ${timeContext}.
 
-${watchlistSummary.map(item => `ID: ${item.id} - ${item.title} (${item.type})${item.rating ? `, rated: ${item.rating}` : ''}${item.year ? `, ${item.year}` : ''}${item.seasons ? `, ${item.seasons}s` : ''}`).join('\n')}
+${watchlistSummary.map(item => `${item.id}: ${item.title} (${item.type})${item.rating ? `, ${item.rating}` : ''}${item.year ? `, ${item.year}` : ''}${item.seasons ? `, ${item.seasons}s` : ''}`).join('\n')}
 
-Strategy: ${randomStrategy.name}. Consider ratings, type preferences, and time of day.
+Strategy: ${randomStrategy.name}. Use IDs: ${shuffledWatchlist.map(item => item.id).join(', ')}.
 
-AVAILABLE IDs: ${shuffledWatchlist.map(item => item.id).join(', ')}
-
-CRITICAL: Return EXACT numeric IDs from the list above. Your reason must describe the specific item being recommended.
-
-Return JSON array:
-[{"id": [exact_numeric_id], "title": "[exact_title_from_list]", "reason": "[2-3 sentence reason about THIS specific item]", "confidence": [0.1-1.0]}]`;
+Return: [{"id": [exact_id], "title": "[exact_title]", "reason": "[2-3 sentence reason]", "confidence": [0.1-1.0]}]`;
 
   try {
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -431,6 +430,14 @@ export async function GET(_request: NextRequest) {
     const userId = await getUserId();
     console.log('User ID:', userId);
 
+    // Check cache first
+    const cacheKey = `recommendations_${userId}`;
+    const cached = recommendationCache.get(cacheKey);
+    if (cached && (Date.now() - cached.timestamp) < CACHE_DURATION) {
+      console.log('Returning cached recommendations');
+      return NextResponse.json(cached.data);
+    }
+
     // Get user's watchlist
     console.log('Fetching watchlist from database...');
     try {
@@ -444,7 +451,6 @@ export async function GET(_request: NextRequest) {
           type: true,
           status: true,
           rating: true,
-          notes: true,
           tmdbOverview: true,
           tmdbMovieReleaseYear: true,
           tmdbTvFirstAirYear: true,
@@ -456,6 +462,7 @@ export async function GET(_request: NextRequest) {
         orderBy: {
           createdAt: 'desc',
         },
+        take: 50, // Limit to 50 items for faster processing
       });
 
       console.log('Watchlist items found:', watchlist.length);
@@ -519,12 +526,20 @@ export async function GET(_request: NextRequest) {
       }));
     }
 
-    return NextResponse.json({
+    const responseData = {
       recommendations,
       totalItems: watchlist.length,
       strategy: strategyName,
       strategyFocus: strategyFocus,
+    };
+
+    // Cache the results
+    recommendationCache.set(cacheKey, {
+      data: responseData,
+      timestamp: Date.now()
     });
+
+    return NextResponse.json(responseData);
 
   } catch (error) {
     console.error('Recommendations API error:', error);

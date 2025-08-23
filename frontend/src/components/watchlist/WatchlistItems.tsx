@@ -694,6 +694,30 @@ export default function WatchlistItems() {
               {/* Modal content: poster, title, year, platform, season, status, rating, added, tagline, overview, actions */}
               <div className="flex gap-4 mb-4">
                 <div className="flex flex-col items-center mr-4">
+                  {/* Type Badge - Above Poster */}
+                  <div className="mb-2">
+                    <span
+                      className={`px-2.5 py-1 text-xs font-semibold rounded-full inline-flex items-center
+                        ${modalItem.type === 'movie' 
+                          ? 'bg-purple-100 text-purple-700 border border-purple-200' 
+                          : 'bg-emerald-100 text-emerald-700 border border-emerald-200'
+                        }`}
+                    >
+                      {modalItem.type === 'movie' ? (
+                        <>
+                          <FilmIcon className="w-3 h-3 mr-1 flex-shrink-0" />
+                          Movie
+                        </>
+                      ) : (
+                        <>
+                          <TvIcon className="w-3 h-3 mr-1 flex-shrink-0" />
+                          TV
+                        </>
+                      )}
+                    </span>
+                  </div>
+                  
+                  {/* Poster */}
                   {modalItem.tmdbPosterPath ? (
                     <Image
                       src={`https://image.tmdb.org/t/p/w154${modalItem.tmdbPosterPath}`}
@@ -720,28 +744,9 @@ export default function WatchlistItems() {
                   )}
                 </div>
                 <div className="flex-1 min-w-0 pr-8">
-                  {/* Title and Type Badge - Inline */}
-                  <div className="mb-2 flex items-center gap-3">
-                    <h2 className="font-semibold text-xl text-slate-900 flex-1">{modalItem.title}</h2>
-                    <span
-                      className={`px-2.5 py-1 text-xs font-semibold rounded-full inline-flex items-center flex-shrink-0
-                        ${modalItem.type === 'movie' 
-                          ? 'bg-purple-100 text-purple-700 border border-purple-200' 
-                          : 'bg-emerald-100 text-emerald-700 border border-emerald-200'
-                        }`}
-                    >
-                      {modalItem.type === 'movie' ? (
-                        <>
-                          <FilmIcon className="w-3 h-3 mr-1 flex-shrink-0" />
-                          Movie
-                        </>
-                      ) : (
-                        <>
-                          <TvIcon className="w-3 h-3 mr-1 flex-shrink-0" />
-                          TV
-                        </>
-                      )}
-                    </span>
+                  {/* Title - Full Width */}
+                  <div className="mb-2">
+                    <h2 className="font-semibold text-xl text-slate-900">{modalItem.title}</h2>
                   </div>
                   
                   {/* Status Badge - Most Prominent */}

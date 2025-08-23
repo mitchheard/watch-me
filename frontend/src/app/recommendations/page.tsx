@@ -354,7 +354,7 @@ export default function RecommendationsPage() {
 
                   {/* Call to Action */}
                   {item.status === 'want-to-watch' && (
-                    <div className="mt-3 sm:mt-4">
+                    <div className="mt-3 sm:mt-4 flex justify-end">
                       <button
                         onClick={() => updateItemStatus(item.id, 'watching')}
                         className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm font-medium"

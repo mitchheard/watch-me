@@ -12,6 +12,7 @@ interface Recommendation {
   title: string;
   type: string;
   status: string;
+  rating?: string | null;
   reason: string;
   confidence: number;
   tmdbPosterPath?: string | null;

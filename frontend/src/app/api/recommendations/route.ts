@@ -13,7 +13,7 @@ interface WatchItem {
   type: string;
   status: string;
   rating: string | null;
-  notes: string | null;
+  notes?: string | null;
   tmdbPosterPath: string | null;
   tmdbOverview: string | null;
   tmdbMovieReleaseYear: number | null;

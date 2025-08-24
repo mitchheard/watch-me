@@ -20,6 +20,7 @@ interface WatchItem {
   tmdbTvFirstAirYear: number | null;
   tmdbMovieRuntime: number | null;
   tmdbTvNumberOfSeasons: number | null;
+  createdAt?: Date | null;
 }
 
 interface Recommendation {

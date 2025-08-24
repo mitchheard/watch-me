@@ -4,7 +4,7 @@ import { createServerClient, type CookieOptions } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 
 // Simple in-memory cache (in production, use Redis or similar)
-const recommendationCache = new Map<string, { data: any; timestamp: number }>();
+const recommendationCache = new Map<string, { data: unknown; timestamp: number }>();
 const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
 interface WatchItem {
@@ -210,7 +210,7 @@ async function getOpenAIRecommendations(watchlist: WatchItem[]): Promise<{
   const hour = currentTime.getHours();
   const timeContext = hour < 12 ? "morning" : hour < 17 ? "afternoon" : hour < 21 ? "evening" : "night";
   
-  const timestamp = Date.now();
+  // const timestamp = Date.now(); // Removed unused variable
   const prompt = `Pick 5 from: ${strategyFocus}. Time: ${timeContext}.
 
 ${watchlistSummary.map(item => `${item.id}: ${item.title} (${item.type})${item.rating ? `, ${item.rating}` : ''}${item.year ? `, ${item.year}` : ''}${item.seasons ? `, ${item.seasons}s` : ''}`).join('\n')}

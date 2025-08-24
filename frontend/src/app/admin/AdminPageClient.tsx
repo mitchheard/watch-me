@@ -85,14 +85,7 @@ export default function AdminPageClient() {
     return 0;
   });
 
-  const dateTimeFormatOptions: Intl.DateTimeFormatOptions = {
-    year: 'numeric',
-    month: 'numeric',
-    day: 'numeric',
-    hour: 'numeric',
-    minute: 'numeric',
-    hour12: true,
-  };
+  // Removed unused dateTimeFormatOptions
 
   // Calculate total items across all users
   const totalItems = users.reduce((sum, user) => sum + user.itemCount, 0);

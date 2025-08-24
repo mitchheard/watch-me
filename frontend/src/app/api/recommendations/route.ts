@@ -36,6 +36,7 @@ interface Recommendation {
   tmdbTvFirstAirYear?: number | null;
   tmdbMovieRuntime?: number | null;
   tmdbTvNumberOfSeasons?: number | null;
+  createdAt?: string | null;
 }
 
 interface AIRecommendation {

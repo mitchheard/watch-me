@@ -235,7 +235,7 @@ export default function WatchlistItems() {
               className="rounded-lg p-3 transition-all hover:shadow-md relative border border-slate-200 bg-white hover:border-slate-300"
               onClick={() => setModalItem(item)}
             >
-              <div className="flex items-start gap-3">
+              <div className="flex items-end gap-3">
                 {/* Poster */}
                 <div className="flex-shrink-0">
                   {item.tmdbPosterPath ? (
@@ -264,7 +264,7 @@ export default function WatchlistItems() {
                 {/* Content */}
                 <div className="flex-1 min-w-0">
                   {/* Title and Type Badge */}
-                  <div className="flex items-start justify-between gap-2 mb-1.5">
+                  <div className="flex items-start justify-between gap-2 mb-1">
                     <h3 className="font-semibold text-base text-slate-900 truncate">{item.title}</h3>
                     <span
                       className={`px-2 py-0.5 text-xs font-semibold rounded-full flex-shrink-0 inline-flex items-center
@@ -287,25 +287,8 @@ export default function WatchlistItems() {
                     </span>
                   </div>
                   
-                  {/* Status Badge - Most Prominent */}
-                  <div className="mb-1.5">
-                    <span
-                      className={`px-2.5 py-1 text-sm font-medium rounded-full inline-flex items-center
-                        ${item.status === 'want-to-watch' ? 'bg-blue-100 text-blue-700 border border-blue-200' :
-                          item.status === 'watching' ? 'bg-orange-100 text-orange-700 border border-orange-200' :
-                          item.status === 'finished' ? 'bg-teal-100 text-teal-700 border border-teal-200' :
-                          'bg-slate-100 text-slate-700 border border-slate-200' 
-                        }`}
-                    >
-                      {item.status === 'want-to-watch' ? 'Want to Watch' : 
-                       item.status === 'watching' ? 'Watching' :
-                       item.status === 'finished' ? 'Finished' :
-                       item.status.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
-                    </span>
-                  </div>
-                  
-                  {/* Progress Info, Years, and Rating - Combined */}
-                  <div className="mb-1 flex flex-wrap items-center gap-2">
+                  {/* Release/Series Dates - Below Title */}
+                  <div className="mb-2">
                     <span className="text-xs text-slate-600">
                       {item.type === 'show' && (item.currentSeason || item.totalSeasons) ? (
                         <>
@@ -341,8 +324,26 @@ export default function WatchlistItems() {
                         </>
                       )}
                     </span>
+                  </div>
+                  
+                  {/* Status and Rating - Below Dates */}
+                  <div className="flex items-center gap-2">
+                    {/* Status Badge */}
+                    <span
+                      className={`px-2.5 py-1 text-sm font-medium rounded-full inline-flex items-center
+                        ${item.status === 'want-to-watch' ? 'bg-blue-100 text-blue-700 border border-blue-200' :
+                          item.status === 'watching' ? 'bg-orange-100 text-orange-700 border border-orange-200' :
+                          item.status === 'finished' ? 'bg-teal-100 text-teal-700 border border-teal-200' :
+                          'bg-slate-100 text-slate-700 border border-slate-200' 
+                        }`}
+                    >
+                      {item.status === 'want-to-watch' ? 'Want to Watch' : 
+                       item.status === 'watching' ? 'Watching' :
+                       item.status === 'finished' ? 'Finished' :
+                       item.status.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                    </span>
                     
-                    {/* Rating Badge - Inline */}
+                    {/* Rating Badge */}
                     {item.rating === 'loved' && (
                       <span className="inline-flex items-center px-2 py-0.5 text-xs font-semibold rounded-full bg-pink-100 text-pink-700 border border-pink-200">
                         ❤️ Loved

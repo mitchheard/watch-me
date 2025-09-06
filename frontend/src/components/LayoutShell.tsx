@@ -71,7 +71,7 @@ export default function LayoutShell({ children }: { children: ReactNode }) {
                       )}
                       <hr className="my-1 border-slate-200" />
                       <Link
-                        href="/watchlists"
+                        href="/"
                         onClick={() => setIsMenuOpen(false)}
                         className="flex items-center gap-2 px-4 py-2 text-sm text-slate-700 hover:bg-slate-100 hover:text-slate-900 w-full text-left"
                       >
@@ -79,12 +79,12 @@ export default function LayoutShell({ children }: { children: ReactNode }) {
                         My Watchlist
                       </Link>
                       <Link
-                        href="/watchlists?shared=true"
+                        href="/watchlists"
                         onClick={() => setIsMenuOpen(false)}
                         className="flex items-center gap-2 px-4 py-2 text-sm text-slate-700 hover:bg-slate-100 hover:text-slate-900 w-full text-left"
                       >
                         <ShareIcon className="h-5 w-5 text-slate-500" />
-                        Shared Lists
+                        Manage Lists
                       </Link>
                       <Link
                         href="/recommendations"

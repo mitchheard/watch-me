@@ -2,7 +2,7 @@ import { prisma } from './prisma';
 import { resend, ADMIN_EMAIL, EMAIL_TEMPLATES } from './email';
 
 // TODO: Move this to env or a Profile table
-const ADMIN_USER_ID = '464661fa-7ae1-406f-9975-dec0ccbc94aa';
+const _ADMIN_USER_ID = '464661fa-7ae1-406f-9975-dec0ccbc94aa';
 
 export interface AdminNotificationData {
   type: 'user_activity' | 'weekly_summary' | 'system_alert';
@@ -115,13 +115,13 @@ async function generateEmailHTML(template: string, data: Record<string, unknown>
   
   switch (template) {
     case EMAIL_TEMPLATES.ADMIN_NEW_USER:
-      return generateNewUserEmailHTML(data, unsubscribeLink);
+      return generateNewUserEmailHTML(data as NewUserData, unsubscribeLink);
     case EMAIL_TEMPLATES.ADMIN_FIRST_ITEM:
-      return generateFirstItemEmailHTML(data, unsubscribeLink);
+      return generateFirstItemEmailHTML(data as FirstItemData, unsubscribeLink);
     case EMAIL_TEMPLATES.ADMIN_FIRST_REVIEW:
-      return generateFirstReviewEmailHTML(data, unsubscribeLink);
+      return generateFirstReviewEmailHTML(data as FirstReviewData, unsubscribeLink);
     case EMAIL_TEMPLATES.ADMIN_REPEAT_VISIT:
-      return generateRepeatVisitEmailHTML(data, unsubscribeLink);
+      return generateRepeatVisitEmailHTML(data as RepeatVisitData, unsubscribeLink);
     case EMAIL_TEMPLATES.ADMIN_WEEKLY_REPORT:
       return generateWeeklyReportEmailHTML(data, unsubscribeLink);
     case EMAIL_TEMPLATES.ADMIN_MONTHLY_REPORT:

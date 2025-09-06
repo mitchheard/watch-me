@@ -121,7 +121,8 @@ async function generateUnsubscribeLink(): Promise<string> {
 
 // Generate HTML email content
 async function generateEmailHTML(template: string, data: Record<string, unknown>): Promise<string> {
-  const unsubscribeLink = await generateUnsubscribeLink();
+  // TODO: Re-enable unsubscribe links once unsubscribeToken field is added to database
+  const unsubscribeLink = '#'; // Temporarily disabled
   
   switch (template) {
     case EMAIL_TEMPLATES.ADMIN_NEW_USER:

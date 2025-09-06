@@ -10,23 +10,11 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Token is required' }, { status: 400 });
     }
 
-    // Find preferences by unsubscribe token
-    const preferences = await prisma.notificationPreferences.findUnique({
-      where: { unsubscribeToken: token },
-      include: {
-        user: {
-          select: {
-            email: true,
-          },
-        },
-      },
-    });
-
-    if (!preferences) {
-      return NextResponse.json({ error: 'Invalid or expired token' }, { status: 404 });
-    }
-
-    return NextResponse.json({ preferences });
+    // TODO: Implement proper unsubscribe token system
+    // For now, return a placeholder response since unsubscribeToken field doesn't exist yet
+    return NextResponse.json({ 
+      error: 'Unsubscribe functionality temporarily disabled - unsubscribeToken field not yet implemented in database' 
+    }, { status: 501 });
   } catch (error) {
     console.error('Error fetching unsubscribe preferences:', error);
     return NextResponse.json(
@@ -45,32 +33,11 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: 'Token is required' }, { status: 400 });
     }
 
-    // Find preferences by unsubscribe token
-    const existingPreferences = await prisma.notificationPreferences.findUnique({
-      where: { unsubscribeToken: token },
-    });
-
-    if (!existingPreferences) {
-      return NextResponse.json({ error: 'Invalid or expired token' }, { status: 404 });
-    }
-
-    // Update preferences
-    const preferences = await prisma.notificationPreferences.update({
-      where: { unsubscribeToken: token },
-      data: {
-        ...updates,
-        updatedAt: new Date(),
-      },
-      include: {
-        user: {
-          select: {
-            email: true,
-          },
-        },
-      },
-    });
-
-    return NextResponse.json({ preferences });
+    // TODO: Implement proper unsubscribe token system
+    // For now, return a placeholder response since unsubscribeToken field doesn't exist yet
+    return NextResponse.json({ 
+      error: 'Unsubscribe functionality temporarily disabled - unsubscribeToken field not yet implemented in database' 
+    }, { status: 501 });
   } catch (error) {
     console.error('Error updating unsubscribe preferences:', error);
     return NextResponse.json(

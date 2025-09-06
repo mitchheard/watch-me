@@ -5,7 +5,7 @@ import { WatchItem, WatchlistFormData } from '@/types/watchlist';
 import WatchlistForm from './WatchlistForm';
 import Modal from '@/components/Modal';
 import useWatchlistFilters from '@/hooks/useWatchlistFilters';
-import { FilmIcon, TvIcon, ChevronDownIcon } from '@heroicons/react/24/outline';
+import { FilmIcon, TvIcon, ChevronDownIcon, PlusIcon } from '@heroicons/react/24/outline';
 import { motion } from 'framer-motion';
 import Image from 'next/image';
 import { useAuth } from '@/contexts/AuthContext';

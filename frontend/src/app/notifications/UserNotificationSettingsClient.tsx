@@ -285,24 +285,6 @@ export default function UserNotificationSettingsClient() {
             </div>
           </div>
 
-          {/* Admin Actions */}
-          <div className="mt-6 pt-6 border-t border-slate-200">
-            <h3 className="font-medium text-slate-900 mb-3">Admin Actions</h3>
-            <div className="flex gap-3">
-              <a
-                href="/admin/notifications"
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
-              >
-                📊 View Admin Notifications
-              </a>
-              <a
-                href="/admin"
-                className="px-4 py-2 bg-slate-600 text-white rounded-lg hover:bg-slate-700 transition-colors text-sm font-medium"
-              >
-                🛠️ Admin Dashboard
-              </a>
-            </div>
-          </div>
         </div>
       )}
 

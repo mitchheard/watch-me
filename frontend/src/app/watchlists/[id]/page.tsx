@@ -9,6 +9,8 @@ interface WatchlistPageProps {
 
 export default async function WatchlistPage({ params }: WatchlistPageProps) {
   const { id } = await params;
+  
+  console.log('WatchlistPage - ID:', id);
 
   // For now, we'll use a placeholder name
   // In a real implementation, you'd fetch the watchlist data here

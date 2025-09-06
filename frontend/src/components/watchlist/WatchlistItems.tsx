@@ -44,15 +44,22 @@ export default function WatchlistItems({
   }, [watchlistId]);
 
   const fetchItems = async () => {
+    if (!watchlistId) {
+      setError('No watchlist ID provided');
+      return;
+    }
+
     try {
       setLoading(true);
+      console.log('Fetching items for watchlist:', watchlistId);
       const response = await fetch(`/api/watchlists/${watchlistId}/items`);
       if (!response.ok) {
-        throw new Error('Failed to fetch watchlist items');
+        throw new Error(`Failed to fetch watchlist items: ${response.status} ${response.statusText}`);
       }
       const data = await response.json();
       setItems(data.items);
     } catch (err) {
+      console.error('Error fetching watchlist items:', err);
       setError(err instanceof Error ? err.message : 'Failed to fetch watchlist items');
     } finally {
       setLoading(false);

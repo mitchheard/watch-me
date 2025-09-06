@@ -362,3 +362,129 @@ export async function notifyRepeatVisit(userId: string, userEmail: string, visit
     data
   );
 }
+
+// Send weekly report to admin
+export async function sendWeeklyReport() {
+  try {
+    console.log('📊 Sending weekly report...');
+    
+    // Get weekly stats
+    const now = new Date();
+    const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+    const twoWeeksAgo = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000);
+
+    const [currentWeekStats, previousWeekStats, popularContent] = await Promise.all([
+      // Current week stats
+      prisma.watchItem.count({
+        where: {
+          createdAt: { gte: weekAgo }
+        }
+      }),
+      // Previous week stats
+      prisma.watchItem.count({
+        where: {
+          createdAt: { gte: twoWeeksAgo, lt: weekAgo }
+        }
+      }),
+      // Most popular content this week
+      prisma.watchItem.groupBy({
+        by: ['title'],
+        where: {
+          createdAt: { gte: weekAgo }
+        },
+        _count: {
+          title: true
+        },
+        orderBy: {
+          _count: {
+            title: 'desc'
+          }
+        },
+        take: 5
+      })
+    ]);
+
+    const data = {
+      currentWeekItems: currentWeekStats,
+      previousWeekItems: previousWeekStats,
+      growth: currentWeekStats - previousWeekStats,
+      popularContent: popularContent.map(item => `${item.title} (${item._count.title})`).join(', '),
+      weekStart: weekAgo.toISOString().split('T')[0],
+      weekEnd: now.toISOString().split('T')[0]
+    };
+
+    await sendAdminEmail(
+      EMAIL_TEMPLATES.ADMIN_WEEKLY_REPORT,
+      '📊 Weekly Activity Report - Watch Me',
+      data
+    );
+
+    console.log('✅ Weekly report sent successfully');
+  } catch (error) {
+    console.error('❌ Failed to send weekly report:', error);
+    throw error;
+  }
+}
+
+// Send monthly report to admin
+export async function sendMonthlyReport() {
+  try {
+    console.log('📈 Sending monthly report...');
+    
+    // Get monthly stats
+    const now = new Date();
+    const monthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+    const twoMonthsAgo = new Date(now.getTime() - 60 * 24 * 60 * 60 * 1000);
+
+    const [currentMonthStats, previousMonthStats, popularContent] = await Promise.all([
+      // Current month stats
+      prisma.watchItem.count({
+        where: {
+          createdAt: { gte: monthAgo }
+        }
+      }),
+      // Previous month stats
+      prisma.watchItem.count({
+        where: {
+          createdAt: { gte: twoMonthsAgo, lt: monthAgo }
+        }
+      }),
+      // Most popular content this month
+      prisma.watchItem.groupBy({
+        by: ['title'],
+        where: {
+          createdAt: { gte: monthAgo }
+        },
+        _count: {
+          title: true
+        },
+        orderBy: {
+          _count: {
+            title: 'desc'
+          }
+        },
+        take: 5
+      })
+    ]);
+
+    const data = {
+      currentMonthItems: currentMonthStats,
+      previousMonthItems: previousMonthStats,
+      growth: currentMonthStats - previousMonthStats,
+      popularContent: popularContent.map(item => `${item.title} (${item._count.title})`).join(', '),
+      monthStart: monthAgo.toISOString().split('T')[0],
+      monthEnd: now.toISOString().split('T')[0]
+    };
+
+    await sendAdminEmail(
+      EMAIL_TEMPLATES.ADMIN_MONTHLY_REPORT,
+      '📈 Monthly Growth Report - Watch Me',
+      data
+    );
+
+    console.log('✅ Monthly report sent successfully');
+  } catch (error) {
+    console.error('❌ Failed to send monthly report:', error);
+    throw error;
+  }
+}

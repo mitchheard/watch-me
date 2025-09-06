@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 
 // TODO: Move this to env or a Profile table
@@ -51,7 +51,7 @@ export default function AdminNotificationsClient() {
     }
   }, [user, isLoading]);
 
-  const fetchNotifications = async () => {
+  const fetchNotifications = useCallback(async () => {
     try {
       setLoading(true);
       const params = new URLSearchParams({
@@ -77,7 +77,7 @@ export default function AdminNotificationsClient() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [pagination.page, pagination.limit, filters.type, filters.isRead]);
 
   const markAsRead = async (id: string, isRead: boolean) => {
     try {

@@ -126,7 +126,7 @@ export async function POST(_request: NextRequest) {
 }
 
 // GET endpoint for testing/manual triggering
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   try {
     const now = new Date();
     const dayOfWeek = now.getDay();

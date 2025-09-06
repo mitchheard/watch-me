@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 
@@ -39,7 +39,7 @@ export default function UnsubscribeClient() {
     }
   }, [token, fetchPreferences]);
 
-  const fetchPreferences = async () => {
+  const fetchPreferences = useCallback(async () => {
     try {
       setLoading(true);
       const response = await fetch(`/api/unsubscribe/preferences?token=${token}`);
@@ -56,7 +56,7 @@ export default function UnsubscribeClient() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [token]);
 
   const updatePreferences = async (updates: Partial<NotificationPreferences>) => {
     try {

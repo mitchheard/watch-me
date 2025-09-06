@@ -9,4 +9,12 @@ if (typeof window === 'undefined') { // Only log during build/server-side proces
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 
-export const supabase = createBrowserClient(supabaseUrl, supabaseAnonKey); 
+// Create Supabase client with local development options
+export const supabase = createBrowserClient(supabaseUrl, supabaseAnonKey, {
+  auth: {
+    // Override redirect URL for local development
+    redirectTo: typeof window !== 'undefined' && window.location.hostname === 'localhost' 
+      ? `${window.location.origin}/auth/callback`
+      : undefined
+  }
+}); 

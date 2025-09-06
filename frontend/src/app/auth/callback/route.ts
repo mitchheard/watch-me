@@ -5,16 +5,20 @@ import { prisma } from '@/lib/prisma';
 import { notifyNewUser, notifyRepeatVisit, notifyUserReturned } from '@/lib/adminNotifications';
 
 export async function GET(request: NextRequest) {
-  // Use NEXTAUTH_URL (or your specific env var for site URL) as the reliable application origin
-  const appOrigin = process.env.NEXTAUTH_URL;
-
+  // Determine the application origin for redirects
+  // Priority: NEXTAUTH_URL env var > request origin > fallback
+  let appOrigin = process.env.NEXTAUTH_URL;
+  
   if (!appOrigin) {
-    console.error("[AuthCallback] CRITICAL: Application origin is not configured. Set NEXTAUTH_URL environment variable.");
-    // Fallback or error handling if NEXTAUTH_URL is not set
-    // For safety, you might redirect to a generic error page or use a less reliable fallback like request.headers.get('host')
-    // However, for critical auth redirects, having a definite URL is best.
-    // This example will throw an error to make it obvious if not configured.
-    return NextResponse.json({ error: "Internal server configuration error: App origin not set." }, { status: 500 });
+    // Fallback to request origin for local development
+    const requestOrigin = request.headers.get('origin') || request.headers.get('host');
+    if (requestOrigin) {
+      appOrigin = requestOrigin.startsWith('http') ? requestOrigin : `http://${requestOrigin}`;
+      console.log(`[AuthCallback] Using request origin as fallback: ${appOrigin}`);
+    } else {
+      console.error("[AuthCallback] CRITICAL: Application origin is not configured. Set NEXTAUTH_URL environment variable.");
+      return NextResponse.json({ error: "Internal server configuration error: App origin not set." }, { status: 500 });
+    }
   }
 
   const { searchParams } = new URL(request.url); // Still use request.url for searchParams

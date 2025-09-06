@@ -126,7 +126,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     console.log('[AuthContext] logout: Finished. isLoading set to false.');
   };
 
-  console.log('[AuthContext] Provider render. isLoading:', isLoading, 'User:', user?.id);
+  // console.log('[AuthContext] Provider render. isLoading:', isLoading, 'User:', user?.id);
 
   return (
     <AuthContext.Provider value={{ 

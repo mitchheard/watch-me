@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { PlusIcon, PencilIcon, TrashIcon, ShareIcon, EyeIcon } from '@heroicons/react/24/outline';
 import CreateWatchlistModal from './CreateWatchlistModal';
 import Link from 'next/link';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface Watchlist {
   id: string;
@@ -31,14 +32,20 @@ interface WatchlistManagerProps {
 }
 
 export default function WatchlistManager({ className = '' }: WatchlistManagerProps) {
+  const { user, isLoading: authLoading } = useAuth();
   const [watchlists, setWatchlists] = useState<Watchlist[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
 
   useEffect(() => {
-    fetchWatchlists();
-  }, []);
+    if (!authLoading && user) {
+      fetchWatchlists();
+    } else if (!authLoading && !user) {
+      setLoading(false);
+      setError('Please log in to view your watchlists');
+    }
+  }, [authLoading, user]);
 
   const fetchWatchlists = async () => {
     try {
@@ -86,6 +93,19 @@ export default function WatchlistManager({ className = '' }: WatchlistManagerPro
     console.log('Share watchlist:', watchlist);
     alert('Sharing functionality coming soon!');
   };
+
+  if (authLoading) {
+    return (
+      <div className={`space-y-4 ${className}`}>
+        <div className="animate-pulse">
+          <div className="h-6 bg-gray-200 rounded w-1/3 mb-4"></div>
+          {[1, 2, 3].map(i => (
+            <div key={i} className="h-20 bg-gray-200 rounded mb-3"></div>
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   if (loading) {
     return (

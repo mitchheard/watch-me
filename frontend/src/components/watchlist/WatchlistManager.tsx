@@ -5,6 +5,7 @@ import { PlusIcon, PencilIcon, TrashIcon, ShareIcon, EyeIcon } from '@heroicons/
 import CreateWatchlistModal from './CreateWatchlistModal';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
+import { useSearchParams } from 'next/navigation';
 
 interface Watchlist {
   id: string;
@@ -33,6 +34,8 @@ interface WatchlistManagerProps {
 
 export default function WatchlistManager({ className = '' }: WatchlistManagerProps) {
   const { user, isLoading: authLoading } = useAuth();
+  const searchParams = useSearchParams();
+  const showSharedOnly = searchParams.get('shared') === 'true';
   const [watchlists, setWatchlists] = useState<Watchlist[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -67,6 +70,11 @@ export default function WatchlistManager({ className = '' }: WatchlistManagerPro
     setShowCreateModal(false);
     fetchWatchlists(); // Refresh the list
   };
+
+  // Filter watchlists based on the current view
+  const filteredWatchlists = showSharedOnly 
+    ? watchlists.filter(watchlist => watchlist.isShared)
+    : watchlists;
 
   const handleDeleteWatchlist = async (watchlistId: string) => {
     if (!confirm('Are you sure you want to delete this watchlist? This action cannot be undone.')) {
@@ -131,7 +139,16 @@ export default function WatchlistManager({ className = '' }: WatchlistManagerPro
   return (
     <div className={`space-y-4 ${className}`}>
       <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold text-gray-900">My Watchlists</h2>
+        <div>
+          <h2 className="text-lg font-semibold text-gray-900">
+            {showSharedOnly ? 'Shared Lists' : 'My Watchlists'}
+          </h2>
+          {showSharedOnly && (
+            <p className="text-sm text-gray-600 mt-1">
+              Lists shared with friends and family
+            </p>
+          )}
+        </div>
         <button
           onClick={() => setShowCreateModal(true)}
           className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
@@ -142,7 +159,7 @@ export default function WatchlistManager({ className = '' }: WatchlistManagerPro
       </div>
 
       <div className="space-y-3">
-        {watchlists.map((watchlist) => (
+        {filteredWatchlists.map((watchlist) => (
           <div
             key={watchlist.id}
             className="p-4 bg-white border border-gray-200 rounded-lg hover:border-gray-300 transition-colors"
@@ -221,14 +238,16 @@ export default function WatchlistManager({ className = '' }: WatchlistManagerPro
         ))}
       </div>
 
-      {watchlists.length === 0 && (
+      {filteredWatchlists.length === 0 && (
         <div className="text-center py-8 text-gray-500">
-          <p className="text-sm mb-4">No watchlists found</p>
+          <p className="text-sm mb-4">
+            {showSharedOnly ? 'No shared lists found' : 'No watchlists found'}
+          </p>
           <button
             onClick={() => setShowCreateModal(true)}
             className="text-blue-600 hover:text-blue-700 text-sm font-medium"
           >
-            Create your first watchlist
+            {showSharedOnly ? 'Create your first shared list' : 'Create your first watchlist'}
           </button>
         </div>
       )}

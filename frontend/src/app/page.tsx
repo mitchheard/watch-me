@@ -5,6 +5,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { FilmIcon, TvIcon, CheckCircleIcon } from '@heroicons/react/24/solid';
 import Image from 'next/image';
+import WatchlistItems from '@/components/watchlist/WatchlistItems';
 
 function DemoWatchlist() {
   type DemoStatus = 'want-to-watch' | 'watching' | 'finished';
@@ -114,14 +115,6 @@ function LandingPage() {
 
 export default function Page() {
   const { user, isLoading } = useAuth();
-  const router = useRouter();
-
-  useEffect(() => {
-    if (!isLoading && user) {
-      // Redirect authenticated users to the new watchlists page
-      router.push('/watchlists');
-    }
-  }, [user, isLoading, router]);
 
   if (isLoading) {
     return (
@@ -135,10 +128,6 @@ export default function Page() {
     return <LandingPage />;
   }
 
-  // Show loading while redirecting
-  return (
-    <div className="flex items-center justify-center min-h-screen">
-      <p className="text-xl text-gray-600">Redirecting to your watchlists...</p>
-    </div>
-  );
+  // Show the user's default personal watchlist
+  return <DefaultWatchlistView />;
 }

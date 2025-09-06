@@ -30,15 +30,6 @@ export default function UnsubscribeClient() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (token) {
-      fetchPreferences();
-    } else {
-      setError('Invalid unsubscribe link. Please check your email for the correct link.');
-      setLoading(false);
-    }
-  }, [token, fetchPreferences]);
-
   const fetchPreferences = useCallback(async () => {
     try {
       setLoading(true);
@@ -57,6 +48,15 @@ export default function UnsubscribeClient() {
       setLoading(false);
     }
   }, [token]);
+
+  useEffect(() => {
+    if (token) {
+      fetchPreferences();
+    } else {
+      setError('Invalid unsubscribe link. Please check your email for the correct link.');
+      setLoading(false);
+    }
+  }, [token, fetchPreferences]);
 
   const updatePreferences = async (updates: Partial<NotificationPreferences>) => {
     try {

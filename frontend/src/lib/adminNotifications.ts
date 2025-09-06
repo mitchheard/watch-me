@@ -98,8 +98,8 @@ export async function sendAdminEmail(
   }
 }
 
-// Generate unsubscribe link for admin emails
-async function generateUnsubscribeLink(): Promise<string> {
+// Generate unsubscribe link for admin emails (temporarily disabled)
+async function _generateUnsubscribeLink(): Promise<string> {
   try {
     // Get admin user preferences to get unsubscribe token
     const adminPreferences = await prisma.notificationPreferences.findUnique({

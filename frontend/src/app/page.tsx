@@ -7,7 +7,7 @@ import { FilmIcon, TvIcon, CheckCircleIcon } from '@heroicons/react/24/solid';
 import Image from 'next/image';
 import WatchlistItems from '@/components/watchlist/WatchlistItems';
 import Modal from '@/components/Modal';
-import WatchlistForm from '@/components/WatchlistForm';
+import WatchlistForm from '@/components/watchlist/WatchlistForm';
 
 function DemoWatchlist() {
   type DemoStatus = 'want-to-watch' | 'watching' | 'finished';

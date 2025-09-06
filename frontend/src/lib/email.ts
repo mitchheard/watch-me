@@ -25,6 +25,7 @@ export const EMAIL_TEMPLATES = {
   ADMIN_FIRST_ITEM: 'admin-first-item',
   ADMIN_FIRST_REVIEW: 'admin-first-review',
   ADMIN_REPEAT_VISIT: 'admin-repeat-visit',
+  ADMIN_USER_RETURNED: 'admin-user-returned',
   ADMIN_WEEKLY_REPORT: 'admin-weekly-report',
   ADMIN_MONTHLY_REPORT: 'admin-monthly-report',
 } as const;

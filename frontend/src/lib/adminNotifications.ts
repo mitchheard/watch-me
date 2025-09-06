@@ -41,6 +41,14 @@ export interface RepeatVisitData {
   lastVisit: Date;
 }
 
+export interface UserReturnedData {
+  userId: string;
+  userEmail: string;
+  daysSinceLastVisit: number;
+  lastVisit: Date;
+  currentVisit: Date;
+}
+
 // Create admin notification in database
 export async function createAdminNotification(data: AdminNotificationData) {
   return await prisma.adminNotification.create({
@@ -122,6 +130,8 @@ async function generateEmailHTML(template: string, data: Record<string, unknown>
       return generateFirstReviewEmailHTML(data as unknown as FirstReviewData, unsubscribeLink);
     case EMAIL_TEMPLATES.ADMIN_REPEAT_VISIT:
       return generateRepeatVisitEmailHTML(data as unknown as RepeatVisitData, unsubscribeLink);
+    case EMAIL_TEMPLATES.ADMIN_USER_RETURNED:
+      return generateUserReturnedEmailHTML(data as unknown as UserReturnedData, unsubscribeLink);
     case EMAIL_TEMPLATES.ADMIN_WEEKLY_REPORT:
       return generateWeeklyReportEmailHTML(data, unsubscribeLink);
     case EMAIL_TEMPLATES.ADMIN_MONTHLY_REPORT:
@@ -200,6 +210,26 @@ function generateRepeatVisitEmailHTML(data: RepeatVisitData, unsubscribeLink: st
         <p><strong>Visit Count:</strong> ${data.visitCount}</p>
         <p><strong>First Visit:</strong> ${data.firstVisit.toLocaleString()}</p>
         <p><strong>Last Visit:</strong> ${data.lastVisit.toLocaleString()}</p>
+      </div>
+      <p style="color: #6b7280; font-size: 14px;">This is an automated notification from Watch Me.</p>
+      <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 24px 0;">
+      <p style="color: #9ca3af; font-size: 12px; text-align: center;">
+        <a href="${unsubscribeLink}" style="color: #6b7280; text-decoration: underline;">Unsubscribe from these emails</a>
+      </p>
+    </div>
+  `;
+}
+
+function generateUserReturnedEmailHTML(data: UserReturnedData, unsubscribeLink: string): string {
+  return `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+      <h2 style="color: #1f2937;">🎯 User Returned After Inactivity!</h2>
+      <p>A user has returned to the app after being inactive for a while!</p>
+      <div style="background: #f3f4f6; padding: 16px; border-radius: 8px; margin: 16px 0;">
+        <p><strong>User:</strong> ${data.userEmail}</p>
+        <p><strong>Days Since Last Visit:</strong> ${data.daysSinceLastVisit}</p>
+        <p><strong>Last Visit:</strong> ${data.lastVisit.toLocaleString()}</p>
+        <p><strong>Current Visit:</strong> ${data.currentVisit.toLocaleString()}</p>
       </div>
       <p style="color: #6b7280; font-size: 14px;">This is an automated notification from Watch Me.</p>
       <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 24px 0;">
@@ -349,6 +379,31 @@ export async function notifyRepeatVisit(userId: string, userEmail: string, visit
   await sendAdminEmail(
     EMAIL_TEMPLATES.ADMIN_REPEAT_VISIT,
     '🔄 User Repeat Visit - Watch Me',
+    data as unknown as Record<string, unknown>
+  );
+}
+
+export async function notifyUserReturned(userId: string, userEmail: string, daysSinceLastVisit: number, lastVisit: Date, currentVisit: Date) {
+  const data: UserReturnedData = {
+    userId,
+    userEmail,
+    daysSinceLastVisit,
+    lastVisit,
+    currentVisit,
+  };
+
+  // Create database notification
+  await createAdminNotification({
+    type: 'user_activity',
+    title: 'User Returned After Inactivity',
+    message: `${userEmail} returned after ${daysSinceLastVisit} days of inactivity`,
+    data: data as unknown as Record<string, unknown>,
+  });
+
+  // Send email notification
+  await sendAdminEmail(
+    EMAIL_TEMPLATES.ADMIN_USER_RETURNED,
+    '🎯 User Returned After Inactivity - Watch Me',
     data as unknown as Record<string, unknown>
   );
 }

@@ -2,7 +2,7 @@ import { createServerClient, type CookieOptions } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import { NextResponse, type NextRequest } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { notifyNewUser } from '@/lib/adminNotifications';
+import { notifyNewUser, notifyRepeatVisit, notifyUserReturned } from '@/lib/adminNotifications';
 
 export async function GET(request: NextRequest) {
   // Use NEXTAUTH_URL (or your specific env var for site URL) as the reliable application origin
@@ -69,31 +69,83 @@ export async function GET(request: NextRequest) {
 
     console.log('[AuthCallback] Successfully exchanged code for session. Session data:', sessionData);
     
-    // Create a UserSession record
+    // Create a UserSession record and handle notifications
     if (sessionData.session?.user) {
       try {
+        const userId = sessionData.session.user.id;
+        const userEmail = sessionData.session.user.email || 'Unknown email';
+        const currentTime = new Date();
+        
+        // Create new session record
         await prisma.userSession.create({
           data: {
-            userId: sessionData.session.user.id,
+            userId,
           },
         });
-        console.log(`[AuthCallback] UserSession record created for user: ${sessionData.session.user.id}`);
+        console.log(`[AuthCallback] UserSession record created for user: ${userId}`);
         
         // Check if this is a new user and send admin notification
         const existingUser = await prisma.user.findUnique({
-          where: { id: sessionData.session.user.id },
+          where: { id: userId },
         });
         
         if (!existingUser) {
           // This is a new user, send admin notification
           try {
-            await notifyNewUser(
-              sessionData.session.user.id,
-              sessionData.session.user.email || 'Unknown email'
-            );
-            console.log(`[AuthCallback] Admin notification sent for new user: ${sessionData.session.user.id}`);
+            await notifyNewUser(userId, userEmail);
+            console.log(`[AuthCallback] Admin notification sent for new user: ${userId}`);
           } catch (notificationError) {
             console.error(`[AuthCallback] Failed to send new user notification:`, notificationError);
+            // Non-critical, so we just log and continue
+          }
+        } else {
+          // Existing user - check for repeat visits and inactivity returns
+          try {
+            // Get user's session history
+            const userSessions = await prisma.userSession.findMany({
+              where: { userId },
+              orderBy: { createdAt: 'desc' },
+              take: 10, // Get last 10 sessions for analysis
+            });
+
+            if (userSessions.length > 1) {
+              const lastSession = userSessions[1]; // Second most recent (first is the one we just created)
+              const daysSinceLastVisit = Math.floor(
+                (currentTime.getTime() - lastSession.createdAt.getTime()) / (1000 * 60 * 60 * 24)
+              );
+
+              // Check for user returning after inactivity (7+ days)
+              if (daysSinceLastVisit >= 7) {
+                await notifyUserReturned(
+                  userId,
+                  userEmail,
+                  daysSinceLastVisit,
+                  lastSession.createdAt,
+                  currentTime
+                );
+                console.log(`[AuthCallback] User returned after ${daysSinceLastVisit} days of inactivity: ${userId}`);
+              }
+
+              // Check for repeat visits this week (3+ visits in last 7 days)
+              const weekAgo = new Date(currentTime.getTime() - (7 * 24 * 60 * 60 * 1000));
+              const visitsThisWeek = userSessions.filter(
+                session => session.createdAt >= weekAgo
+              ).length;
+
+              if (visitsThisWeek >= 3) {
+                const firstVisitThisWeek = userSessions[visitsThisWeek - 1];
+                await notifyRepeatVisit(
+                  userId,
+                  userEmail,
+                  visitsThisWeek,
+                  firstVisitThisWeek.createdAt,
+                  currentTime
+                );
+                console.log(`[AuthCallback] User has ${visitsThisWeek} visits this week: ${userId}`);
+              }
+            }
+          } catch (notificationError) {
+            console.error(`[AuthCallback] Failed to send activity notifications:`, notificationError);
             // Non-critical, so we just log and continue
           }
         }

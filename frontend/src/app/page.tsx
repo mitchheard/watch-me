@@ -1,18 +1,10 @@
 'use client';
 
-import { useState, Suspense } from 'react';
-import dynamic from 'next/dynamic';
+import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import WatchlistForm from '@/components/watchlist/WatchlistForm';
-// import WatchlistItems from '@/components/watchlist/WatchlistItems';
-import Modal from '@/components/Modal';
+import { useRouter } from 'next/navigation';
 import { FilmIcon, TvIcon, CheckCircleIcon } from '@heroicons/react/24/solid';
-import { WatchlistFormData } from '@/types/watchlist';
 import Image from 'next/image';
-
-const WatchlistItems = dynamic(() => import('@/components/watchlist/WatchlistItems'), {
-  ssr: false,
-});
 
 function DemoWatchlist() {
   type DemoStatus = 'want-to-watch' | 'watching' | 'finished';
@@ -122,24 +114,19 @@ function LandingPage() {
 
 export default function Page() {
   const { user, isLoading } = useAuth();
-  const [refreshKey, setRefreshKey] = useState(0);
-  const [isAddItemModalOpen, setIsAddItemModalOpen] = useState(false);
+  const router = useRouter();
 
-  const handleAddItem = async (item: WatchlistFormData) => {
-    await fetch('/api/watchlist', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(item),
-    });
-    setRefreshKey(prevKey => prevKey + 1);
-    setIsAddItemModalOpen(false);
-  };
+  useEffect(() => {
+    if (!isLoading && user) {
+      // Redirect authenticated users to the new watchlists page
+      router.push('/watchlists');
+    }
+  }, [user, isLoading, router]);
 
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <p className="text-xl text-gray-600">Authenticating...</p>
-        {/* You could add a spinner here */}
       </div>
     );
   }
@@ -148,19 +135,10 @@ export default function Page() {
     return <LandingPage />;
   }
 
+  // Show loading while redirecting
   return (
-    <>
-      <Suspense fallback={<div className="text-center py-10">Loading watchlist...</div>}>
-        <WatchlistItems key={refreshKey} />
-      </Suspense>
-
-      <main className="flex-1">
-        {isAddItemModalOpen && (
-          <Modal onClose={() => setIsAddItemModalOpen(false)} title="Add Movie or TV Show">
-            <WatchlistForm _onAddItem={handleAddItem} />
-          </Modal>
-        )}
-      </main>
-    </>
+    <div className="flex items-center justify-center min-h-screen">
+      <p className="text-xl text-gray-600">Redirecting to your watchlists...</p>
+    </div>
   );
 }

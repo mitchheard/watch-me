@@ -12,9 +12,13 @@ const ADMIN_USER_ID = '464661fa-7ae1-406f-9975-dec0ccbc94aa';
 export default function LayoutShell({ children }: { children: ReactNode }) {
   const { user, logout, loginWithGoogle } = useAuth();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isHomePage, setIsHomePage] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const pathname = usePathname();
-  const isHomePage = pathname === '/';
+
+  useEffect(() => {
+    setIsHomePage(pathname === '/');
+  }, [pathname]);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -67,12 +71,12 @@ export default function LayoutShell({ children }: { children: ReactNode }) {
                       )}
                       <hr className="my-1 border-slate-200" />
                       <Link
-                        href="/"
+                        href="/watchlists"
                         onClick={() => setIsMenuOpen(false)}
                         className="flex items-center gap-2 px-4 py-2 text-sm text-slate-700 hover:bg-slate-100 hover:text-slate-900 w-full text-left"
                       >
                         <FilmIcon className="h-5 w-5 text-slate-500" />
-                        Watchlist
+                        Watchlists
                       </Link>
                       <Link
                         href="/recommendations"

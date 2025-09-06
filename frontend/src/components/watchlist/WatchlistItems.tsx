@@ -167,23 +167,23 @@ export default function WatchlistItems({
         <h2 className="text-lg font-semibold text-gray-900">
           {watchlistName} ({items.length} items)
         </h2>
-        <button
+          <button
           onClick={() => setShowAddModal(true)}
           className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
         >
           <PlusIcon className="h-4 w-4" />
           Add Item
-        </button>
-      </div>
-
+          </button>
+        </div>
+        
       <div className="space-y-3">
         {items.map((item) => (
           <div
-            key={item.id}
+              key={item.id}
             className="p-4 bg-white border border-gray-200 rounded-lg hover:border-gray-300 transition-colors"
           >
             <div className="flex items-start gap-3">
-              {/* Poster */}
+                {/* Poster */}
               {item.watchlistItem.tmdbPosterPath && (
                 <img
                   src={`https://image.tmdb.org/t/p/w92${item.watchlistItem.tmdbPosterPath}`}
@@ -191,9 +191,9 @@ export default function WatchlistItems({
                   className="w-12 h-18 object-cover rounded flex-shrink-0"
                 />
               )}
-
-              {/* Content */}
-              <div className="flex-1 min-w-0">
+                
+                {/* Content */}
+                <div className="flex-1 min-w-0">
                 <div className="flex items-start justify-between mb-2">
                   <div>
                     <h3 className="font-medium text-gray-900 truncate">
@@ -214,8 +214,8 @@ export default function WatchlistItems({
                       title="Edit item"
                     >
                       <PencilIcon className="h-4 w-4" />
-                    </button>
-                    <button
+                </button>
+                <button
                       onClick={() => handleDeleteItem(item.id)}
                       className="p-1 text-gray-400 hover:text-red-600"
                       title="Remove item"
@@ -234,29 +234,29 @@ export default function WatchlistItems({
                       {item.rating}
                     </span>
                   )}
-                </div>
-
+                  </div>
+                  
                 {item.notes && (
                   <p className="text-sm text-gray-600 line-clamp-2">
                     {item.notes}
                   </p>
-                )}
+                    )}
+                  </div>
+                </div>
               </div>
-            </div>
-          </div>
         ))}
       </div>
 
       {items.length === 0 && (
         <div className="text-center py-8 text-gray-500">
           <p className="text-sm mb-4">No items in this watchlist</p>
-          <button
+                <button
             onClick={() => setShowAddModal(true)}
             className="text-blue-600 hover:text-blue-700 text-sm font-medium"
           >
             Add your first item
-          </button>
-        </div>
+                </button>
+              </div>
       )}
 
       {/* Add Item Modal */}

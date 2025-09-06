@@ -364,15 +364,102 @@ export default function OriginalWatchlistItems() {
           </Modal>
         )}
 
-        {/* Edit Item Modal */}
+        {/* Action Sheet Modal */}
         {modalItem && (
-          <Modal onClose={() => setModalItem(null)} title="Edit Item">
+          <Dialog open={!!modalItem} onClose={() => setModalItem(null)} className="fixed z-50 inset-0 overflow-y-auto">
+            <div className="fixed inset-0 bg-black opacity-30" aria-hidden="true" />
+            <div className="flex items-end sm:items-center justify-center min-h-screen px-2 sm:px-4">
+              <Dialog.Panel className="fixed bottom-0 left-0 right-0 w-full rounded-t-2xl sm:rounded-2xl bg-white shadow-xl transform transition-all sm:max-w-md sm:mx-auto">
+                <div className="p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-semibold text-gray-900">{modalItem.title}</h3>
+                    <button
+                      onClick={() => setModalItem(null)}
+                      className="text-gray-400 hover:text-gray-600"
+                    >
+                      <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </div>
+                  
+                  <div className="space-y-3">
+                    <button
+                      className="w-full px-4 py-3 rounded-lg border border-slate-300 bg-white text-slate-700 text-sm font-medium hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
+                      onClick={() => {
+                        setSelectedItem(modalItem);
+                        setModalItem(null);
+                      }}
+                    >
+                      Edit
+                    </button>
+                    <button
+                      className="w-full px-4 py-3 rounded-lg border border-slate-300 bg-white text-slate-700 text-sm font-medium hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
+                      onClick={() => {
+                        setRateItem(modalItem);
+                        setModalItem(null);
+                      }}
+                    >
+                      Rate
+                    </button>
+                    <button
+                      className="w-full px-4 py-3 rounded-lg border border-red-300 bg-red-50 text-red-700 text-sm font-medium hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-colors"
+                      onClick={() => {
+                        handleDeleteItem(modalItem.id);
+                        setModalItem(null);
+                      }}
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </div>
+              </Dialog.Panel>
+            </div>
+          </Dialog>
+        )}
+
+        {/* Edit Item Modal */}
+        {selectedItem && (
+          <Modal onClose={() => setSelectedItem(null)} title="Edit Item">
             <WatchlistForm 
-              itemToEdit={modalItem}
+              itemToEdit={selectedItem}
               _onAddItem={async () => {}} // Not used in edit mode
               onUpdateItem={handleUpdateItem}
-              onCancelEdit={() => setModalItem(null)}
+              onCancelEdit={() => setSelectedItem(null)}
             />
+          </Modal>
+        )}
+
+        {/* Rate Item Modal */}
+        {rateItem && (
+          <Modal onClose={() => setRateItem(null)} title="Rate Item">
+            <div className="p-6">
+              <h3 className="text-lg font-semibold mb-4">{rateItem.title}</h3>
+              <div className="space-y-3">
+                {['Loved', 'Liked', 'Not for me'].map((rating) => (
+                  <button
+                    key={rating}
+                    onClick={() => handleRateItem(rateItem, rating)}
+                    disabled={isRateSubmitting}
+                    className={`w-full px-4 py-3 rounded-lg border text-sm font-medium transition-colors ${
+                      rateValue === rating
+                        ? 'border-blue-500 bg-blue-50 text-blue-700'
+                        : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
+                    }`}
+                  >
+                    {rating}
+                  </button>
+                ))}
+              </div>
+              <div className="flex gap-3 mt-6">
+                <button
+                  onClick={() => setRateItem(null)}
+                  className="flex-1 px-4 py-2 rounded-lg border border-gray-300 bg-white text-gray-700 text-sm font-medium hover:bg-gray-50"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
           </Modal>
         )}
       </div>

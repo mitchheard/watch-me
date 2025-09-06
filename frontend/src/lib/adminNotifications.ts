@@ -103,21 +103,7 @@ export async function sendAdminEmail(
 
 // Generate unsubscribe link for admin emails (temporarily disabled)
 async function _generateUnsubscribeLink(): Promise<string> {
-  try {
-    // Get admin user preferences to get unsubscribe token
-    const adminPreferences = await prisma.notificationPreferences.findUnique({
-      where: { userId: ADMIN_USER_ID },
-    });
-
-    if (adminPreferences?.unsubscribeToken) {
-      const baseUrl = process.env.DOMAIN ? `https://${process.env.DOMAIN}` : 'http://localhost:3000';
-      return `${baseUrl}/unsubscribe?token=${adminPreferences.unsubscribeToken}`;
-    }
-  } catch (error) {
-    console.error('Error generating unsubscribe link:', error);
-  }
-  
-  // Fallback to a generic unsubscribe page
+  // TODO: Re-implement when unsubscribeToken field is added to database
   const baseUrl = process.env.DOMAIN ? `https://${process.env.DOMAIN}` : 'http://localhost:3000';
   return `${baseUrl}/unsubscribe`;
 }

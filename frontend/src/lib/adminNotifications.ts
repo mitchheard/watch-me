@@ -1,6 +1,9 @@
 import { prisma } from './prisma';
 import { resend, ADMIN_EMAIL, EMAIL_TEMPLATES } from './email';
 
+// TODO: Move this to env or a Profile table
+const ADMIN_USER_ID = '464661fa-7ae1-406f-9975-dec0ccbc94aa';
+
 export interface AdminNotificationData {
   type: 'user_activity' | 'weekly_summary' | 'system_alert';
   title: string;

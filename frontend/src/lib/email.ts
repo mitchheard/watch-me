@@ -1,8 +1,20 @@
 import { Resend } from 'resend';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+// Lazy initialization to avoid build-time errors when env vars aren't available
+let resendInstance: Resend | null = null;
 
-export { resend };
+function getResend() {
+  if (!resendInstance) {
+    const apiKey = process.env.RESEND_API_KEY;
+    if (!apiKey) {
+      throw new Error('RESEND_API_KEY environment variable is required');
+    }
+    resendInstance = new Resend(apiKey);
+  }
+  return resendInstance;
+}
+
+export { getResend as resend };
 
 // Admin email configuration
 export const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'admin@watchme.app';

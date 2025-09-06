@@ -62,7 +62,7 @@ export async function sendAdminEmail(
   console.log('🔔 Attempting to send admin email:', { template, subject, to: ADMIN_EMAIL });
   
   try {
-    const result = await resend.emails.send({
+    const result = await resend().emails.send({
       from: 'Watch Me <noreply@gowatchme.app>',
       to: [ADMIN_EMAIL],
       subject,

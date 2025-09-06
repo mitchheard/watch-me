@@ -5,7 +5,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { FilmIcon, TvIcon, CheckCircleIcon } from '@heroicons/react/24/solid';
 import Image from 'next/image';
-import WatchlistItems from '@/components/watchlist/WatchlistItems';
+import OriginalWatchlistItems from '@/components/watchlist/OriginalWatchlistItems';
 import Modal from '@/components/Modal';
 import WatchlistForm from '@/components/watchlist/WatchlistForm';
 
@@ -145,7 +145,7 @@ export default function Page() {
   return (
     <>
       <Suspense fallback={<div className="text-center py-10">Loading watchlist...</div>}>
-        <WatchlistItems key={refreshKey} />
+        <OriginalWatchlistItems key={refreshKey} />
       </Suspense>
 
       <main className="flex-1">

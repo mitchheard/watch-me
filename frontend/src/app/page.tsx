@@ -117,6 +117,18 @@ function LandingPage() {
 
 export default function Page() {
   const { user, isLoading } = useAuth();
+  const [refreshKey, setRefreshKey] = useState(0);
+  const [isAddItemModalOpen, setIsAddItemModalOpen] = useState(false);
+
+  const handleAddItem = async (item: any) => {
+    await fetch('/api/watchlist', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(item),
+    });
+    setRefreshKey(prevKey => prevKey + 1);
+    setIsAddItemModalOpen(false);
+  };
 
   if (isLoading) {
     return (

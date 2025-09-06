@@ -115,13 +115,13 @@ async function generateEmailHTML(template: string, data: Record<string, unknown>
   
   switch (template) {
     case EMAIL_TEMPLATES.ADMIN_NEW_USER:
-      return generateNewUserEmailHTML(data as NewUserData, unsubscribeLink);
+      return generateNewUserEmailHTML(data as unknown as NewUserData, unsubscribeLink);
     case EMAIL_TEMPLATES.ADMIN_FIRST_ITEM:
-      return generateFirstItemEmailHTML(data as FirstItemData, unsubscribeLink);
+      return generateFirstItemEmailHTML(data as unknown as FirstItemData, unsubscribeLink);
     case EMAIL_TEMPLATES.ADMIN_FIRST_REVIEW:
-      return generateFirstReviewEmailHTML(data as FirstReviewData, unsubscribeLink);
+      return generateFirstReviewEmailHTML(data as unknown as FirstReviewData, unsubscribeLink);
     case EMAIL_TEMPLATES.ADMIN_REPEAT_VISIT:
-      return generateRepeatVisitEmailHTML(data as RepeatVisitData, unsubscribeLink);
+      return generateRepeatVisitEmailHTML(data as unknown as RepeatVisitData, unsubscribeLink);
     case EMAIL_TEMPLATES.ADMIN_WEEKLY_REPORT:
       return generateWeeklyReportEmailHTML(data, unsubscribeLink);
     case EMAIL_TEMPLATES.ADMIN_MONTHLY_REPORT:

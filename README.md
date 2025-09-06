@@ -88,6 +88,13 @@ Open http://localhost:3000 in your browser to see the app.
 └── public/                  # Static assets
 ```
 
+## 📚 Documentation
+
+- **[Notification System](NOTIFICATION_SYSTEM.md)** - Comprehensive guide to the admin notification system, user activity tracking, and email alerts
+- **[Component Guide](COMPONENT_GUIDE.md)** - Detailed documentation of all UI components and their usage
+- **[Development Roadmap](DEVELOPMENT_ROADMAP.md)** - Current development status and upcoming features
+- **[Features Overview](FEATURES.md)** - Complete list of implemented features and functionality
+
 ## 🔜 Planned Features
 
 - Social features (sharing watchlists)

@@ -229,25 +229,90 @@ export default function UserNotificationSettingsClient() {
       {isAdmin && (
         <div className="bg-white rounded-lg border border-slate-200 p-6">
           <div className="flex items-center gap-2 mb-4">
-            <h2 className="text-lg font-semibold text-slate-900">👑 Admin Email Reports</h2>
+            <h2 className="text-lg font-semibold text-slate-900">👑 Admin Notifications</h2>
             <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs font-medium rounded-full">
               Admin Only
             </span>
           </div>
           <p className="text-slate-600 text-sm mb-6">
-            Configure automatic email reports that will be sent to your admin email address.
+            All email notifications that are sent to your admin email address.
           </p>
           
-          <div className="space-y-4">
-            {/* Weekly Digest */}
+          <div className="space-y-3">
+            {/* New User Signup */}
+            <div className="flex items-center justify-between p-4 bg-green-50 rounded-lg border border-green-200">
+              <div className="flex-1">
+                <div className="flex items-center gap-2 mb-1">
+                  <h4 className="font-medium text-slate-900 text-sm">🎉 New User Signup</h4>
+                  <span className="text-xs text-green-600 font-medium bg-green-100 px-2 py-1 rounded">Always On</span>
+                </div>
+                <p className="text-xs text-slate-600">
+                  Sent when a new user registers for the first time
+                </p>
+              </div>
+            </div>
+
+            {/* User Added First Item */}
             <div className="flex items-center justify-between p-4 bg-blue-50 rounded-lg border border-blue-200">
               <div className="flex-1">
-                <h3 className="font-medium text-slate-900">Weekly Digest</h3>
-                <p className="text-sm text-slate-600 mt-1">
-                  Automated weekly report sent every Monday at 9:00 AM UTC
+                <div className="flex items-center gap-2 mb-1">
+                  <h4 className="font-medium text-slate-900 text-sm">📝 User Added First Item</h4>
+                  <span className="text-xs text-blue-600 font-medium bg-blue-100 px-2 py-1 rounded">Always On</span>
+                </div>
+                <p className="text-xs text-slate-600">
+                  Sent when a user adds their first item to their watchlist
                 </p>
-                <p className="text-xs text-slate-500 mt-1">
-                  Includes: User activity, popular content, growth metrics
+              </div>
+            </div>
+
+            {/* User Left First Review */}
+            <div className="flex items-center justify-between p-4 bg-yellow-50 rounded-lg border border-yellow-200">
+              <div className="flex-1">
+                <div className="flex items-center gap-2 mb-1">
+                  <h4 className="font-medium text-slate-900 text-sm">⭐ User Left First Review</h4>
+                  <span className="text-xs text-yellow-600 font-medium bg-yellow-100 px-2 py-1 rounded">Always On</span>
+                </div>
+                <p className="text-xs text-slate-600">
+                  Sent when a user leaves their first rating or review
+                </p>
+              </div>
+            </div>
+
+            {/* User Repeat Visit */}
+            <div className="flex items-center justify-between p-4 bg-purple-50 rounded-lg border border-purple-200">
+              <div className="flex-1">
+                <div className="flex items-center gap-2 mb-1">
+                  <h4 className="font-medium text-slate-900 text-sm">🔄 User Repeat Visit</h4>
+                  <span className="text-xs text-purple-600 font-medium bg-purple-100 px-2 py-1 rounded">Always On</span>
+                </div>
+                <p className="text-xs text-slate-600">
+                  Sent when a user visits 3+ times within 7 days
+                </p>
+              </div>
+            </div>
+
+            {/* User Returned After Inactivity */}
+            <div className="flex items-center justify-between p-4 bg-orange-50 rounded-lg border border-orange-200">
+              <div className="flex-1">
+                <div className="flex items-center gap-2 mb-1">
+                  <h4 className="font-medium text-slate-900 text-sm">🎯 User Returned After Inactivity</h4>
+                  <span className="text-xs text-orange-600 font-medium bg-orange-100 px-2 py-1 rounded">Always On</span>
+                </div>
+                <p className="text-xs text-slate-600">
+                  Sent when a user returns after 7+ days of inactivity
+                </p>
+              </div>
+            </div>
+
+            {/* Weekly Digest */}
+            <div className="flex items-center justify-between p-4 bg-slate-50 rounded-lg border border-slate-200">
+              <div className="flex-1">
+                <div className="flex items-center gap-2 mb-1">
+                  <h4 className="font-medium text-slate-900 text-sm">📊 Weekly Digest</h4>
+                  <span className="text-xs text-slate-600 font-medium bg-slate-100 px-2 py-1 rounded">Every Monday 9:00 AM UTC</span>
+                </div>
+                <p className="text-xs text-slate-600">
+                  Automated weekly report including user activity, popular content, and growth metrics
                 </p>
               </div>
               <label className="relative inline-flex items-center cursor-pointer">
@@ -263,14 +328,14 @@ export default function UserNotificationSettingsClient() {
             </div>
 
             {/* Monthly Digest */}
-            <div className="flex items-center justify-between p-4 bg-blue-50 rounded-lg border border-blue-200">
+            <div className="flex items-center justify-between p-4 bg-slate-50 rounded-lg border border-slate-200">
               <div className="flex-1">
-                <h3 className="font-medium text-slate-900">Monthly Digest</h3>
-                <p className="text-sm text-slate-600 mt-1">
-                  Automated monthly report sent on the 1st of each month at 9:00 AM UTC
-                </p>
-                <p className="text-xs text-slate-500 mt-1">
-                  Includes: Monthly statistics, user engagement, content trends
+                <div className="flex items-center gap-2 mb-1">
+                  <h4 className="font-medium text-slate-900 text-sm">📈 Monthly Digest</h4>
+                  <span className="text-xs text-slate-600 font-medium bg-slate-100 px-2 py-1 rounded">1st of Month 9:00 AM UTC</span>
+                </div>
+                <p className="text-xs text-slate-600">
+                  Automated monthly report including statistics, user engagement, and content trends
                 </p>
               </div>
               <label className="relative inline-flex items-center cursor-pointer">
@@ -285,19 +350,9 @@ export default function UserNotificationSettingsClient() {
               </label>
             </div>
           </div>
-
         </div>
       )}
 
-      {/* Schedule Information */}
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-        <h3 className="font-medium text-blue-900 mb-2">📅 Schedule Information</h3>
-        <div className="text-sm text-blue-800 space-y-1">
-          <p><strong>Weekly Reports:</strong> Every Monday at 9:00 AM UTC</p>
-          <p><strong>Monthly Reports:</strong> 1st of each month at 9:00 AM UTC</p>
-          <p><strong>Timezone:</strong> Reports are sent in UTC time. Adjust for your local timezone.</p>
-        </div>
-      </div>
 
       {/* Test Section - Only for admins */}
       {isAdmin && (

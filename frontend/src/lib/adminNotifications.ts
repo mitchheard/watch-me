@@ -45,7 +45,7 @@ export async function createAdminNotification(data: AdminNotificationData) {
       type: data.type,
       title: data.title,
       message: data.message,
-      data: data.data || null,
+      data: data.data || undefined,
     },
   });
 }

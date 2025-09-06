@@ -2,6 +2,7 @@ import { createServerClient, type CookieOptions } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import { NextResponse, type NextRequest } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { notifyNewUser } from '@/lib/adminNotifications';
 
 export async function GET(request: NextRequest) {
   // Use NEXTAUTH_URL (or your specific env var for site URL) as the reliable application origin
@@ -77,6 +78,25 @@ export async function GET(request: NextRequest) {
           },
         });
         console.log(`[AuthCallback] UserSession record created for user: ${sessionData.session.user.id}`);
+        
+        // Check if this is a new user and send admin notification
+        const existingUser = await prisma.user.findUnique({
+          where: { id: sessionData.session.user.id },
+        });
+        
+        if (!existingUser) {
+          // This is a new user, send admin notification
+          try {
+            await notifyNewUser(
+              sessionData.session.user.id,
+              sessionData.session.user.email || 'Unknown email'
+            );
+            console.log(`[AuthCallback] Admin notification sent for new user: ${sessionData.session.user.id}`);
+          } catch (notificationError) {
+            console.error(`[AuthCallback] Failed to send new user notification:`, notificationError);
+            // Non-critical, so we just log and continue
+          }
+        }
       } catch (dbError: unknown) { // Explicitly type dbError
         const errorMessage = dbError instanceof Error ? dbError.message : String(dbError);
         console.error(`[AuthCallback] Failed to create UserSession record for user ${sessionData.session.user.id}:`, errorMessage, dbError);

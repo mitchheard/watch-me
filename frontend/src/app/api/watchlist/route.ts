@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { createServerClient, type CookieOptions } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import { WatchlistFormData } from '@/types/watchlist';
+import { notifyFirstItem, notifyFirstReview } from '@/lib/adminNotifications';
 
 async function getUserId() {
   const cookieStore = await cookies();
@@ -72,6 +73,12 @@ export async function POST(request: Request) {
   try {
     const _userId = await getUserId();
     const data: WatchlistFormData = await request.json();
+    
+    // Check if this is the user's first item
+    const existingItems = await prisma.watchItem.count({
+      where: { userId: _userId },
+    });
+    
     const item = await prisma.watchItem.create({
       data: {
         userId: _userId,
@@ -98,6 +105,28 @@ export async function POST(request: Request) {
         updatedAt: new Date(),
       }
     });
+    
+    // If this was the user's first item, send admin notification
+    if (existingItems === 0) {
+      try {
+        const user = await prisma.user.findUnique({
+          where: { id: _userId },
+        });
+        
+        if (user?.email) {
+          await notifyFirstItem(
+            _userId,
+            user.email,
+            data.title,
+            data.type
+          );
+        }
+      } catch (notificationError) {
+        console.error('Failed to send first item notification:', notificationError);
+        // Non-critical, so we just log and continue
+      }
+    }
+    
     return NextResponse.json(item);
   } catch (error) {
     if (
@@ -129,6 +158,13 @@ export async function PUT(request: Request) {
     const data = await request.json();
     const { id, ...updateData } = data;
 
+    // Check if this is adding a rating for the first time
+    const existingItem = await prisma.watchItem.findUnique({
+      where: { id, userId: _userId },
+    });
+
+    const isAddingRating = updateData.rating && !existingItem?.rating;
+
     // Only update fields that are present in the request
     const updateFields: Record<string, unknown> = { updatedAt: new Date() };
     for (const key in updateData) {
@@ -141,6 +177,27 @@ export async function PUT(request: Request) {
       where: { id, userId: _userId },
       data: updateFields,
     });
+
+    // If this was the user's first review, send admin notification
+    if (isAddingRating) {
+      try {
+        const user = await prisma.user.findUnique({
+          where: { id: _userId },
+        });
+        
+        if (user?.email) {
+          await notifyFirstReview(
+            _userId,
+            user.email,
+            item.title,
+            updateData.rating as string
+          );
+        }
+      } catch (notificationError) {
+        console.error('Failed to send first review notification:', notificationError);
+        // Non-critical, so we just log and continue
+      }
+    }
 
     return NextResponse.json(item);
   } catch (error) {

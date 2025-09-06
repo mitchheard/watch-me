@@ -16,6 +16,7 @@ model User {
   updatedAt DateTime      @updatedAt
   sessions  UserSession[]
   WatchItem WatchItem[]
+  notificationPreferences NotificationPreferences?
 }
 
 model UserSession {
@@ -57,4 +58,49 @@ model WatchItem {
   User                   User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
+}
+
+model NotificationPreferences {
+  id                    String   @id @default(cuid())
+  userId                String   @unique
+  emailEnabled          Boolean  @default(true)
+  welcomeEmailSent      Boolean  @default(false)
+  weeklyDigestEnabled   Boolean  @default(false)
+  newSeasonAlerts       Boolean  @default(true)
+  friendActivityAlerts  Boolean  @default(true)
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+  user                  User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model AdminNotification {
+  id          String   @id @default(cuid())
+  type        String   // 'user_activity', 'weekly_summary', 'system_alert'
+  title       String
+  message     String
+  data        Json?    // Additional data for the notification
+  isRead      Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([type])
+  @@index([isRead])
+  @@index([createdAt])
+}
+
+model EmailLog {
+  id          String   @id @default(cuid())
+  to          String
+  subject     String
+  template    String   // 'welcome', 'weekly_digest', 'admin_alert'
+  status      String   // 'sent', 'failed', 'pending'
+  error       String?
+  sentAt      DateTime?
+  createdAt   DateTime @default(now())
+
+  @@index([to])
+  @@index([status])
+  @@index([createdAt])
 }

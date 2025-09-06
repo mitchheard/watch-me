@@ -17,6 +17,8 @@ model User {
   sessions  UserSession[]
   WatchItem WatchItem[]
   notificationPreferences NotificationPreferences?
+  watchlists Watchlist[]
+  watchlistMembers WatchlistMember[]
 }
 
 model UserSession {
@@ -105,4 +107,82 @@ model EmailLog {
   @@index([to])
   @@index([status])
   @@index([createdAt])
+}
+
+model Watchlist {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  isShared    Boolean  @default(false)
+  isDefault   Boolean  @default(false) // True for user's default personal list
+  ownerId     String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  owner       User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  members     WatchlistMember[]
+  items       WatchlistItemList[]
+
+  @@index([ownerId])
+  @@index([isShared])
+}
+
+model WatchlistMember {
+  id          String @id @default(cuid())
+  watchlistId String
+  userId      String
+  role        String @default("member") // "owner", "member"
+  joinedAt    DateTime @default(now())
+  
+  watchlist   Watchlist @relation(fields: [watchlistId], references: [id], onDelete: Cascade)
+  user        User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([watchlistId, userId])
+  @@index([userId])
+}
+
+model WatchlistItemList {
+  id            String @id @default(cuid())
+  watchlistId   String
+  watchlistItemId String
+  status        String @default("Want to Watch") // "Want to Watch", "Watching", "Finished"
+  rating        String? // "Loved", "Liked", "Not for me"
+  notes         String?
+  addedAt       DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  watchlist     Watchlist @relation(fields: [watchlistId], references: [id], onDelete: Cascade)
+  watchlistItem WatchlistItem @relation(fields: [watchlistItemId], references: [id], onDelete: Cascade)
+
+  @@unique([watchlistId, watchlistItemId])
+  @@index([watchlistId])
+  @@index([watchlistItemId])
+}
+
+model WatchlistItem {
+  id                     String @id @default(cuid())
+  title                  String
+  type                   String // "movie", "tv"
+  tmdbId                 Int
+  tmdbImdbId             String?
+  tmdbMovieCertification String?
+  tmdbMovieReleaseYear   Int?
+  tmdbMovieRuntime       Int?
+  tmdbOverview           String?
+  tmdbPosterPath         String?
+  tmdbTagline            String?
+  tmdbTvCertification    String?
+  tmdbTvFirstAirYear     Int?
+  tmdbTvLastAirYear      Int?
+  tmdbTvNetworks         String?
+  tmdbTvNumberOfEpisodes Int?
+  tmdbTvNumberOfSeasons  Int?
+  tmdbTvStatus           String?
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+  
+  watchlists             WatchlistItemList[]
+
+  @@unique([tmdbId])
+  @@index([type])
 }

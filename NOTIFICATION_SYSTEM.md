@@ -4,6 +4,8 @@
 
 The Watch Me notification system provides comprehensive user activity tracking and admin alerts. It automatically monitors user behavior patterns and sends email notifications to administrators for key engagement milestones and activity patterns.
 
+**Unified Interface**: All notification management is consolidated into a single `/notifications` page that adapts based on user role - regular users see personal notification preferences, while admin users see both personal preferences and all admin email notification settings.
+
 ## System Architecture
 
 ### Core Components
@@ -182,13 +184,16 @@ model AdminNotification {
 
 ## Admin Panel Integration
 
-### Notification Management
-- **View Notifications**: `/admin/notifications` - View all admin notifications
-- **Settings**: `/admin/notifications/settings` - Configure notification preferences
-- **Reports**: Manual report generation endpoints
+### Unified Notification Management
+- **All Notifications**: `/notifications` - Unified page for both user and admin notifications
+- **Admin Section**: Only visible to admin users, includes all 7 admin email notifications
+- **User Section**: Personal notification preferences for all users
+- **Inline Schedules**: Schedule information displayed directly with each notification
+- **Toggle Controls**: Configurable settings for scheduled reports (Weekly/Monthly digests)
 
 ### User Notification Settings
 - **User Settings**: `/notifications` - Users can manage their notification preferences
+- **Admin Override**: Admin users see additional admin notification section
 - **Unsubscribe**: `/unsubscribe` - Unsubscribe page (temporarily disabled)
 
 ## Scheduled Reports
@@ -205,15 +210,12 @@ model AdminNotification {
 
 ## API Endpoints
 
-### Admin Notifications
-- `GET /api/admin/notifications` - Fetch admin notifications
-- `POST /api/admin/notifications/schedule` - Trigger scheduled reports
-- `GET /api/admin/notifications/preferences` - Get admin preferences
-- `PUT /api/admin/notifications/preferences` - Update admin preferences
+### Unified Notifications
+- `GET /api/user/notifications/preferences` - Get user preferences (includes admin preferences for admin users)
+- `PUT /api/user/notifications/preferences` - Update user preferences (includes admin preferences for admin users)
 
-### User Notifications
-- `GET /api/user/notifications/preferences` - Get user preferences
-- `PUT /api/user/notifications/preferences` - Update user preferences
+### Admin Reports
+- `POST /api/admin/notifications/schedule` - Trigger scheduled reports
 
 ### Reports
 - `GET /api/admin/reports/weekly` - Generate weekly report

@@ -364,12 +364,12 @@ export default function OriginalWatchlistItems() {
           </Modal>
         )}
 
-        {/* Action Sheet Modal */}
+        {/* Detailed Item Modal */}
         {modalItem && (
           <Dialog open={!!modalItem} onClose={() => setModalItem(null)} className="fixed z-50 inset-0 overflow-y-auto">
             <div className="fixed inset-0 bg-black opacity-30" aria-hidden="true" />
             <div className="flex items-end sm:items-center justify-center min-h-screen px-2 sm:px-4">
-              <Dialog.Panel className="fixed bottom-0 left-0 right-0 w-full rounded-t-2xl sm:rounded-2xl bg-white shadow-xl transform transition-all sm:max-w-md sm:mx-auto">
+              <Dialog.Panel className="fixed bottom-0 left-0 right-0 w-full rounded-t-2xl sm:rounded-2xl bg-white shadow-xl transform transition-all sm:max-w-2xl sm:mx-auto max-h-[90vh] overflow-y-auto">
                 <div className="p-6">
                   <div className="flex items-center justify-between mb-4">
                     <h3 className="text-lg font-semibold text-gray-900">{modalItem.title}</h3>
@@ -382,10 +382,81 @@ export default function OriginalWatchlistItems() {
                       </svg>
                     </button>
                   </div>
+
+                  <div className="flex gap-4 mb-4">
+                    {/* Poster */}
+                    <div className="flex-shrink-0">
+                      {modalItem.tmdbPosterPath ? (
+                        <Image
+                          src={`https://image.tmdb.org/t/p/w185${modalItem.tmdbPosterPath}`}
+                          alt={`${modalItem.title} poster`}
+                          width={120}
+                          height={180}
+                          className="rounded-lg shadow-sm object-cover border border-slate-200"
+                          style={{ aspectRatio: '2/3' }}
+                          unoptimized
+                        />
+                      ) : (
+                        <Image
+                          src="/no-image.svg"
+                          alt="No poster available"
+                          width={120}
+                          height={180}
+                          className="rounded-lg shadow-sm bg-slate-200 object-cover border border-slate-200"
+                          style={{ aspectRatio: '2/3' }}
+                          unoptimized
+                        />
+                      )}
+                    </div>
+
+                    {/* Details */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-2">
+                        <span
+                          className={`px-2 py-1 text-xs font-semibold rounded-full ${
+                            modalItem.type === 'movie' 
+                              ? 'bg-purple-100 text-purple-700' 
+                              : 'bg-blue-100 text-blue-700'
+                          }`}
+                        >
+                          {modalItem.type === 'movie' ? 'Movie' : 'TV Show'}
+                        </span>
+                        <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(modalItem.status)}`}>
+                          {modalItem.status}
+                        </span>
+                      </div>
+
+                      {(modalItem.tmdbMovieReleaseYear || modalItem.tmdbTvFirstAirYear) && (
+                        <p className="text-sm text-gray-600 mb-2">
+                          {modalItem.tmdbMovieReleaseYear || modalItem.tmdbTvFirstAirYear}
+                        </p>
+                      )}
+
+                      {modalItem.rating && (
+                        <p className="text-sm text-gray-600 mb-2">
+                          Rating: <span className={`font-medium ${getRatingColor(modalItem.rating)}`}>{modalItem.rating}</span>
+                        </p>
+                      )}
+
+                      <p className="text-sm text-gray-600 mb-4">
+                        Added: {new Date(modalItem.createdAt).toLocaleDateString('en-US', { 
+                          year: 'numeric', 
+                          month: 'short', 
+                          day: 'numeric' 
+                        })}
+                      </p>
+
+                      {modalItem.tmdbOverview && (
+                        <p className="text-sm text-gray-700 leading-relaxed">
+                          {modalItem.tmdbOverview}
+                        </p>
+                      )}
+                    </div>
+                  </div>
                   
-                  <div className="space-y-3">
+                  <div className="flex gap-3">
                     <button
-                      className="w-full px-4 py-3 rounded-lg border border-slate-300 bg-white text-slate-700 text-sm font-medium hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
+                      className="flex-1 px-4 py-3 rounded-lg border border-slate-300 bg-white text-slate-700 text-sm font-medium hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
                       onClick={() => {
                         setSelectedItem(modalItem);
                         setModalItem(null);
@@ -394,7 +465,7 @@ export default function OriginalWatchlistItems() {
                       Edit
                     </button>
                     <button
-                      className="w-full px-4 py-3 rounded-lg border border-slate-300 bg-white text-slate-700 text-sm font-medium hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
+                      className="flex-1 px-4 py-3 rounded-lg border border-slate-300 bg-white text-slate-700 text-sm font-medium hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
                       onClick={() => {
                         setRateItem(modalItem);
                         setModalItem(null);
@@ -403,13 +474,13 @@ export default function OriginalWatchlistItems() {
                       Rate
                     </button>
                     <button
-                      className="w-full px-4 py-3 rounded-lg border border-red-300 bg-red-50 text-red-700 text-sm font-medium hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-colors"
+                      className="flex-1 px-4 py-3 rounded-lg border border-red-300 bg-red-50 text-red-700 text-sm font-medium hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-colors"
                       onClick={() => {
                         handleDeleteItem(modalItem.id);
                         setModalItem(null);
                       }}
                     >
-                      Delete
+                      Remove
                     </button>
                   </div>
                 </div>

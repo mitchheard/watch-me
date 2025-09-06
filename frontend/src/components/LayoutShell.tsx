@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { usePathname } from 'next/navigation';
 import { Bars3Icon } from '@heroicons/react/24/outline';
-import { UserCircleIcon, ArrowRightOnRectangleIcon, Cog8ToothIcon, FilmIcon, SparklesIcon } from '@heroicons/react/24/solid';
+import { UserCircleIcon, ArrowRightOnRectangleIcon, Cog8ToothIcon, FilmIcon, SparklesIcon, BellIcon } from '@heroicons/react/24/solid';
 
 const ADMIN_USER_ID = '464661fa-7ae1-406f-9975-dec0ccbc94aa';
 
@@ -81,6 +81,14 @@ export default function LayoutShell({ children }: { children: ReactNode }) {
                       >
                         <SparklesIcon className="h-5 w-5 text-slate-500" />
                         What Should I Watch?
+                      </Link>
+                      <Link
+                        href="/notifications"
+                        onClick={() => setIsMenuOpen(false)}
+                        className="flex items-center gap-2 px-4 py-2 text-sm text-slate-700 hover:bg-slate-100 hover:text-slate-900 w-full text-left"
+                      >
+                        <BellIcon className="h-5 w-5 text-slate-500" />
+                        Notifications
                       </Link>
                       {user.id === ADMIN_USER_ID && (
                         <Link

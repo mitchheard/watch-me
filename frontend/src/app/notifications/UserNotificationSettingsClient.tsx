@@ -12,7 +12,7 @@ interface NotificationPreferences {
   emailEnabled: boolean;
   welcomeEmailSent: boolean;
   weeklyDigestEnabled: boolean;
-  monthlyDigestEnabled: boolean;
+  monthlyDigestEnabled?: boolean; // Optional in case migration hasn't been applied yet
   newSeasonAlerts: boolean;
   friendActivityAlerts: boolean;
   createdAt: string;
@@ -275,7 +275,7 @@ export default function UserNotificationSettingsClient() {
               <label className="relative inline-flex items-center cursor-pointer">
                 <input
                   type="checkbox"
-                  checked={preferences.monthlyDigestEnabled}
+                  checked={preferences.monthlyDigestEnabled ?? false}
                   onChange={() => handleToggle('monthlyDigestEnabled')}
                   disabled={saving}
                   className="sr-only peer"

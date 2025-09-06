@@ -40,17 +40,35 @@ export async function GET(request: NextRequest) {
 
     // If no preferences exist, create default ones
     if (!preferences) {
-      preferences = await prisma.notificationPreferences.create({
-        data: {
-          userId,
-          emailEnabled: true,
-          welcomeEmailSent: false,
-          weeklyDigestEnabled: false,
-          monthlyDigestEnabled: false,
-          newSeasonAlerts: true,
-          friendActivityAlerts: true,
-        },
-      });
+      try {
+        preferences = await prisma.notificationPreferences.create({
+          data: {
+            userId,
+            emailEnabled: true,
+            welcomeEmailSent: false,
+            weeklyDigestEnabled: false,
+            monthlyDigestEnabled: false,
+            newSeasonAlerts: true,
+            friendActivityAlerts: true,
+          },
+        });
+      } catch (error: any) {
+        // If monthlyDigestEnabled field doesn't exist yet, create without it
+        if (error.message?.includes('monthlyDigestEnabled')) {
+          preferences = await prisma.notificationPreferences.create({
+            data: {
+              userId,
+              emailEnabled: true,
+              welcomeEmailSent: false,
+              weeklyDigestEnabled: false,
+              newSeasonAlerts: true,
+              friendActivityAlerts: true,
+            },
+          });
+        } else {
+          throw error;
+        }
+      }
     }
 
     return NextResponse.json({ preferences });
@@ -77,26 +95,53 @@ export async function PUT(request: NextRequest) {
     } = body;
 
     // Update or create notification preferences for the user
-    const preferences = await prisma.notificationPreferences.upsert({
-      where: { userId },
-      update: {
-        emailEnabled,
-        weeklyDigestEnabled,
-        monthlyDigestEnabled,
-        newSeasonAlerts,
-        friendActivityAlerts,
-        updatedAt: new Date(),
-      },
-      create: {
-        userId,
-        emailEnabled: emailEnabled ?? true,
-        welcomeEmailSent: false,
-        weeklyDigestEnabled: weeklyDigestEnabled ?? false,
-        monthlyDigestEnabled: monthlyDigestEnabled ?? false,
-        newSeasonAlerts: newSeasonAlerts ?? true,
-        friendActivityAlerts: friendActivityAlerts ?? true,
-      },
-    });
+    let preferences;
+    try {
+      preferences = await prisma.notificationPreferences.upsert({
+        where: { userId },
+        update: {
+          emailEnabled,
+          weeklyDigestEnabled,
+          monthlyDigestEnabled,
+          newSeasonAlerts,
+          friendActivityAlerts,
+          updatedAt: new Date(),
+        },
+        create: {
+          userId,
+          emailEnabled: emailEnabled ?? true,
+          welcomeEmailSent: false,
+          weeklyDigestEnabled: weeklyDigestEnabled ?? false,
+          monthlyDigestEnabled: monthlyDigestEnabled ?? false,
+          newSeasonAlerts: newSeasonAlerts ?? true,
+          friendActivityAlerts: friendActivityAlerts ?? true,
+        },
+      });
+    } catch (error: any) {
+      // If monthlyDigestEnabled field doesn't exist yet, update without it
+      if (error.message?.includes('monthlyDigestEnabled')) {
+        preferences = await prisma.notificationPreferences.upsert({
+          where: { userId },
+          update: {
+            emailEnabled,
+            weeklyDigestEnabled,
+            newSeasonAlerts,
+            friendActivityAlerts,
+            updatedAt: new Date(),
+          },
+          create: {
+            userId,
+            emailEnabled: emailEnabled ?? true,
+            welcomeEmailSent: false,
+            weeklyDigestEnabled: weeklyDigestEnabled ?? false,
+            newSeasonAlerts: newSeasonAlerts ?? true,
+            friendActivityAlerts: friendActivityAlerts ?? true,
+          },
+        });
+      } else {
+        throw error;
+      }
+    }
 
     return NextResponse.json({ preferences });
   } catch (error) {

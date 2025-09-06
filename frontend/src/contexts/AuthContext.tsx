@@ -65,15 +65,22 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const loginWithGoogle = async () => {
     const redirectToUrl = `${window.location.origin}/auth/callback`;
     console.log('[AuthContext] loginWithGoogle: Initiating Google OAuth. Redirecting to:', redirectToUrl);
+    
+    // Force the redirect URL to be explicit and add additional parameters
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
         redirectTo: redirectToUrl,
         queryParams: {
-          prompt: 'select_account'
+          prompt: 'select_account',
+          // Add explicit redirect parameter
+          redirect_to: redirectToUrl,
+          // Add environment detection
+          environment: window.location.hostname === 'localhost' ? 'development' : 'production'
         }
       }
     });
+    
     if (error) {
       console.error('[AuthContext] loginWithGoogle: Error:', error.message);
     }

@@ -191,7 +191,7 @@ function generateWeeklyReportEmailHTML(data: any): string {
         <p><strong>New Users This Week:</strong> ${data.newUsers}</p>
         <p><strong>Total Items Added:</strong> ${data.totalItems}</p>
         <p><strong>Items Added This Week:</strong> ${data.newItems}</p>
-        <p><strong>Most Popular Content:</strong> ${data.popularContent}</p>
+        <p><strong>Most Popular Content:</strong> ${data.popularContent.map(item => `${item.title} (${item.count})`).join(', ')}</p>
       </div>
       <p style="color: #6b7280; font-size: 14px;">This is an automated weekly report from Watch Me.</p>
     </div>
@@ -209,6 +209,7 @@ function generateMonthlyReportEmailHTML(data: any): string {
         <p><strong>Growth Rate:</strong> ${data.growthRate}%</p>
         <p><strong>Total Items Added:</strong> ${data.totalItems}</p>
         <p><strong>Items Added This Month:</strong> ${data.newItems}</p>
+        <p><strong>Most Popular Content:</strong> ${data.popularContent.map(item => `${item.title} (${item.count})`).join(', ')}</p>
         <p><strong>User Engagement:</strong> ${data.engagement}</p>
       </div>
       <p style="color: #6b7280; font-size: 14px;">This is an automated monthly report from Watch Me.</p>

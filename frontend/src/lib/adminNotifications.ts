@@ -220,7 +220,7 @@ function generateWeeklyReportEmailHTML(data: Record<string, unknown>, unsubscrib
         <p><strong>New Users This Week:</strong> ${data.newUsers}</p>
         <p><strong>Total Items Added:</strong> ${data.totalItems}</p>
         <p><strong>Items Added This Week:</strong> ${data.newItems}</p>
-        <p><strong>Most Popular Content:</strong> ${data.popularContent.map(item => `${item.title} (${item.count})`).join(', ')}</p>
+        <p><strong>Most Popular Content:</strong> ${data.popularContent}</p>
       </div>
       <p style="color: #6b7280; font-size: 14px;">This is an automated weekly report from Watch Me.</p>
       <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 24px 0;">
@@ -242,7 +242,7 @@ function generateMonthlyReportEmailHTML(data: Record<string, unknown>, unsubscri
         <p><strong>Growth Rate:</strong> ${data.growthRate}%</p>
         <p><strong>Total Items Added:</strong> ${data.totalItems}</p>
         <p><strong>Items Added This Month:</strong> ${data.newItems}</p>
-        <p><strong>Most Popular Content:</strong> ${data.popularContent.map(item => `${item.title} (${item.count})`).join(', ')}</p>
+        <p><strong>Most Popular Content:</strong> ${data.popularContent}</p>
         <p><strong>User Engagement:</strong> ${data.engagement}</p>
       </div>
       <p style="color: #6b7280; font-size: 14px;">This is an automated monthly report from Watch Me.</p>

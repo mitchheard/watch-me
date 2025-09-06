@@ -63,7 +63,7 @@ export async function sendAdminEmail(
       from: 'Watch Me <noreply@gowatchme.app>',
       to: [ADMIN_EMAIL],
       subject,
-      html: generateEmailHTML(template, data),
+      html: await generateEmailHTML(template, data),
     });
 
     console.log('✅ Email sent successfully:', result);
@@ -98,27 +98,50 @@ export async function sendAdminEmail(
   }
 }
 
+// Generate unsubscribe link for admin emails
+async function generateUnsubscribeLink(): Promise<string> {
+  try {
+    // Get admin user preferences to get unsubscribe token
+    const adminPreferences = await prisma.notificationPreferences.findUnique({
+      where: { userId: ADMIN_USER_ID },
+    });
+
+    if (adminPreferences?.unsubscribeToken) {
+      const baseUrl = process.env.DOMAIN ? `https://${process.env.DOMAIN}` : 'http://localhost:3000';
+      return `${baseUrl}/unsubscribe?token=${adminPreferences.unsubscribeToken}`;
+    }
+  } catch (error) {
+    console.error('Error generating unsubscribe link:', error);
+  }
+  
+  // Fallback to a generic unsubscribe page
+  const baseUrl = process.env.DOMAIN ? `https://${process.env.DOMAIN}` : 'http://localhost:3000';
+  return `${baseUrl}/unsubscribe`;
+}
+
 // Generate HTML email content
-function generateEmailHTML(template: string, data: any): string {
+async function generateEmailHTML(template: string, data: any): Promise<string> {
+  const unsubscribeLink = await generateUnsubscribeLink();
+  
   switch (template) {
     case EMAIL_TEMPLATES.ADMIN_NEW_USER:
-      return generateNewUserEmailHTML(data);
+      return generateNewUserEmailHTML(data, unsubscribeLink);
     case EMAIL_TEMPLATES.ADMIN_FIRST_ITEM:
-      return generateFirstItemEmailHTML(data);
+      return generateFirstItemEmailHTML(data, unsubscribeLink);
     case EMAIL_TEMPLATES.ADMIN_FIRST_REVIEW:
-      return generateFirstReviewEmailHTML(data);
+      return generateFirstReviewEmailHTML(data, unsubscribeLink);
     case EMAIL_TEMPLATES.ADMIN_REPEAT_VISIT:
-      return generateRepeatVisitEmailHTML(data);
+      return generateRepeatVisitEmailHTML(data, unsubscribeLink);
     case EMAIL_TEMPLATES.ADMIN_WEEKLY_REPORT:
-      return generateWeeklyReportEmailHTML(data);
+      return generateWeeklyReportEmailHTML(data, unsubscribeLink);
     case EMAIL_TEMPLATES.ADMIN_MONTHLY_REPORT:
-      return generateMonthlyReportEmailHTML(data);
+      return generateMonthlyReportEmailHTML(data, unsubscribeLink);
     default:
       return '<p>Admin notification</p>';
   }
 }
 
-function generateNewUserEmailHTML(data: NewUserData): string {
+function generateNewUserEmailHTML(data: NewUserData, unsubscribeLink: string): string {
   return `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
       <h2 style="color: #1f2937;">🎉 New User Signup!</h2>
@@ -129,11 +152,15 @@ function generateNewUserEmailHTML(data: NewUserData): string {
         <p><strong>Signup Time:</strong> ${data.createdAt.toLocaleString()}</p>
       </div>
       <p style="color: #6b7280; font-size: 14px;">This is an automated notification from Watch Me.</p>
+      <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 24px 0;">
+      <p style="color: #9ca3af; font-size: 12px; text-align: center;">
+        <a href="${unsubscribeLink}" style="color: #6b7280; text-decoration: underline;">Unsubscribe from these emails</a>
+      </p>
     </div>
   `;
 }
 
-function generateFirstItemEmailHTML(data: FirstItemData): string {
+function generateFirstItemEmailHTML(data: FirstItemData, unsubscribeLink: string): string {
   return `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
       <h2 style="color: #1f2937;">📝 User Added First Item!</h2>
@@ -145,11 +172,15 @@ function generateFirstItemEmailHTML(data: FirstItemData): string {
         <p><strong>Added:</strong> ${data.addedAt.toLocaleString()}</p>
       </div>
       <p style="color: #6b7280; font-size: 14px;">This is an automated notification from Watch Me.</p>
+      <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 24px 0;">
+      <p style="color: #9ca3af; font-size: 12px; text-align: center;">
+        <a href="${unsubscribeLink}" style="color: #6b7280; text-decoration: underline;">Unsubscribe from these emails</a>
+      </p>
     </div>
   `;
 }
 
-function generateFirstReviewEmailHTML(data: FirstReviewData): string {
+function generateFirstReviewEmailHTML(data: FirstReviewData, unsubscribeLink: string): string {
   return `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
       <h2 style="color: #1f2937;">⭐ User Left First Review!</h2>
@@ -161,11 +192,15 @@ function generateFirstReviewEmailHTML(data: FirstReviewData): string {
         <p><strong>Reviewed:</strong> ${data.reviewedAt.toLocaleString()}</p>
       </div>
       <p style="color: #6b7280; font-size: 14px;">This is an automated notification from Watch Me.</p>
+      <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 24px 0;">
+      <p style="color: #9ca3af; font-size: 12px; text-align: center;">
+        <a href="${unsubscribeLink}" style="color: #6b7280; text-decoration: underline;">Unsubscribe from these emails</a>
+      </p>
     </div>
   `;
 }
 
-function generateRepeatVisitEmailHTML(data: RepeatVisitData): string {
+function generateRepeatVisitEmailHTML(data: RepeatVisitData, unsubscribeLink: string): string {
   return `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
       <h2 style="color: #1f2937;">🔄 User Repeat Visit!</h2>
@@ -177,11 +212,15 @@ function generateRepeatVisitEmailHTML(data: RepeatVisitData): string {
         <p><strong>Last Visit:</strong> ${data.lastVisit.toLocaleString()}</p>
       </div>
       <p style="color: #6b7280; font-size: 14px;">This is an automated notification from Watch Me.</p>
+      <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 24px 0;">
+      <p style="color: #9ca3af; font-size: 12px; text-align: center;">
+        <a href="${unsubscribeLink}" style="color: #6b7280; text-decoration: underline;">Unsubscribe from these emails</a>
+      </p>
     </div>
   `;
 }
 
-function generateWeeklyReportEmailHTML(data: any): string {
+function generateWeeklyReportEmailHTML(data: any, unsubscribeLink: string): string {
   return `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
       <h2 style="color: #1f2937;">📊 Weekly Activity Report</h2>
@@ -194,11 +233,15 @@ function generateWeeklyReportEmailHTML(data: any): string {
         <p><strong>Most Popular Content:</strong> ${data.popularContent.map(item => `${item.title} (${item.count})`).join(', ')}</p>
       </div>
       <p style="color: #6b7280; font-size: 14px;">This is an automated weekly report from Watch Me.</p>
+      <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 24px 0;">
+      <p style="color: #9ca3af; font-size: 12px; text-align: center;">
+        <a href="${unsubscribeLink}" style="color: #6b7280; text-decoration: underline;">Unsubscribe from these emails</a>
+      </p>
     </div>
   `;
 }
 
-function generateMonthlyReportEmailHTML(data: any): string {
+function generateMonthlyReportEmailHTML(data: any, unsubscribeLink: string): string {
   return `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
       <h2 style="color: #1f2937;">📈 Monthly Growth Report</h2>
@@ -213,6 +256,10 @@ function generateMonthlyReportEmailHTML(data: any): string {
         <p><strong>User Engagement:</strong> ${data.engagement}</p>
       </div>
       <p style="color: #6b7280; font-size: 14px;">This is an automated monthly report from Watch Me.</p>
+      <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 24px 0;">
+      <p style="color: #9ca3af; font-size: 12px; text-align: center;">
+        <a href="${unsubscribeLink}" style="color: #6b7280; text-decoration: underline;">Unsubscribe from these emails</a>
+      </p>
     </div>
   `;
 }

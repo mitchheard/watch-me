@@ -5,10 +5,10 @@ import { prisma } from '@/lib/prisma';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { watchlistId: string } }
+  { params }: { params: Promise<{ watchlistId: string }> }
 ) {
   try {
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
     const supabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -26,7 +26,7 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { watchlistId } = params;
+    const { watchlistId } = await params;
 
     // Verify user has access to this watchlist
     const watchlist = await prisma.watchlist.findFirst({
@@ -68,10 +68,10 @@ export async function GET(
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { watchlistId: string } }
+  { params }: { params: Promise<{ watchlistId: string }> }
 ) {
   try {
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
     const supabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -89,7 +89,7 @@ export async function POST(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { watchlistId } = params;
+    const { watchlistId } = await params;
     const body = await request.json();
     const { tmdbId, status, rating, notes } = body;
 

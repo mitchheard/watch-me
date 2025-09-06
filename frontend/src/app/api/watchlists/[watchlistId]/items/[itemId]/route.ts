@@ -5,10 +5,10 @@ import { prisma } from '@/lib/prisma';
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { watchlistId: string; itemId: string } }
+  { params }: { params: Promise<{ watchlistId: string; itemId: string }> }
 ) {
   try {
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
     const supabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -26,7 +26,7 @@ export async function PUT(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { watchlistId, itemId } = params;
+    const { watchlistId, itemId } = await params;
     const body = await request.json();
     const { status, rating, notes } = body;
 
@@ -135,10 +135,10 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { watchlistId: string; itemId: string } }
+  { params }: { params: Promise<{ watchlistId: string; itemId: string }> }
 ) {
   try {
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
     const supabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -156,7 +156,7 @@ export async function DELETE(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { watchlistId, itemId } = params;
+    const { watchlistId, itemId } = await params;
 
     // Verify user has access to this watchlist
     const watchlist = await prisma.watchlist.findFirst({

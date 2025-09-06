@@ -67,20 +67,11 @@ export default function CreateWatchlistModal({
     onClose();
   };
 
+  if (!isOpen) return null;
+
   return (
-    <Modal isOpen={isOpen} onClose={handleClose}>
-      <div className="p-6">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold text-gray-900">
-            Create New Watchlist
-          </h2>
-          <button
-            onClick={handleClose}
-            className="text-gray-400 hover:text-gray-600"
-          >
-            <XMarkIcon className="h-6 w-6" />
-          </button>
-        </div>
+    <Modal onClose={handleClose} title="Create New Watchlist">
+      <div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Name */}

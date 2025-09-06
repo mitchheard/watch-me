@@ -139,6 +139,7 @@ export async function POST(request: Request) {
       error.meta !== null &&
       'target' in error.meta &&
       Array.isArray((error.meta as { target?: unknown }).target) &&
+      ((error.meta as { target?: unknown }).target as unknown[]).includes('userId') &&
       ((error.meta as { target?: unknown }).target as unknown[]).includes('tmdbId')
     ) {
       return NextResponse.json(
@@ -216,7 +217,7 @@ export async function DELETE(request: Request) {
       return NextResponse.json({ error: 'Missing id' }, { status: 400 });
     }
     await prisma.watchItem.delete({
-      where: { id }
+      where: { id, userId: _userId }
     });
     return NextResponse.json({ success: true });
   } catch (error) {

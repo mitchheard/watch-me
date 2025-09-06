@@ -15,6 +15,7 @@ interface NotificationPreferences {
   monthlyDigestEnabled?: boolean; // Optional in case migration hasn't been applied yet
   newSeasonAlerts: boolean;
   friendActivityAlerts: boolean;
+  unsubscribeToken?: string; // Optional in case migration hasn't been applied yet
   createdAt: string;
   updatedAt: string;
 }

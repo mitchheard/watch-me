@@ -267,7 +267,7 @@ export async function notifyNewUser(userId: string, email: string) {
     type: 'user_activity',
     title: 'New User Signup',
     message: `New user ${email} has joined Watch Me`,
-    data: data as Record<string, unknown>,
+    data: data as unknown as Record<string, unknown>,
   });
 
   // Send email notification
@@ -292,7 +292,7 @@ export async function notifyFirstItem(userId: string, userEmail: string, itemTit
     type: 'user_activity',
     title: 'User Added First Item',
     message: `${userEmail} added their first item: ${itemTitle}`,
-    data: data as Record<string, unknown>,
+    data: data as unknown as Record<string, unknown>,
   });
 
   // Send email notification
@@ -317,7 +317,7 @@ export async function notifyFirstReview(userId: string, userEmail: string, itemT
     type: 'user_activity',
     title: 'User Left First Review',
     message: `${userEmail} left their first review for ${itemTitle}`,
-    data: data as Record<string, unknown>,
+    data: data as unknown as Record<string, unknown>,
   });
 
   // Send email notification
@@ -342,7 +342,7 @@ export async function notifyRepeatVisit(userId: string, userEmail: string, visit
     type: 'user_activity',
     title: 'User Repeat Visit',
     message: `${userEmail} has visited ${visitCount} times this week`,
-    data: data as Record<string, unknown>,
+    data: data as unknown as Record<string, unknown>,
   });
 
   // Send email notification

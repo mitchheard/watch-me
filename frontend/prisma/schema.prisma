@@ -69,7 +69,7 @@ model NotificationPreferences {
   monthlyDigestEnabled  Boolean  @default(false)
   newSeasonAlerts       Boolean  @default(true)
   friendActivityAlerts  Boolean  @default(true)
-  unsubscribeToken      String   @unique @default(cuid())
+  unsubscribeToken      String?  @unique @default(cuid())
   createdAt             DateTime @default(now())
   updatedAt             DateTime @updatedAt
   user                  User     @relation(fields: [userId], references: [id], onDelete: Cascade)

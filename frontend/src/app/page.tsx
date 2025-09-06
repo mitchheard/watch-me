@@ -1,12 +1,13 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { FilmIcon, TvIcon, CheckCircleIcon } from '@heroicons/react/24/solid';
 import Image from 'next/image';
 import WatchlistItems from '@/components/watchlist/WatchlistItems';
-import DefaultWatchlistView from '@/components/watchlist/DefaultWatchlistView';
+import Modal from '@/components/Modal';
+import WatchlistForm from '@/components/WatchlistForm';
 
 function DemoWatchlist() {
   type DemoStatus = 'want-to-watch' | 'watching' | 'finished';
@@ -129,6 +130,19 @@ export default function Page() {
     return <LandingPage />;
   }
 
-  // Show the user's default personal watchlist
-  return <DefaultWatchlistView />;
+  return (
+    <>
+      <Suspense fallback={<div className="text-center py-10">Loading watchlist...</div>}>
+        <WatchlistItems key={refreshKey} />
+      </Suspense>
+
+      <main className="flex-1">
+        {isAddItemModalOpen && (
+          <Modal onClose={() => setIsAddItemModalOpen(false)} title="Add Movie or TV Show">
+            <WatchlistForm _onAddItem={handleAddItem} />
+          </Modal>
+        )}
+      </main>
+    </>
+  );
 }

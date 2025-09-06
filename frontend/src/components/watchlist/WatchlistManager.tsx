@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { PlusIcon, PencilIcon, TrashIcon, ShareIcon, EyeIcon, MagnifyingGlassIcon, FunnelIcon } from '@heroicons/react/24/outline';
+import { PlusIcon, PencilIcon, TrashIcon, ShareIcon, EyeIcon, MagnifyingGlassIcon, FunnelIcon, FilmIcon } from '@heroicons/react/24/outline';
 import CreateWatchlistModal from './CreateWatchlistModal';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';

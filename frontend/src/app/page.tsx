@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { FilmIcon, TvIcon, CheckCircleIcon } from '@heroicons/react/24/solid';
 import Image from 'next/image';
 import WatchlistItems from '@/components/watchlist/WatchlistItems';
+import DefaultWatchlistView from '@/components/watchlist/DefaultWatchlistView';
 
 function DemoWatchlist() {
   type DemoStatus = 'want-to-watch' | 'watching' | 'finished';

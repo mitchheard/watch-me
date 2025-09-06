@@ -1,26 +1,48 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { createClient } from '@/lib/supabaseClient';
+import { createServerClient } from '@supabase/ssr';
+import { cookies } from 'next/headers';
+
+async function getUserId() {
+  const cookieStore = await cookies();
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        get(name: string) {
+          return cookieStore.get(name)?.value;
+        },
+        set(name: string, value: string, options: Record<string, unknown>) {
+          cookieStore.set({ name, value, ...options });
+        },
+        remove(name: string, options: Record<string, unknown>) {
+          cookieStore.delete({ name, ...options });
+        },
+      },
+    }
+  );
+  const { data: { user }, error } = await supabase.auth.getUser();
+  if (error || !user) {
+    throw new Error('Not authenticated');
+  }
+  return user.id;
+}
 
 export async function GET(request: NextRequest) {
   try {
-    const supabase = createClient();
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-
-    if (authError || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const userId = await getUserId();
 
     // Get or create notification preferences for the user
     let preferences = await prisma.notificationPreferences.findUnique({
-      where: { userId: user.id },
+      where: { userId },
     });
 
     // If no preferences exist, create default ones
     if (!preferences) {
       preferences = await prisma.notificationPreferences.create({
         data: {
-          userId: user.id,
+          userId,
           emailEnabled: true,
           welcomeEmailSent: false,
           weeklyDigestEnabled: false,
@@ -43,12 +65,7 @@ export async function GET(request: NextRequest) {
 
 export async function PUT(request: NextRequest) {
   try {
-    const supabase = createClient();
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-
-    if (authError || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const userId = await getUserId();
 
     const body = await request.json();
     const { 
@@ -61,7 +78,7 @@ export async function PUT(request: NextRequest) {
 
     // Update or create notification preferences for the user
     const preferences = await prisma.notificationPreferences.upsert({
-      where: { userId: user.id },
+      where: { userId },
       update: {
         emailEnabled,
         weeklyDigestEnabled,
@@ -71,7 +88,7 @@ export async function PUT(request: NextRequest) {
         updatedAt: new Date(),
       },
       create: {
-        userId: user.id,
+        userId,
         emailEnabled: emailEnabled ?? true,
         welcomeEmailSent: false,
         weeklyDigestEnabled: weeklyDigestEnabled ?? false,

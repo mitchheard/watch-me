@@ -274,7 +274,7 @@ export async function notifyNewUser(userId: string, email: string) {
   await sendAdminEmail(
     EMAIL_TEMPLATES.ADMIN_NEW_USER,
     '🎉 New User Signup - Watch Me',
-    data
+    data as unknown as Record<string, unknown>
   );
 }
 
@@ -299,7 +299,7 @@ export async function notifyFirstItem(userId: string, userEmail: string, itemTit
   await sendAdminEmail(
     EMAIL_TEMPLATES.ADMIN_FIRST_ITEM,
     '📝 User Added First Item - Watch Me',
-    data
+    data as unknown as Record<string, unknown>
   );
 }
 
@@ -324,7 +324,7 @@ export async function notifyFirstReview(userId: string, userEmail: string, itemT
   await sendAdminEmail(
     EMAIL_TEMPLATES.ADMIN_FIRST_REVIEW,
     '⭐ User Left First Review - Watch Me',
-    data
+    data as unknown as Record<string, unknown>
   );
 }
 
@@ -349,7 +349,7 @@ export async function notifyRepeatVisit(userId: string, userEmail: string, visit
   await sendAdminEmail(
     EMAIL_TEMPLATES.ADMIN_REPEAT_VISIT,
     '🔄 User Repeat Visit - Watch Me',
-    data
+    data as unknown as Record<string, unknown>
   );
 }
 

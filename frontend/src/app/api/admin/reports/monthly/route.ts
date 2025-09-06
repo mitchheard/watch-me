@@ -3,7 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { sendAdminEmail } from '@/lib/adminNotifications';
 import { EMAIL_TEMPLATES } from '@/lib/email';
 
-export async function POST(request: NextRequest) {
+export async function POST(_request: NextRequest) {
   try {
     // Get monthly stats
     const now = new Date();

@@ -4,7 +4,7 @@ import { prisma } from '@/lib/prisma';
 // TODO: Move this to env or a Profile table
 const ADMIN_USER_ID = '464661fa-7ae1-406f-9975-dec0ccbc94aa';
 
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   try {
     // Get or create notification preferences for admin user
     let preferences = await prisma.notificationPreferences.findUnique({

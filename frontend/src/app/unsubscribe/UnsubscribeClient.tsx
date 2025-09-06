@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
+import Link from 'next/link';
 
 interface NotificationPreferences {
   id: string;
@@ -36,7 +37,7 @@ export default function UnsubscribeClient() {
       setError('Invalid unsubscribe link. Please check your email for the correct link.');
       setLoading(false);
     }
-  }, [token]);
+  }, [token, fetchPreferences]);
 
   const fetchPreferences = async () => {
     try {
@@ -121,12 +122,12 @@ export default function UnsubscribeClient() {
       <div className="text-center py-8">
         <div className="bg-red-50 border border-red-200 rounded-lg p-6">
           <p className="text-red-800">{error}</p>
-          <a
+          <Link
             href="/"
             className="mt-4 inline-block px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
           >
             Go to Watch Me
-          </a>
+          </Link>
         </div>
       </div>
     );
@@ -192,7 +193,7 @@ export default function UnsubscribeClient() {
       <div className="bg-white rounded-lg border border-slate-200 p-6">
         <h2 className="text-lg font-semibold text-slate-900 mb-4">📧 Email Notifications</h2>
         <p className="text-slate-600 text-sm mb-6">
-          Choose which types of emails you'd like to receive from Watch Me.
+          Choose which types of emails you&apos;d like to receive from Watch Me.
         </p>
         
         <div className="space-y-4">
@@ -281,7 +282,7 @@ export default function UnsubscribeClient() {
             <div className="flex-1">
               <h3 className="font-medium text-slate-900">Friend Activity Alerts</h3>
               <p className="text-sm text-slate-600 mt-1">
-                Get notified about your friends' watchlist activity
+                Get notified about your friends&apos; watchlist activity
               </p>
             </div>
             <label className="relative inline-flex items-center cursor-pointer">

@@ -5,7 +5,7 @@ export interface AdminNotificationData {
   type: 'user_activity' | 'weekly_summary' | 'system_alert';
   title: string;
   message: string;
-  data?: any;
+  data?: Record<string, unknown>;
 }
 
 export interface NewUserData {
@@ -54,7 +54,7 @@ export async function createAdminNotification(data: AdminNotificationData) {
 export async function sendAdminEmail(
   template: string,
   subject: string,
-  data: any
+  data: Record<string, unknown>
 ) {
   console.log('🔔 Attempting to send admin email:', { template, subject, to: ADMIN_EMAIL });
   
@@ -120,7 +120,7 @@ async function generateUnsubscribeLink(): Promise<string> {
 }
 
 // Generate HTML email content
-async function generateEmailHTML(template: string, data: any): Promise<string> {
+async function generateEmailHTML(template: string, data: Record<string, unknown>): Promise<string> {
   const unsubscribeLink = await generateUnsubscribeLink();
   
   switch (template) {
@@ -220,7 +220,7 @@ function generateRepeatVisitEmailHTML(data: RepeatVisitData, unsubscribeLink: st
   `;
 }
 
-function generateWeeklyReportEmailHTML(data: any, unsubscribeLink: string): string {
+function generateWeeklyReportEmailHTML(data: Record<string, unknown>, unsubscribeLink: string): string {
   return `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
       <h2 style="color: #1f2937;">📊 Weekly Activity Report</h2>
@@ -241,7 +241,7 @@ function generateWeeklyReportEmailHTML(data: any, unsubscribeLink: string): stri
   `;
 }
 
-function generateMonthlyReportEmailHTML(data: any, unsubscribeLink: string): string {
+function generateMonthlyReportEmailHTML(data: Record<string, unknown>, unsubscribeLink: string): string {
   return `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
       <h2 style="color: #1f2937;">📈 Monthly Growth Report</h2>

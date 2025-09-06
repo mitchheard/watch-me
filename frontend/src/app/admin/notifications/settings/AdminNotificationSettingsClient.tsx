@@ -225,7 +225,7 @@ export default function AdminNotificationSettingsClient() {
             <div className="flex-1">
               <h3 className="font-medium text-slate-900">Friend Activity Alerts</h3>
               <p className="text-sm text-slate-600 mt-1">
-                Notify users about their friends' watchlist activity
+                Notify users about their friends&apos; watchlist activity
               </p>
             </div>
             <label className="relative inline-flex items-center cursor-pointer">

@@ -11,7 +11,7 @@ interface AdminNotification {
   type: string;
   title: string;
   message: string;
-  data: any;
+  data: Record<string, unknown> | null;
   isRead: boolean;
   createdAt: string;
   updatedAt: string;
@@ -135,7 +135,7 @@ export default function AdminNotificationsClient() {
         throw new Error(`Failed to generate ${type} report`);
       }
 
-      const result = await response.json();
+      await response.json();
       alert(`${type.charAt(0).toUpperCase() + type.slice(1)} report generated and sent successfully!`);
     } catch (err) {
       console.error(`Error generating ${type} report:`, err);
@@ -149,7 +149,7 @@ export default function AdminNotificationsClient() {
     if (user && user.id === ADMIN_USER_ID) {
       fetchNotifications();
     }
-  }, [user, pagination.page, filters]);
+  }, [user, pagination.page, filters, fetchNotifications]);
 
   if (isLoading || loading) {
     return <div className="text-center py-8">Loading notifications...</div>;

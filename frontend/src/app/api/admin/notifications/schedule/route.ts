@@ -95,7 +95,11 @@ export async function POST(_request: NextRequest) {
           title: 'Scheduled Reports Sent',
           message: `Automated reports sent: ${results.map(r => r.type).join(', ')}`,
           data: {
-            results,
+            results: results.map(r => ({
+              type: r.type,
+              success: r.success,
+              error: r.error || null
+            })),
             sentAt: now.toISOString(),
             preferences: {
               weeklyDigestEnabled: preferences.weeklyDigestEnabled,

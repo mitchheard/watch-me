@@ -2,13 +2,13 @@ import { notFound } from 'next/navigation';
 import WatchlistItems from '@/components/watchlist/WatchlistItems';
 
 interface WatchlistPageProps {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
 export default async function WatchlistPage({ params }: WatchlistPageProps) {
-  const { id } = params;
+  const { id } = await params;
 
   // For now, we'll use a placeholder name
   // In a real implementation, you'd fetch the watchlist data here
@@ -31,10 +31,19 @@ export default async function WatchlistPage({ params }: WatchlistPageProps) {
           </h1>
         </div>
 
-        <WatchlistItems 
-          watchlistId={id}
-          watchlistName={watchlistName}
-        />
+        {id ? (
+          <WatchlistItems 
+            watchlistId={id}
+            watchlistName={watchlistName}
+          />
+        ) : (
+          <div className="text-center py-8">
+            <p className="text-red-600">Invalid watchlist ID</p>
+            <a href="/watchlists" className="text-blue-600 hover:text-blue-700 mt-2 inline-block">
+              ← Back to Watchlists
+            </a>
+          </div>
+        )}
       </div>
     </div>
   );

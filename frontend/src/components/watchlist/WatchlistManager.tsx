@@ -1,8 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { PlusIcon, PencilIcon, TrashIcon, ShareIcon } from '@heroicons/react/24/outline';
+import { PlusIcon, PencilIcon, TrashIcon, ShareIcon, EyeIcon } from '@heroicons/react/24/outline';
 import CreateWatchlistModal from './CreateWatchlistModal';
+import Link from 'next/link';
 
 interface Watchlist {
   id: string;
@@ -160,6 +161,14 @@ export default function WatchlistManager({ className = '' }: WatchlistManagerPro
               </div>
 
               <div className="flex items-center gap-1 ml-4">
+                <Link
+                  href={`/watchlists/${watchlist.id}`}
+                  className="p-1 text-gray-400 hover:text-gray-600"
+                  title="View watchlist"
+                >
+                  <EyeIcon className="h-4 w-4" />
+                </Link>
+                
                 {watchlist.isShared && (
                   <button
                     onClick={() => handleShareWatchlist(watchlist)}

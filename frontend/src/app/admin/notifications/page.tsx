@@ -11,12 +11,20 @@ export default function AdminNotificationsPage() {
             Manage and view system notifications
           </p>
         </div>
-        <a
-          href="/admin"
-          className="px-4 py-2 bg-slate-600 text-white rounded-lg hover:bg-slate-700 transition-colors text-sm font-medium"
-        >
-          Back to Admin
-        </a>
+        <div className="flex gap-3">
+          <a
+            href="/admin/notifications/settings"
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
+          >
+            ⚙️ Settings
+          </a>
+          <a
+            href="/admin"
+            className="px-4 py-2 bg-slate-600 text-white rounded-lg hover:bg-slate-700 transition-colors text-sm font-medium"
+          >
+            Back to Admin
+          </a>
+        </div>
       </div>
       
       <Suspense fallback={<div className="text-center py-8">Loading notifications...</div>}>

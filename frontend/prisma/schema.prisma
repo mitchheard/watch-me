@@ -66,6 +66,7 @@ model NotificationPreferences {
   emailEnabled          Boolean  @default(true)
   welcomeEmailSent      Boolean  @default(false)
   weeklyDigestEnabled   Boolean  @default(false)
+  monthlyDigestEnabled  Boolean  @default(false)
   newSeasonAlerts       Boolean  @default(true)
   friendActivityAlerts  Boolean  @default(true)
   createdAt             DateTime @default(now())

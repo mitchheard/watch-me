@@ -3,11 +3,9 @@
 import { useState, useEffect, Suspense } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useRouter, usePathname } from 'next/navigation';
-import { FilmIcon, TvIcon, CheckCircleIcon, PlusIcon } from '@heroicons/react/24/solid';
+import { FilmIcon, TvIcon, CheckCircleIcon } from '@heroicons/react/24/solid';
 import Image from 'next/image';
 import WatchlistItems from '@/components/watchlist/WatchlistItems';
-import Modal from '@/components/Modal';
-import WatchlistForm from '@/components/watchlist/WatchlistForm';
 
 function DemoWatchlist() {
   type DemoStatus = 'want-to-watch' | 'watching' | 'finished';
@@ -119,17 +117,7 @@ export default function Page() {
   const { user, isLoading } = useAuth();
   const pathname = usePathname();
   const [refreshKey, setRefreshKey] = useState(0);
-  const [isAddItemModalOpen, setIsAddItemModalOpen] = useState(false);
 
-  const handleAddItem = async (item: any) => {
-    await fetch('/api/watchlist', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(item),
-    });
-    setRefreshKey(prevKey => prevKey + 1);
-    setIsAddItemModalOpen(false);
-  };
 
 
   if (isLoading) {
@@ -150,29 +138,7 @@ export default function Page() {
         <WatchlistItems key={refreshKey} />
       </Suspense>
 
-      {/* Floating Action Button - Only show on home page */}
-      {pathname === '/' && (
-        <div className="fixed bottom-6 right-6 z-50">
-          {/* Add New Item Button */}
-          <button
-            onClick={() => setIsAddItemModalOpen(true)}
-            className="flex items-center gap-2 px-4 py-3 bg-blue-600 text-white rounded-full shadow-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
-            title="Add New Item"
-          >
-            <PlusIcon className="h-5 w-5" />
-            <span className="hidden sm:inline">Add Item</span>
-          </button>
-        </div>
-      )}
 
-      <main className="flex-1">
-        {isAddItemModalOpen && (
-          <Modal onClose={() => setIsAddItemModalOpen(false)} title="Add Movie or TV Show">
-            <WatchlistForm _onAddItem={handleAddItem} />
-          </Modal>
-        )}
-        
-      </main>
     </>
   );
 }

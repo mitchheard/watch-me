@@ -41,13 +41,6 @@ export default function WatchlistItems({ watchlistId }: WatchlistItemsProps = {}
   const [modalStep, setModalStep] = useState<'edit' | 'rate'>('edit');
   const [modalItem, setModalItem] = useState<WatchItem | null>(null);
 
-  useEffect(() => {
-    setHasMounted(true);
-    fetchItems();
-  }, []);
-
-  if (!user) return null;
-
   const fetchItems = async () => {
     try {
       // Use different API endpoints based on whether watchlistId is provided
@@ -67,6 +60,13 @@ export default function WatchlistItems({ watchlistId }: WatchlistItemsProps = {}
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    setHasMounted(true);
+    fetchItems();
+  }, [watchlistId]);
+
+  if (!user) return null;
 
   const handleDelete = async (id: number) => {
     if (!window.confirm('Are you sure you want to remove this item from your watchlist?')) return;

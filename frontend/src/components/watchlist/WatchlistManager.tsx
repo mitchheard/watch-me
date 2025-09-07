@@ -51,6 +51,17 @@ export default function WatchlistManager({ className = '' }: WatchlistManagerPro
     }
   }, [authLoading, user]);
 
+  useEffect(() => {
+    const handleOpenCreateModal = () => {
+      setShowCreateModal(true);
+    };
+
+    window.addEventListener('openCreateModal', handleOpenCreateModal);
+    return () => {
+      window.removeEventListener('openCreateModal', handleOpenCreateModal);
+    };
+  }, []);
+
   const fetchWatchlists = async () => {
     try {
       setLoading(true);
@@ -148,27 +159,16 @@ export default function WatchlistManager({ className = '' }: WatchlistManagerPro
   return (
     <div className={`space-y-4 sm:space-y-6 ${className}`}>
       {/* Header */}
-      <div className="flex items-center justify-between">
+      {showSharedOnly && (
         <div>
-          {showSharedOnly && (
-            <>
-              <h2 className="text-base sm:text-lg font-semibold text-gray-900">
-                Shared Lists
-              </h2>
-              <p className="text-xs sm:text-sm text-gray-600 mt-1">
-                Lists shared with friends and family
-              </p>
-            </>
-          )}
+          <h2 className="text-base sm:text-lg font-semibold text-gray-900">
+            Shared Lists
+          </h2>
+          <p className="text-xs sm:text-sm text-gray-600 mt-1">
+            Lists shared with friends and family
+          </p>
         </div>
-        <button
-          onClick={() => setShowCreateModal(true)}
-          className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
-        >
-          <PlusIcon className="h-4 w-4" />
-          New List
-        </button>
-      </div>
+      )}
 
       {/* Search Controls */}
       {!showSharedOnly && (

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { PlusIcon, PencilIcon, TrashIcon, ShareIcon, EyeIcon, MagnifyingGlassIcon, FunnelIcon, FilmIcon } from '@heroicons/react/24/outline';
+import { PlusIcon, PencilIcon, TrashIcon, ShareIcon, EyeIcon, MagnifyingGlassIcon, FilmIcon } from '@heroicons/react/24/outline';
 import CreateWatchlistModal from './CreateWatchlistModal';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
@@ -41,7 +41,6 @@ export default function WatchlistManager({ className = '' }: WatchlistManagerPro
   const [error, setError] = useState<string | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [filterType, setFilterType] = useState<'all' | 'personal' | 'shared'>('all');
 
   useEffect(() => {
     if (!authLoading && user) {
@@ -73,22 +72,17 @@ export default function WatchlistManager({ className = '' }: WatchlistManagerPro
     fetchWatchlists(); // Refresh the list
   };
 
-  // Filter watchlists based on search and filter criteria
+  // Filter watchlists based on search criteria
   const filteredWatchlists = watchlists.filter(watchlist => {
     // Search filter
     const matchesSearch = searchQuery === '' || 
       watchlist.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       (watchlist.description && watchlist.description.toLowerCase().includes(searchQuery.toLowerCase()));
     
-    // Type filter
-    const matchesType = filterType === 'all' || 
-      (filterType === 'personal' && !watchlist.isShared) ||
-      (filterType === 'shared' && watchlist.isShared);
-    
     // URL-based filter (for shared lists page)
     const matchesUrlFilter = !showSharedOnly || watchlist.isShared;
     
-    return matchesSearch && matchesType && matchesUrlFilter;
+    return matchesSearch && matchesUrlFilter;
   });
 
   const handleDeleteWatchlist = async (watchlistId: string) => {
@@ -156,13 +150,15 @@ export default function WatchlistManager({ className = '' }: WatchlistManagerPro
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-base sm:text-lg font-semibold text-gray-900">
-            {showSharedOnly ? 'Shared Lists' : 'My Watchlists'}
-          </h2>
           {showSharedOnly && (
-            <p className="text-xs sm:text-sm text-gray-600 mt-1">
-              Lists shared with friends and family
-            </p>
+            <>
+              <h2 className="text-base sm:text-lg font-semibold text-gray-900">
+                Shared Lists
+              </h2>
+              <p className="text-xs sm:text-sm text-gray-600 mt-1">
+                Lists shared with friends and family
+              </p>
+            </>
           )}
         </div>
         <button
@@ -174,7 +170,7 @@ export default function WatchlistManager({ className = '' }: WatchlistManagerPro
         </button>
       </div>
 
-      {/* Search and Filter Controls */}
+      {/* Search Controls */}
       {!showSharedOnly && (
         <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
           {/* Search */}
@@ -188,29 +184,16 @@ export default function WatchlistManager({ className = '' }: WatchlistManagerPro
               className="w-full pl-10 pr-4 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             />
           </div>
-          
-          {/* Filter */}
-          <div className="flex items-center gap-2">
-            <FunnelIcon className="h-4 w-4 text-gray-400" />
-            <select
-              value={filterType}
-              onChange={(e) => setFilterType(e.target.value as 'all' | 'personal' | 'shared')}
-              className="px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            >
-              <option value="all">All Lists</option>
-              <option value="personal">Personal</option>
-              <option value="shared">Shared</option>
-            </select>
-          </div>
         </div>
       )}
 
       {/* Watchlists Grid */}
       <div className="grid gap-3 sm:gap-4 md:grid-cols-2 lg:grid-cols-3">
         {filteredWatchlists.map((watchlist) => (
-          <div
+          <Link
             key={watchlist.id}
-            className="group p-4 sm:p-5 bg-white border border-gray-200 rounded-xl hover:border-gray-300 hover:shadow-md transition-all duration-200"
+            href={`/watchlists/${watchlist.id}`}
+            className="group p-4 sm:p-5 bg-white border border-gray-200 rounded-xl hover:border-gray-300 hover:shadow-md transition-all duration-200 block"
           >
             {/* Header */}
             <div className="flex items-start justify-between mb-3">
@@ -260,15 +243,7 @@ export default function WatchlistManager({ className = '' }: WatchlistManagerPro
             </div>
 
             {/* Actions */}
-            <div className="flex items-center justify-between">
-              <Link
-                href={`/watchlists/${watchlist.id}`}
-                className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors"
-              >
-                <EyeIcon className="h-4 w-4" />
-                View
-              </Link>
-              
+            <div className="flex items-center justify-end">
               <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                 {watchlist.isShared && (
                   <button
@@ -298,7 +273,7 @@ export default function WatchlistManager({ className = '' }: WatchlistManagerPro
                 )}
               </div>
             </div>
-          </div>
+          </Link>
         ))}
       </div>
 
@@ -308,7 +283,7 @@ export default function WatchlistManager({ className = '' }: WatchlistManagerPro
             <FilmIcon className="h-12 w-12 text-gray-400" />
           </div>
           <h3 className="text-lg font-medium text-gray-900 mb-2">
-            {searchQuery || filterType !== 'all' 
+            {searchQuery 
               ? 'No watchlists match your search' 
               : showSharedOnly 
                 ? 'No shared lists yet' 
@@ -316,14 +291,14 @@ export default function WatchlistManager({ className = '' }: WatchlistManagerPro
             }
           </h3>
           <p className="text-gray-500 mb-6 max-w-sm mx-auto">
-            {searchQuery || filterType !== 'all'
-              ? 'Try adjusting your search or filter criteria'
+            {searchQuery
+              ? 'Try adjusting your search criteria'
               : showSharedOnly
                 ? 'Create a shared list to collaborate with friends and family'
                 : 'Create your first watchlist to start organizing your movies and TV shows'
             }
           </p>
-          {(!searchQuery && filterType === 'all') && (
+          {!searchQuery && (
             <button
               onClick={() => setShowCreateModal(true)}
               className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"

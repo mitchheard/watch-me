@@ -22,7 +22,11 @@ const CARD_POSTER_HEIGHT = 84;
 const MODAL_POSTER_WIDTH = 80;
 const MODAL_POSTER_HEIGHT = 120;
 
-export default function WatchlistItems() {
+interface WatchlistItemsProps {
+  watchlistId?: string;
+}
+
+export default function WatchlistItems({ watchlistId }: WatchlistItemsProps = {}) {
   const { user } = useAuth();
   const [items, setItems] = useState<WatchItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -46,7 +50,9 @@ export default function WatchlistItems() {
 
   const fetchItems = async () => {
     try {
-      const res = await fetch('/api/watchlist');
+      // Use different API endpoints based on whether watchlistId is provided
+      const apiUrl = watchlistId ? `/api/watchlists/${watchlistId}/items` : '/api/watchlist';
+      const res = await fetch(apiUrl);
       const data = await res.json();
       
       if (!res.ok) {
@@ -64,7 +70,9 @@ export default function WatchlistItems() {
 
   const handleDelete = async (id: number) => {
     if (!window.confirm('Are you sure you want to remove this item from your watchlist?')) return;
-    const res = await fetch(`/api/watchlist?id=${id}`, { method: 'DELETE' });
+    // Use different API endpoints based on whether watchlistId is provided
+    const apiUrl = watchlistId ? `/api/watchlists/${watchlistId}/items/${id}` : `/api/watchlist?id=${id}`;
+    const res = await fetch(apiUrl, { method: 'DELETE' });
     if (res.ok) {
       setModalItem(null); // Close details modal after delete
       fetchItems();
@@ -131,7 +139,9 @@ export default function WatchlistItems() {
     if (!item) return;
     setIsRateSubmitting(true);
     try {
-      await fetch('/api/watchlist', {
+      // Use different API endpoints based on whether watchlistId is provided
+      const apiUrl = watchlistId ? `/api/watchlists/${watchlistId}/items/${item.id}` : '/api/watchlist';
+      await fetch(apiUrl, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id: item.id, rating: rateValue }),

@@ -1,5 +1,5 @@
 import { notFound } from 'next/navigation';
-import IndividualWatchlistItems from '@/components/watchlist/IndividualWatchlistItems';
+import WatchlistItems from '@/components/watchlist/WatchlistItems';
 import WatchlistBreadcrumb from '@/components/watchlist/WatchlistBreadcrumb';
 
 interface WatchlistPageProps {
@@ -24,9 +24,8 @@ export default async function WatchlistPage({ params }: WatchlistPageProps) {
         </div>
 
         {id ? (
-          <IndividualWatchlistItems 
+          <WatchlistItems 
             watchlistId={id}
-            watchlistName={watchlistName}
           />
         ) : (
           <div className="text-center py-8">

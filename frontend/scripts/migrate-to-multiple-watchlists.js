@@ -4,7 +4,7 @@
  * Migration script to convert existing WatchItem data to the new multiple watchlists system
  * 
  * This script:
- * 1. Creates a default "My Personal List" for each user
+ * 1. Creates a default "My Watchlist" for each user
  * 2. Migrates existing WatchItem data to WatchlistItem and WatchlistItemList
  * 3. Preserves all existing data (status, rating, notes, etc.)
  */
@@ -37,7 +37,7 @@ async function migrateToMultipleWatchlists() {
       // Create default personal watchlist for this user
       const defaultWatchlist = await prisma.watchlist.create({
         data: {
-          name: 'My Personal List',
+          name: 'My Watchlist',
           description: 'Your personal watchlist',
           isDefault: true,
           isShared: false,

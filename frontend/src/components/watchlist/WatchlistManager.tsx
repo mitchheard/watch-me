@@ -152,15 +152,15 @@ export default function WatchlistManager({ className = '' }: WatchlistManagerPro
   }
 
   return (
-    <div className={`space-y-6 ${className}`}>
+    <div className={`space-y-4 sm:space-y-6 ${className}`}>
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-lg font-semibold text-gray-900">
+          <h2 className="text-base sm:text-lg font-semibold text-gray-900">
             {showSharedOnly ? 'Shared Lists' : 'My Watchlists'}
           </h2>
           {showSharedOnly && (
-            <p className="text-sm text-gray-600 mt-1">
+            <p className="text-xs sm:text-sm text-gray-600 mt-1">
               Lists shared with friends and family
             </p>
           )}
@@ -176,7 +176,7 @@ export default function WatchlistManager({ className = '' }: WatchlistManagerPro
 
       {/* Search and Filter Controls */}
       {!showSharedOnly && (
-        <div className="flex flex-col sm:flex-row gap-4">
+        <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
           {/* Search */}
           <div className="relative flex-1">
             <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
@@ -185,7 +185,7 @@ export default function WatchlistManager({ className = '' }: WatchlistManagerPro
               placeholder="Search watchlists..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full pl-10 pr-4 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             />
           </div>
           
@@ -195,7 +195,7 @@ export default function WatchlistManager({ className = '' }: WatchlistManagerPro
             <select
               value={filterType}
               onChange={(e) => setFilterType(e.target.value as 'all' | 'personal' | 'shared')}
-              className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             >
               <option value="all">All Lists</option>
               <option value="personal">Personal</option>
@@ -206,11 +206,11 @@ export default function WatchlistManager({ className = '' }: WatchlistManagerPro
       )}
 
       {/* Watchlists Grid */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-3 sm:gap-4 md:grid-cols-2 lg:grid-cols-3">
         {filteredWatchlists.map((watchlist) => (
           <div
             key={watchlist.id}
-            className="group p-5 bg-white border border-gray-200 rounded-xl hover:border-gray-300 hover:shadow-md transition-all duration-200"
+            className="group p-4 sm:p-5 bg-white border border-gray-200 rounded-xl hover:border-gray-300 hover:shadow-md transition-all duration-200"
           >
             {/* Header */}
             <div className="flex items-start justify-between mb-3">

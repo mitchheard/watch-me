@@ -162,7 +162,7 @@ export default function WatchlistManager({ className = '' }: WatchlistManagerPro
 
       {/* Search Controls */}
       {!showSharedOnly && (
-        <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
+        <div className="flex items-center gap-3">
           {/* Search */}
           <div className="relative flex-1">
             <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
@@ -177,9 +177,9 @@ export default function WatchlistManager({ className = '' }: WatchlistManagerPro
           {/* New Button */}
           <button
             onClick={() => setShowCreateModal(true)}
-            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
+            className="flex items-center gap-1 px-3 py-2 text-xs font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors whitespace-nowrap"
           >
-            <PlusIcon className="h-4 w-4" />
+            <PlusIcon className="h-3 w-3" />
             New
           </button>
         </div>

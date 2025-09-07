@@ -1,5 +1,6 @@
 import { notFound } from 'next/navigation';
 import IndividualWatchlistItems from '@/components/watchlist/IndividualWatchlistItems';
+import WatchlistBreadcrumb from '@/components/watchlist/WatchlistBreadcrumb';
 
 interface WatchlistPageProps {
   params: Promise<{
@@ -12,31 +13,14 @@ export default async function WatchlistPage({ params }: WatchlistPageProps) {
   
   console.log('WatchlistPage - ID:', id);
 
-  // Fetch the actual watchlist data
-  let watchlistName = 'My Watchlist';
-  try {
-    const response = await fetch(`${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/api/watchlists/${id}`, {
-      cache: 'no-store'
-    });
-    if (response.ok) {
-      const watchlist = await response.json();
-      watchlistName = watchlist.name || 'My Watchlist';
-    }
-  } catch (error) {
-    console.error('Failed to fetch watchlist:', error);
-  }
+  // Use a default name - the actual name will be fetched client-side
+  const watchlistName = 'My Watchlist';
 
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-4xl mx-auto px-4 py-4">
         <div className="mb-4">
-          <nav className="flex items-center space-x-2 text-sm text-gray-500">
-            <a href="/watchlists" className="hover:text-gray-700">
-              Watchlists
-            </a>
-            <span>/</span>
-            <span className="text-gray-900">{watchlistName}</span>
-          </nav>
+          <WatchlistBreadcrumb watchlistId={id} initialName={watchlistName} />
         </div>
 
         {id ? (

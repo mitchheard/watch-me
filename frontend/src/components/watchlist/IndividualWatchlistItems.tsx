@@ -25,11 +25,12 @@ interface IndividualWatchlistItemsProps {
   watchlistName: string;
 }
 
-export default function IndividualWatchlistItems({ watchlistId, watchlistName }: IndividualWatchlistItemsProps) {
+export default function IndividualWatchlistItems({ watchlistId, watchlistName: initialWatchlistName }: IndividualWatchlistItemsProps) {
   const { user } = useAuth();
   const [items, setItems] = useState<WatchItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedItem, setSelectedItem] = useState<WatchItem | null>(null);
+  const [actualWatchlistName, setActualWatchlistName] = useState(initialWatchlistName);
   const { type, status, updateFilters } = useWatchlistFilters();
   const [hasMounted, setHasMounted] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
@@ -41,8 +42,21 @@ export default function IndividualWatchlistItems({ watchlistId, watchlistName }:
 
   useEffect(() => {
     setHasMounted(true);
+    fetchWatchlistName();
     fetchItems();
   }, [watchlistId]);
+
+  const fetchWatchlistName = async () => {
+    try {
+      const response = await fetch(`/api/watchlists/${watchlistId}`);
+      if (response.ok) {
+        const watchlist = await response.json();
+        setActualWatchlistName(watchlist.name || 'My Watchlist');
+      }
+    } catch (error) {
+      console.error('Failed to fetch watchlist name:', error);
+    }
+  };
 
   if (!user) return null;
 

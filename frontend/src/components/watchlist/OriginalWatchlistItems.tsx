@@ -205,9 +205,9 @@ export default function OriginalWatchlistItems() {
                 Movies {movieCount}
               </button>
               <button
-                onClick={() => updateFilters('tv', status)}
+                onClick={() => updateFilters('show', status)}
                 className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${
-                  type === 'tv' 
+                  type === 'show' 
                     ? 'bg-blue-600 text-white' 
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                 }`}

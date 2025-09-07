@@ -12,6 +12,7 @@ export type WatchItem = {
   updatedAt: Date;
   userId: string;
   rating: string | null;
+  notes?: string | null;
   tmdbId: number | null;
   tmdbImdbId: string | null;
   tmdbMovieCertification: string | null;

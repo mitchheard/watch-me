@@ -197,7 +197,7 @@ export default function IndividualWatchlistItems({ watchlistId, watchlistName: i
       {/* Filter Buttons */}
       <div className="flex flex-wrap gap-2">
         <button
-          onClick={() => updateFilters({ type: 'all', status })}
+          onClick={() => updateFilters('all', status)}
           className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${
             type === 'all' ? 'bg-white border border-gray-300 text-gray-900' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
           }`}
@@ -205,7 +205,7 @@ export default function IndividualWatchlistItems({ watchlistId, watchlistName: i
           All {items.length}
         </button>
         <button
-          onClick={() => updateFilters({ type: 'movie', status })}
+          onClick={() => updateFilters('movie', status)}
           className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${
             type === 'movie' ? 'bg-white border border-gray-300 text-gray-900' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
           }`}
@@ -213,7 +213,7 @@ export default function IndividualWatchlistItems({ watchlistId, watchlistName: i
           Movie {movieCount}
         </button>
         <button
-          onClick={() => updateFilters({ type: 'show', status })}
+          onClick={() => updateFilters('show', status)}
           className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${
             type === 'show' ? 'bg-white border border-gray-300 text-gray-900' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
           }`}
@@ -420,8 +420,11 @@ export default function IndividualWatchlistItems({ watchlistId, watchlistName: i
           <WatchlistForm
             itemToEdit={selectedItem}
             _onAddItem={handleDummyAddItem}
-            onUpdateSuccess={handleUpdateItemSuccess}
-            onCancel={handleCancelEdit}
+            onUpdateItem={async (id, item) => {
+              // Handle update logic here
+              await handleUpdateItemSuccess();
+            }}
+            onCancelEdit={handleCancelEdit}
           />
         </Modal>
       )}

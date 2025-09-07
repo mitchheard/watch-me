@@ -2,7 +2,7 @@
 
 import { useState, useEffect, Suspense } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { FilmIcon, TvIcon, CheckCircleIcon, PlusIcon, ShareIcon } from '@heroicons/react/24/solid';
 import Image from 'next/image';
 import WatchlistItems from '@/components/watchlist/WatchlistItems';
@@ -118,6 +118,7 @@ function LandingPage() {
 
 export default function Page() {
   const { user, isLoading } = useAuth();
+  const pathname = usePathname();
   const [refreshKey, setRefreshKey] = useState(0);
   const [isAddItemModalOpen, setIsAddItemModalOpen] = useState(false);
   const [isAddToSharedModalOpen, setIsAddToSharedModalOpen] = useState(false);
@@ -170,30 +171,32 @@ export default function Page() {
         <WatchlistItems key={refreshKey} />
       </Suspense>
 
-      {/* Floating Action Button */}
-      <div className="fixed bottom-6 right-6 z-50">
-        <div className="flex flex-col gap-3">
-          {/* Add to Shared List Button */}
-          <button
-            onClick={handleAddToSharedList}
-            className="flex items-center gap-2 px-4 py-3 bg-green-600 text-white rounded-full shadow-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-colors"
-            title="Add to Shared List"
-          >
-            <ShareIcon className="h-5 w-5" />
-            <span className="hidden sm:inline">Add to Shared</span>
-          </button>
-          
-          {/* Add New Item Button */}
-          <button
-            onClick={() => setIsAddItemModalOpen(true)}
-            className="flex items-center gap-2 px-4 py-3 bg-blue-600 text-white rounded-full shadow-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
-            title="Add New Item"
-          >
-            <PlusIcon className="h-5 w-5" />
-            <span className="hidden sm:inline">Add Item</span>
-          </button>
+      {/* Floating Action Button - Only show on home page */}
+      {pathname === '/' && (
+        <div className="fixed bottom-6 right-6 z-50">
+          <div className="flex flex-col gap-3">
+            {/* Add to Shared List Button */}
+            <button
+              onClick={handleAddToSharedList}
+              className="flex items-center gap-2 px-4 py-3 bg-green-600 text-white rounded-full shadow-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-colors"
+              title="Add to Shared List"
+            >
+              <ShareIcon className="h-5 w-5" />
+              <span className="hidden sm:inline">Add to Shared</span>
+            </button>
+            
+            {/* Add New Item Button */}
+            <button
+              onClick={() => setIsAddItemModalOpen(true)}
+              className="flex items-center gap-2 px-4 py-3 bg-blue-600 text-white rounded-full shadow-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
+              title="Add New Item"
+            >
+              <PlusIcon className="h-5 w-5" />
+              <span className="hidden sm:inline">Add Item</span>
+            </button>
+          </div>
         </div>
-      </div>
+      )}
 
       <main className="flex-1">
         {isAddItemModalOpen && (

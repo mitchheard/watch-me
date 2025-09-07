@@ -1,3 +1,5 @@
+'use client';
+
 import WatchlistManager from '@/components/watchlist/WatchlistManager';
 
 export default function WatchlistsPage() {

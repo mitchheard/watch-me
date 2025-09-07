@@ -48,7 +48,7 @@ export async function GET(
     }
 
     // Get items in this watchlist
-    const items = await prisma.watchlistItemList.findMany({
+    const watchlistItemLists = await prisma.watchlistItemList.findMany({
       where: { watchlistId },
       include: {
         watchlistItem: true
@@ -56,7 +56,23 @@ export async function GET(
       orderBy: { addedAt: 'desc' }
     });
 
-    return NextResponse.json({ items });
+    // Transform the data to match the expected WatchItem interface
+    const items = watchlistItemLists.map(itemList => ({
+      id: itemList.id,
+      tmdbId: itemList.watchlistItem.tmdbId,
+      title: itemList.watchlistItem.title,
+      type: itemList.watchlistItem.type,
+      status: itemList.status,
+      rating: itemList.rating,
+      notes: itemList.notes,
+      addedAt: itemList.addedAt,
+      tmdbPosterPath: itemList.watchlistItem.tmdbPosterPath,
+      tmdbOverview: itemList.watchlistItem.tmdbOverview,
+      tmdbMovieReleaseYear: itemList.watchlistItem.tmdbMovieReleaseYear,
+      tmdbTvFirstAirYear: itemList.watchlistItem.tmdbTvFirstAirYear,
+    }));
+
+    return NextResponse.json(items);
   } catch (error) {
     console.error('Error fetching watchlist items:', error);
     return NextResponse.json(

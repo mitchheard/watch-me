@@ -40,12 +40,6 @@ export default function IndividualWatchlistItems({ watchlistId, watchlistName: i
   const [modalStep, setModalStep] = useState<'edit' | 'rate'>('edit');
   const [modalItem, setModalItem] = useState<WatchItem | null>(null);
 
-  useEffect(() => {
-    setHasMounted(true);
-    fetchWatchlistName();
-    fetchItems();
-  }, [watchlistId]);
-
   const fetchWatchlistName = async () => {
     try {
       const response = await fetch(`/api/watchlists/${watchlistId}`);
@@ -57,8 +51,6 @@ export default function IndividualWatchlistItems({ watchlistId, watchlistName: i
       console.error('Failed to fetch watchlist name:', error);
     }
   };
-
-  if (!user) return null;
 
   const fetchItems = async () => {
     try {
@@ -77,6 +69,14 @@ export default function IndividualWatchlistItems({ watchlistId, watchlistName: i
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    setHasMounted(true);
+    fetchWatchlistName();
+    fetchItems();
+  }, [watchlistId]);
+
+  if (!user) return null;
 
   const handleDelete = async (id: number) => {
     if (!window.confirm('Are you sure you want to remove this item from your watchlist?')) return;

@@ -174,13 +174,13 @@ export default function WatchlistManager({ className = '' }: WatchlistManagerPro
               className="w-full pl-10 pr-4 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             />
           </div>
-          {/* New List Button */}
+          {/* New Button */}
           <button
             onClick={() => setShowCreateModal(true)}
             className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
           >
             <PlusIcon className="h-4 w-4" />
-            New List
+            New
           </button>
         </div>
       )}

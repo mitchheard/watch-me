@@ -186,35 +186,35 @@ export default function WatchlistManager({ className = '' }: WatchlistManagerPro
       )}
 
       {/* Watchlists Grid */}
-      <div className="grid gap-3 sm:gap-4 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-2 sm:gap-3 md:grid-cols-2 lg:grid-cols-3">
         {filteredWatchlists.map((watchlist) => (
           <Link
             key={watchlist.id}
             href={`/watchlists/${watchlist.id}`}
-            className="group p-3 sm:p-4 bg-white border border-gray-200 rounded-xl hover:border-gray-300 hover:shadow-md transition-all duration-200 block"
+            className="group p-2.5 sm:p-3 bg-white border border-gray-200 rounded-lg hover:border-gray-300 hover:shadow-md transition-all duration-200 block"
           >
             {/* Header */}
-            <div className="flex items-start justify-between mb-2">
+            <div className="flex items-start justify-between mb-1.5">
               <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-1">
-                  <h3 className="font-semibold text-gray-900 truncate text-base">
+                <div className="flex items-center gap-2 mb-0.5">
+                  <h3 className="font-semibold text-gray-900 truncate text-sm">
                     {watchlist.name}
                   </h3>
                   {watchlist.isShared && (
-                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                      <ShareIcon className="h-3 w-3 mr-1" />
+                    <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                      <ShareIcon className="h-3 w-3 mr-0.5" />
                       Shared
                     </span>
                   )}
                   {watchlist.isDefault && (
-                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                    <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                       Default
                     </span>
                   )}
                 </div>
                 
                 {watchlist.description && (
-                  <p className="text-sm text-gray-600 mb-2 line-clamp-2">
+                  <p className="text-xs text-gray-600 mb-1.5 line-clamp-2">
                     {watchlist.description}
                   </p>
                 )}
@@ -222,51 +222,51 @@ export default function WatchlistManager({ className = '' }: WatchlistManagerPro
             </div>
             
             {/* Stats */}
-            <div className="flex items-center gap-4 text-sm text-gray-500 mb-2">
+            <div className="flex items-center gap-3 text-xs text-gray-500 mb-1.5">
               <span className="flex items-center gap-1">
-                <FilmIcon className="h-4 w-4" />
+                <FilmIcon className="h-3 w-3" />
                 {watchlist._count.items} items
               </span>
               {watchlist.isShared && (
                 <span className="flex items-center gap-1">
-                  <ShareIcon className="h-4 w-4" />
+                  <ShareIcon className="h-3 w-3" />
                   {watchlist.members.length} members
                 </span>
               )}
             </div>
             
             {/* Owner info */}
-            <div className="text-xs text-gray-400 mb-2">
+            <div className="text-xs text-gray-400 mb-1.5">
               Created by {watchlist.owner.email}
             </div>
 
             {/* Actions */}
             <div className="flex items-center justify-end">
-              <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+              <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
                 {watchlist.isShared && (
                   <button
                     onClick={() => handleShareWatchlist(watchlist)}
-                    className="p-1.5 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors"
+                    className="p-1 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded transition-colors"
                     title="Share watchlist"
                   >
-                    <ShareIcon className="h-4 w-4" />
+                    <ShareIcon className="h-3 w-3" />
                   </button>
                 )}
                 
                 <button
-                  className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-50 rounded-lg transition-colors"
+                  className="p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-50 rounded transition-colors"
                   title="Edit watchlist"
                 >
-                  <PencilIcon className="h-4 w-4" />
+                  <PencilIcon className="h-3 w-3" />
                 </button>
                 
                 {!watchlist.isDefault && (
                   <button
                     onClick={() => handleDeleteWatchlist(watchlist.id)}
-                    className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                    className="p-1 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
                     title="Delete watchlist"
                   >
-                    <TrashIcon className="h-4 w-4" />
+                    <TrashIcon className="h-3 w-3" />
                   </button>
                 )}
               </div>

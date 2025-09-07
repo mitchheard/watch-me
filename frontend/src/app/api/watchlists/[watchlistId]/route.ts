@@ -35,11 +35,14 @@ export async function GET(
     const watchlist = await prisma.watchlist.findFirst({
       where: {
         id: watchlistId,
-        members: {
-          some: {
-            userId: user.id
+        OR: [
+          { ownerId: user.id },
+          { 
+            members: {
+              some: { userId: user.id }
+            }
           }
-        }
+        ]
       },
       include: {
         members: {

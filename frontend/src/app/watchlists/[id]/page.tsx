@@ -1,5 +1,5 @@
 import { notFound } from 'next/navigation';
-import WatchlistItems from '@/components/watchlist/WatchlistItems';
+import IndividualWatchlistItems from '@/components/watchlist/IndividualWatchlistItems';
 
 interface WatchlistPageProps {
   params: Promise<{
@@ -12,9 +12,19 @@ export default async function WatchlistPage({ params }: WatchlistPageProps) {
   
   console.log('WatchlistPage - ID:', id);
 
-  // For now, we'll use a placeholder name
-  // In a real implementation, you'd fetch the watchlist data here
-  const watchlistName = 'My Watchlist';
+  // Fetch the actual watchlist data
+  let watchlistName = 'My Watchlist';
+  try {
+    const response = await fetch(`${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/api/watchlists/${id}`, {
+      cache: 'no-store'
+    });
+    if (response.ok) {
+      const watchlist = await response.json();
+      watchlistName = watchlist.name || 'My Watchlist';
+    }
+  } catch (error) {
+    console.error('Failed to fetch watchlist:', error);
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -30,7 +40,7 @@ export default async function WatchlistPage({ params }: WatchlistPageProps) {
         </div>
 
         {id ? (
-          <WatchlistItems 
+          <IndividualWatchlistItems 
             watchlistId={id}
             watchlistName={watchlistName}
           />

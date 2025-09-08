@@ -10,9 +10,11 @@ export default function WatchlistsPage() {
           <nav className="flex items-center space-x-2 text-sm text-gray-500 mb-4">
             <span className="text-gray-900">Watchlists</span>
           </nav>
-          <p className="text-sm sm:text-base text-gray-600">
-            Organize your movies and TV shows into custom lists. Create personal lists or share them with friends and family.
-          </p>
+          <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+            <p className="text-sm sm:text-base text-gray-600">
+              Organize your movies and TV shows into custom lists. Create personal lists or share them with friends and family.
+            </p>
+          </div>
         </div>
 
         <WatchlistManager />

@@ -190,8 +190,7 @@ export default function WatchlistManager({ className = '' }: WatchlistManagerPro
   }
 
   return (
-    <>
-      <div className={"space-y-2 sm:space-y-3 " + className}>
+    <div className="space-y-2 sm:space-y-3">
       {/* Header */}
       {showSharedOnly && (
         <div>
@@ -439,7 +438,6 @@ export default function WatchlistManager({ className = '' }: WatchlistManagerPro
           onRename={handleRenameWatchlist}
         />
       )}
-      </div>
-    </>
+    </div>
   );
 }

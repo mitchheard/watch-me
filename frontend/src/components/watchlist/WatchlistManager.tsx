@@ -190,7 +190,7 @@ export default function WatchlistManager({ className = '' }: WatchlistManagerPro
         {filteredWatchlists.map((watchlist) => (
           <Link
             key={watchlist.id}
-            href={`/watchlists/${watchlist.id}`}
+            href={`/watchlists/${watchlist.id}?name=${encodeURIComponent(watchlist.name)}`}
             className="group p-2 bg-white border border-gray-200 rounded hover:border-gray-300 hover:shadow-sm transition-all duration-200 block"
           >
             {/* Header */}

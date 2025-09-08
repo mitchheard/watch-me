@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { notFound } from 'next/navigation';
 import WatchlistItems from '@/components/watchlist/WatchlistItems';
 import WatchlistBreadcrumb from '@/components/watchlist/WatchlistBreadcrumb';
@@ -13,6 +14,7 @@ interface WatchlistPageProps {
 
 export default function WatchlistPage({ params }: WatchlistPageProps) {
   const [id, setId] = useState<string | null>(null);
+  const searchParams = useSearchParams();
 
   useEffect(() => {
     const getParams = async () => {
@@ -24,8 +26,8 @@ export default function WatchlistPage({ params }: WatchlistPageProps) {
   
   console.log('WatchlistPage - ID:', id);
 
-  // Pass null as initialName to prevent flicker
-  const watchlistName = null;
+  // Get the watchlist name from URL parameters (passed from previous screen)
+  const watchlistName = searchParams.get('name');
 
   // Show loading state while params are being resolved
   if (!id) {

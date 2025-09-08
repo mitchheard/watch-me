@@ -9,9 +9,15 @@ interface WatchlistBreadcrumbProps {
 
 export default function WatchlistBreadcrumb({ watchlistId, initialName = null }: WatchlistBreadcrumbProps) {
   const [watchlistName, setWatchlistName] = useState<string | null>(initialName);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!initialName); // Only loading if no initial name provided
 
   useEffect(() => {
+    // If we already have a name from props, don't fetch
+    if (initialName) {
+      setLoading(false);
+      return;
+    }
+
     const fetchWatchlistName = async () => {
       try {
         const response = await fetch(`/api/watchlists/${watchlistId}`);
@@ -30,7 +36,7 @@ export default function WatchlistBreadcrumb({ watchlistId, initialName = null }:
     };
 
     fetchWatchlistName();
-  }, [watchlistId]);
+  }, [watchlistId, initialName]);
 
   return (
     <nav className="flex items-center space-x-2 text-sm text-gray-500">

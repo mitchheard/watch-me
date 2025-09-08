@@ -60,18 +60,18 @@ export default function WatchlistManager({ className = '' }: WatchlistManagerPro
       setLoading(false);
       setError('Please log in to view your watchlists');
     }
-  }, [authLoading, user]);
-
+  }, [user, authLoading, showSharedOnly]);
 
   const fetchWatchlists = async () => {
+    setLoading(true);
+    setError(null);
     try {
-      setLoading(true);
       const response = await fetch('/api/watchlists');
       if (!response.ok) {
         throw new Error('Failed to fetch watchlists');
       }
       const data = await response.json();
-      setWatchlists(data.watchlists);
+      setWatchlists(data);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch watchlists');
     } finally {
@@ -81,13 +81,11 @@ export default function WatchlistManager({ className = '' }: WatchlistManagerPro
 
   const handleCreateSuccess = () => {
     setShowCreateModal(false);
-    fetchWatchlists(); // Refresh the list
+    fetchWatchlists();
   };
 
-  // Filter watchlists based on search criteria
-  const filteredWatchlists = watchlists.filter(watchlist => {
-    // Search filter
-    const matchesSearch = searchQuery === '' || 
+  const filteredWatchlists = watchlists.filter((watchlist) => {
+    const matchesSearch =
       watchlist.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       (watchlist.description && watchlist.description.toLowerCase().includes(searchQuery.toLowerCase()));
     
@@ -160,7 +158,7 @@ export default function WatchlistManager({ className = '' }: WatchlistManagerPro
 
   if (authLoading) {
     return (
-      <div className={`space-y-4 ${className}`}>
+      <div className="space-y-4">
         <div className="animate-pulse">
           <div className="h-6 bg-gray-200 rounded w-1/3 mb-4"></div>
           {[1, 2, 3].map(i => (
@@ -171,9 +169,17 @@ export default function WatchlistManager({ className = '' }: WatchlistManagerPro
     );
   }
 
+  if (!user) {
+    return (
+      <div className="text-center py-10 text-slate-500">
+        <p>Please log in to manage your watchlists.</p>
+      </div>
+    );
+  }
+
   if (loading) {
     return (
-      <div className={`space-y-4 ${className}`}>
+      <div className="space-y-4">
         <div className="animate-pulse">
           <div className="h-6 bg-gray-200 rounded w-1/3 mb-4"></div>
           {[1, 2, 3].map(i => (
@@ -186,7 +192,7 @@ export default function WatchlistManager({ className = '' }: WatchlistManagerPro
 
   if (error) {
     return (
-      <div className={`text-red-600 text-sm ${className}`}>
+      <div className="text-red-600 text-sm">
         Error: {error}
       </div>
     );
@@ -217,16 +223,15 @@ export default function WatchlistManager({ className = '' }: WatchlistManagerPro
               placeholder="Search watchlists..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full pl-9 pr-3 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             />
           </div>
-          {/* New Button */}
+          {/* New List Button */}
           <button
             onClick={() => setShowCreateModal(true)}
-            className="flex items-center gap-1 px-3 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors whitespace-nowrap"
+            className="flex items-center px-3 py-1.5 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 whitespace-nowrap"
           >
-            <PlusIcon className="h-4 w-4" />
-            New
+            <PlusIcon className="h-4 w-4 mr-1" /> + New
           </button>
         </div>
       )}
@@ -239,6 +244,19 @@ export default function WatchlistManager({ className = '' }: WatchlistManagerPro
             href={`/watchlists/${watchlist.id}?name=${encodeURIComponent(watchlist.name)}`}
             className="group relative p-2 bg-white border border-gray-200 rounded hover:border-gray-300 hover:shadow-sm transition-all duration-200 block"
           >
+            {/* Simple Actions Button */}
+            <div className="absolute top-2 right-2">
+              <button
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  openRenameModal(watchlist, e);
+                }}
+                className="inline-flex justify-center w-full rounded-md bg-white px-1 py-1 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 shadow-sm border border-gray-200"
+              >
+                <PencilIcon className="h-4 w-4" aria-hidden="true" />
+              </button>
+            </div>
             {/* Header */}
             <div className="flex items-start justify-between mb-1">
               <div className="flex-1 min-w-0">
@@ -265,14 +283,16 @@ export default function WatchlistManager({ className = '' }: WatchlistManagerPro
                   </p>
                 )}
               </div>
+              <span className="text-gray-400 text-xs ml-2 whitespace-nowrap">
+                {watchlist._count.items} items
+              </span>
             </div>
-            
-            {/* Stats and Owner in one line */}
-            <div className="flex items-center justify-between text-xs text-gray-500">
-              <div className="flex items-center gap-2">
-                <span className="flex items-center gap-0.5">
-                  <FilmIcon className="h-3 w-3" />
-                  {watchlist._count.items} items
+
+            {/* Footer */}
+            <div className="flex items-center justify-between text-xs text-gray-500 mt-2">
+              <div className="flex items-center gap-1">
+                <span className="text-gray-400">
+                  by {watchlist.owner.email.split('@')[0]}
                 </span>
                 {watchlist.isShared && (
                   <span className="flex items-center gap-0.5">
@@ -280,109 +300,6 @@ export default function WatchlistManager({ className = '' }: WatchlistManagerPro
                     {watchlist.members.length} members
                   </span>
                 )}
-              </div>
-              <span className="text-gray-400">
-                by {watchlist.owner.email.split('@')[0]}
-              </span>
-            </div>
-
-            {/* Actions Menu */}
-            <div className="absolute top-2 right-2">
-              <Menu as="div" className="relative inline-block text-left">
-                <div>
-                  <MenuButton
-                    onClick={(e) => e.stopPropagation()}
-                    className="inline-flex justify-center w-full rounded-md bg-white px-1 py-1 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 shadow-sm border border-gray-200"
-                  >
-                    <EllipsisVerticalIcon className="h-4 w-4" aria-hidden="true" />
-                  </MenuButton>
-                </div>
-
-                <MenuItems className="absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
-                    <div className="py-1">
-                      <MenuItem>
-                        {({ active }) => (
-                          <button
-                            onClick={(e) => openRenameModal(watchlist, e)}
-                            className={classNames(
-                              active ? 'bg-gray-100 text-gray-900' : 'text-gray-700',
-                              'block px-4 py-2 text-sm w-full text-left'
-                            )}
-                          >
-                            <div className="flex items-center">
-                              <PencilIcon className="h-4 w-4 mr-2" />
-                              Rename
-                            </div>
-                          </button>
-                        )}
-                      </MenuItem>
-                      
-                      {watchlist.isShared && (
-                        <MenuItem>
-                          {({ active }) => (
-                            <button
-                              onClick={(e) => {
-                                e.preventDefault();
-                                e.stopPropagation();
-                                handleShareWatchlist(watchlist);
-                              }}
-                              className={classNames(
-                                active ? 'bg-gray-100 text-gray-900' : 'text-gray-700',
-                                'block px-4 py-2 text-sm w-full text-left'
-                              )}
-                            >
-                              <div className="flex items-center">
-                                <ShareIcon className="h-4 w-4 mr-2" />
-                                Share
-                              </div>
-                            </button>
-                          )}
-                        </MenuItem>
-                      )}
-                      
-                      {!watchlist.isDefault && (
-                        <MenuItem>
-                          {({ active }) => (
-                            <button
-                              onClick={(e) => {
-                                e.preventDefault();
-                                e.stopPropagation();
-                                handleDeleteWatchlist(watchlist.id);
-                              }}
-                              className={classNames(
-                                active ? 'bg-gray-100 text-gray-900' : 'text-gray-700',
-                                'block px-4 py-2 text-sm w-full text-left text-red-600'
-                              )}
-                            >
-                              <div className="flex items-center">
-                                <TrashIcon className="h-4 w-4 mr-2" />
-                                Delete
-                              </div>
-                            </button>
-                          )}
-                        </MenuItem>
-                      )}
-                      
-                      {watchlist.isShared && (
-                        <MenuItem disabled>
-                          {({ active }) => (
-                            <button
-                              className={classNames(
-                                active ? 'bg-gray-100 text-gray-900' : 'text-gray-700',
-                                'block px-4 py-2 text-sm w-full text-left opacity-50 cursor-not-allowed'
-                              )}
-                            >
-                              <div className="flex items-center">
-                                <EyeIcon className="h-4 w-4 mr-2" />
-                                Remove Myself (Coming Soon)
-                              </div>
-                            </button>
-                          )}
-                        </MenuItem>
-                      )}
-                    </div>
-                </MenuItems>
-                </Menu>
               </div>
             </div>
           </Link>
@@ -402,23 +319,14 @@ export default function WatchlistManager({ className = '' }: WatchlistManagerPro
                 : 'No watchlists yet'
             }
           </h3>
-          <p className="text-gray-500 mb-6 max-w-sm mx-auto">
-            {searchQuery
-              ? 'Try adjusting your search criteria'
-              : showSharedOnly
-                ? 'Create a shared list to collaborate with friends and family'
-                : 'Create your first watchlist to start organizing your movies and TV shows'
+          <p className="text-sm text-gray-500">
+            {searchQuery 
+              ? 'Try adjusting your search or filters.' 
+              : showSharedOnly 
+                ? 'Shared lists will appear here when you join or create one.' 
+                : 'Create your first watchlist to get started!'
             }
           </p>
-          {!searchQuery && (
-            <button
-              onClick={() => setShowCreateModal(true)}
-              className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
-            >
-              <PlusIcon className="h-4 w-4" />
-              {showSharedOnly ? 'Create Shared List' : 'Create Your First List'}
-            </button>
-          )}
         </div>
       )}
 

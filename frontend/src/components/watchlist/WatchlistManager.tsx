@@ -74,6 +74,7 @@ export default function WatchlistManager({ className = '' }: WatchlistManagerPro
       setWatchlists(data);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch watchlists');
+      setWatchlists([]); // Ensure watchlists is always an array
     } finally {
       setLoading(false);
     }
@@ -84,7 +85,7 @@ export default function WatchlistManager({ className = '' }: WatchlistManagerPro
     fetchWatchlists();
   };
 
-  const filteredWatchlists = watchlists.filter((watchlist) => {
+  const filteredWatchlists = (watchlists || []).filter((watchlist) => {
     const matchesSearch =
       watchlist.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       (watchlist.description && watchlist.description.toLowerCase().includes(searchQuery.toLowerCase()));
@@ -109,7 +110,7 @@ export default function WatchlistManager({ className = '' }: WatchlistManagerPro
         throw new Error('Failed to delete watchlist');
       }
 
-      setWatchlists(watchlists.filter(w => w.id !== watchlistId));
+      setWatchlists((watchlists || []).filter(w => w.id !== watchlistId));
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to delete watchlist');
     }
@@ -138,7 +139,7 @@ export default function WatchlistManager({ className = '' }: WatchlistManagerPro
       }
 
       // Update the watchlist in the local state
-      setWatchlists(watchlists.map(w => 
+      setWatchlists((watchlists || []).map(w => 
         w.id === watchlistToRename.id 
           ? { ...w, name: newName }
           : w

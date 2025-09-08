@@ -148,6 +148,13 @@ This document tracks the development progress, current priorities, and future pl
 ## 🚀 Future Features (Next 2-6 Months)
 
 ### User Experience Enhancements
+- [ ] **Watchlist Management Enhancements**
+  - [x] **Rename Watchlists** - Ability to rename existing watchlists
+  - [ ] **Delete Watchlists** - Ability to delete personal and shared watchlists
+  - [ ] **Remove from Shared Lists** - Ability to remove yourself from shared watchlists
+  - [ ] **Watchlist Permissions** - Granular permission controls for shared lists
+  - [ ] **Watchlist Templates** - Pre-made watchlist templates (e.g., "Oscar Winners", "Comedy Movies")
+
 - [ ] **Advanced Recommendations Engine Enhancements**
   - [ ] User feedback system (rate recommendation helpfulness)
   - [ ] Seasonal and mood-based recommendations

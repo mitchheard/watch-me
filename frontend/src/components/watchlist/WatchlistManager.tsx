@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { PlusIcon, PencilIcon, TrashIcon, ShareIcon, EyeIcon, MagnifyingGlassIcon, FilmIcon } from '@heroicons/react/24/outline';
 import CreateWatchlistModal from './CreateWatchlistModal';
+import RenameWatchlistModal from './RenameWatchlistModal';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSearchParams } from 'next/navigation';
@@ -41,6 +42,8 @@ export default function WatchlistManager({ className = '' }: WatchlistManagerPro
   const [error, setError] = useState<string | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [showRenameModal, setShowRenameModal] = useState(false);
+  const [watchlistToRename, setWatchlistToRename] = useState<Watchlist | null>(null);
 
   useEffect(() => {
     if (!authLoading && user) {
@@ -110,6 +113,41 @@ export default function WatchlistManager({ className = '' }: WatchlistManagerPro
     // TODO: Implement sharing functionality
     console.log('Share watchlist:', watchlist);
     alert('Sharing functionality coming soon!');
+  };
+
+  const handleRenameWatchlist = async (newName: string) => {
+    if (!watchlistToRename) return;
+
+    try {
+      const response = await fetch(`/api/watchlists/${watchlistToRename.id}/rename`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ name: newName }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to rename watchlist');
+      }
+
+      // Update the watchlist in the local state
+      setWatchlists(watchlists.map(w => 
+        w.id === watchlistToRename.id 
+          ? { ...w, name: newName }
+          : w
+      ));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to rename watchlist');
+      throw err;
+    }
+  };
+
+  const openRenameModal = (watchlist: Watchlist, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setWatchlistToRename(watchlist);
+    setShowRenameModal(true);
   };
 
   if (authLoading) {
@@ -254,8 +292,9 @@ export default function WatchlistManager({ className = '' }: WatchlistManagerPro
                 )}
                 
                 <button
-                  className="p-0.5 text-gray-400 hover:text-gray-600 hover:bg-gray-50 rounded transition-colors"
-                  title="Edit watchlist"
+                  onClick={(e) => openRenameModal(watchlist, e)}
+                  className="p-0.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                  title="Rename watchlist"
                 >
                   <PencilIcon className="h-3 w-3" />
                 </button>
@@ -314,6 +353,19 @@ export default function WatchlistManager({ className = '' }: WatchlistManagerPro
         onClose={() => setShowCreateModal(false)}
         onSuccess={handleCreateSuccess}
       />
+
+      {/* Rename Watchlist Modal */}
+      {watchlistToRename && (
+        <RenameWatchlistModal
+          isOpen={showRenameModal}
+          onClose={() => {
+            setShowRenameModal(false);
+            setWatchlistToRename(null);
+          }}
+          currentName={watchlistToRename.name}
+          onRename={handleRenameWatchlist}
+        />
+      )}
     </div>
   );
 }

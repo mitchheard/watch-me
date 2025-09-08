@@ -234,7 +234,7 @@ export default function WatchlistManager({ className = '' }: WatchlistManagerPro
           <Link
             key={watchlist.id}
             href={`/watchlists/${watchlist.id}?name=${encodeURIComponent(watchlist.name)}`}
-            className="group p-2 bg-white border border-gray-200 rounded hover:border-gray-300 hover:shadow-sm transition-all duration-200 block"
+            className="group relative p-2 bg-white border border-gray-200 rounded hover:border-gray-300 hover:shadow-sm transition-all duration-200 block"
           >
             {/* Header */}
             <div className="flex items-start justify-between mb-1">
@@ -284,17 +284,16 @@ export default function WatchlistManager({ className = '' }: WatchlistManagerPro
             </div>
 
             {/* Actions Menu */}
-            <div className="flex items-center justify-end mt-1">
-              <div className="opacity-0 group-hover:opacity-100 transition-opacity">
-                <Menu as="div" className="relative inline-block text-left">
-                  <div>
-                    <MenuButton
-                      onClick={(e) => e.stopPropagation()}
-                      className="inline-flex justify-center w-full rounded-md bg-white px-1 py-1 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-                    >
-                      <EllipsisVerticalIcon className="h-4 w-4" aria-hidden="true" />
-                    </MenuButton>
-                  </div>
+            <div className="absolute top-2 right-2">
+              <Menu as="div" className="relative inline-block text-left">
+                <div>
+                  <MenuButton
+                    onClick={(e) => e.stopPropagation()}
+                    className="inline-flex justify-center w-full rounded-md bg-white px-1 py-1 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 shadow-sm border border-gray-200"
+                  >
+                    <EllipsisVerticalIcon className="h-4 w-4" aria-hidden="true" />
+                  </MenuButton>
+                </div>
 
                   <MenuItems className="absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
                     <div className="py-1">

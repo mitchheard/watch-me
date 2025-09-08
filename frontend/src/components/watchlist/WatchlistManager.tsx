@@ -295,7 +295,7 @@ export default function WatchlistManager({ className = '' }: WatchlistManagerPro
                   </MenuButton>
                 </div>
 
-                  <MenuItems className="absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+                <MenuItems className="absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
                     <div className="py-1">
                       <MenuItem>
                         {({ active }) => (
@@ -378,7 +378,7 @@ export default function WatchlistManager({ className = '' }: WatchlistManagerPro
                         </MenuItem>
                       )}
                     </div>
-                  </MenuItems>
+                </MenuItems>
                 </Menu>
               </div>
             </div>

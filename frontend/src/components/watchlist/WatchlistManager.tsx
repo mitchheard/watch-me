@@ -52,6 +52,11 @@ export default function WatchlistManager({ className = '' }: WatchlistManagerPro
   const [searchQuery, setSearchQuery] = useState('');
   const [showRenameModal, setShowRenameModal] = useState(false);
   const [watchlistToRename, setWatchlistToRename] = useState<Watchlist | null>(null);
+  const [hasMounted, setHasMounted] = useState(false);
+
+  useEffect(() => {
+    setHasMounted(true);
+  }, []);
 
   useEffect(() => {
     if (!authLoading && user) {
@@ -71,7 +76,8 @@ export default function WatchlistManager({ className = '' }: WatchlistManagerPro
         throw new Error('Failed to fetch watchlists');
       }
       const data = await response.json();
-      setWatchlists(data);
+      // Ensure data is always an array
+      setWatchlists(Array.isArray(data) ? data : []);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch watchlists');
       setWatchlists([]); // Ensure watchlists is always an array
@@ -85,7 +91,7 @@ export default function WatchlistManager({ className = '' }: WatchlistManagerPro
     fetchWatchlists();
   };
 
-  const filteredWatchlists = (watchlists || []).filter((watchlist) => {
+  const filteredWatchlists = Array.isArray(watchlists) ? watchlists.filter((watchlist) => {
     const matchesSearch =
       watchlist.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       (watchlist.description && watchlist.description.toLowerCase().includes(searchQuery.toLowerCase()));
@@ -94,7 +100,7 @@ export default function WatchlistManager({ className = '' }: WatchlistManagerPro
     const matchesUrlFilter = !showSharedOnly || watchlist.isShared;
     
     return matchesSearch && matchesUrlFilter;
-  });
+  }) : [];
 
   const handleDeleteWatchlist = async (watchlistId: string) => {
     if (!confirm('Are you sure you want to delete this watchlist? This action cannot be undone.')) {
@@ -110,7 +116,7 @@ export default function WatchlistManager({ className = '' }: WatchlistManagerPro
         throw new Error('Failed to delete watchlist');
       }
 
-      setWatchlists((watchlists || []).filter(w => w.id !== watchlistId));
+      setWatchlists(Array.isArray(watchlists) ? watchlists.filter(w => w.id !== watchlistId) : []);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to delete watchlist');
     }
@@ -139,11 +145,11 @@ export default function WatchlistManager({ className = '' }: WatchlistManagerPro
       }
 
       // Update the watchlist in the local state
-      setWatchlists((watchlists || []).map(w => 
+      setWatchlists(Array.isArray(watchlists) ? watchlists.map(w => 
         w.id === watchlistToRename.id 
           ? { ...w, name: newName }
           : w
-      ));
+      ) : []);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to rename watchlist');
       throw err;
@@ -156,6 +162,19 @@ export default function WatchlistManager({ className = '' }: WatchlistManagerPro
     setWatchlistToRename(watchlist);
     setShowRenameModal(true);
   };
+
+  if (!hasMounted) {
+    return (
+      <div className="space-y-4">
+        <div className="animate-pulse">
+          <div className="h-6 bg-gray-200 rounded w-1/3 mb-4"></div>
+          {[1, 2, 3].map(i => (
+            <div key={i} className="h-20 bg-gray-200 rounded mb-3"></div>
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   if (authLoading) {
     return (

@@ -24,8 +24,8 @@ export default function WatchlistPage({ params }: WatchlistPageProps) {
   
   console.log('WatchlistPage - ID:', id);
 
-  // Use a default name - the actual name will be fetched client-side
-  const watchlistName = 'My Watchlist';
+  // Pass null as initialName to prevent flicker
+  const watchlistName = null;
 
   // Show loading state while params are being resolved
   if (!id) {

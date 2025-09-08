@@ -4,11 +4,12 @@ import { useEffect, useState } from 'react';
 
 interface WatchlistBreadcrumbProps {
   watchlistId: string;
-  initialName?: string;
+  initialName?: string | null;
 }
 
-export default function WatchlistBreadcrumb({ watchlistId, initialName = 'My Watchlist' }: WatchlistBreadcrumbProps) {
-  const [watchlistName, setWatchlistName] = useState(initialName);
+export default function WatchlistBreadcrumb({ watchlistId, initialName = null }: WatchlistBreadcrumbProps) {
+  const [watchlistName, setWatchlistName] = useState<string | null>(initialName);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchWatchlistName = async () => {
@@ -16,10 +17,15 @@ export default function WatchlistBreadcrumb({ watchlistId, initialName = 'My Wat
         const response = await fetch(`/api/watchlists/${watchlistId}`);
         if (response.ok) {
           const watchlist = await response.json();
-          setWatchlistName(watchlist.name || 'My Watchlist');
+          setWatchlistName(watchlist.name);
+        } else {
+          setWatchlistName('Error loading name');
         }
       } catch (error) {
         console.error('Failed to fetch watchlist name:', error);
+        setWatchlistName('Error loading name');
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -32,7 +38,9 @@ export default function WatchlistBreadcrumb({ watchlistId, initialName = 'My Wat
         Watchlists
       </a>
       <span>/</span>
-      <span className="text-gray-900">{watchlistName}</span>
+      <span className="text-gray-900">
+        {loading ? 'Loading...' : watchlistName || 'Watchlist'}
+      </span>
     </nav>
   );
 }

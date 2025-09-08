@@ -1,12 +1,17 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { PlusIcon, PencilIcon, TrashIcon, ShareIcon, EyeIcon, MagnifyingGlassIcon, FilmIcon } from '@heroicons/react/24/outline';
+import { PlusIcon, PencilIcon, TrashIcon, ShareIcon, EyeIcon, MagnifyingGlassIcon, FilmIcon, EllipsisVerticalIcon } from '@heroicons/react/24/outline';
+import { Menu, MenuButton, MenuItems, MenuItem } from '@headlessui/react';
 import CreateWatchlistModal from './CreateWatchlistModal';
 import RenameWatchlistModal from './RenameWatchlistModal';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSearchParams } from 'next/navigation';
+
+function classNames(...classes: string[]) {
+  return classes.filter(Boolean).join(' ');
+}
 
 interface Watchlist {
   id: string;
@@ -278,36 +283,104 @@ export default function WatchlistManager({ className = '' }: WatchlistManagerPro
               </span>
             </div>
 
-            {/* Actions */}
+            {/* Actions Menu */}
             <div className="flex items-center justify-end mt-1">
-              <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                {watchlist.isShared && (
-                  <button
-                    onClick={() => handleShareWatchlist(watchlist)}
-                    className="p-0.5 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded transition-colors"
-                    title="Share watchlist"
-                  >
-                    <ShareIcon className="h-3 w-3" />
-                  </button>
-                )}
-                
-                <button
-                  onClick={(e) => openRenameModal(watchlist, e)}
-                  className="p-0.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
-                  title="Rename watchlist"
-                >
-                  <PencilIcon className="h-3 w-3" />
-                </button>
-                
-                {!watchlist.isDefault && (
-                  <button
-                    onClick={() => handleDeleteWatchlist(watchlist.id)}
-                    className="p-0.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
-                    title="Delete watchlist"
-                  >
-                    <TrashIcon className="h-3 w-3" />
-                  </button>
-                )}
+              <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+                <Menu as="div" className="relative inline-block text-left">
+                  <div>
+                    <MenuButton
+                      onClick={(e) => e.stopPropagation()}
+                      className="inline-flex justify-center w-full rounded-md bg-white px-1 py-1 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                    >
+                      <EllipsisVerticalIcon className="h-4 w-4" aria-hidden="true" />
+                    </MenuButton>
+                  </div>
+
+                  <MenuItems className="absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+                    <div className="py-1">
+                      <MenuItem>
+                        {({ active }) => (
+                          <button
+                            onClick={(e) => openRenameModal(watchlist, e)}
+                            className={classNames(
+                              active ? 'bg-gray-100 text-gray-900' : 'text-gray-700',
+                              'block px-4 py-2 text-sm w-full text-left'
+                            )}
+                          >
+                            <div className="flex items-center">
+                              <PencilIcon className="h-4 w-4 mr-2" />
+                              Rename
+                            </div>
+                          </button>
+                        )}
+                      </MenuItem>
+                      
+                      {watchlist.isShared && (
+                        <MenuItem>
+                          {({ active }) => (
+                            <button
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                handleShareWatchlist(watchlist);
+                              }}
+                              className={classNames(
+                                active ? 'bg-gray-100 text-gray-900' : 'text-gray-700',
+                                'block px-4 py-2 text-sm w-full text-left'
+                              )}
+                            >
+                              <div className="flex items-center">
+                                <ShareIcon className="h-4 w-4 mr-2" />
+                                Share
+                              </div>
+                            </button>
+                          )}
+                        </MenuItem>
+                      )}
+                      
+                      {!watchlist.isDefault && (
+                        <MenuItem>
+                          {({ active }) => (
+                            <button
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                handleDeleteWatchlist(watchlist.id);
+                              }}
+                              className={classNames(
+                                active ? 'bg-gray-100 text-gray-900' : 'text-gray-700',
+                                'block px-4 py-2 text-sm w-full text-left text-red-600'
+                              )}
+                            >
+                              <div className="flex items-center">
+                                <TrashIcon className="h-4 w-4 mr-2" />
+                                Delete
+                              </div>
+                            </button>
+                          )}
+                        </MenuItem>
+                      )}
+                      
+                      {watchlist.isShared && (
+                        <MenuItem disabled>
+                          {({ active }) => (
+                            <button
+                              className={classNames(
+                                active ? 'bg-gray-100 text-gray-900' : 'text-gray-700',
+                                'block px-4 py-2 text-sm w-full text-left opacity-50 cursor-not-allowed'
+                              )}
+                            >
+                              <div className="flex items-center">
+                                <EyeIcon className="h-4 w-4 mr-2" />
+                                Remove Myself (Coming Soon)
+                              </div>
+                            </button>
+                          )}
+                        </MenuItem>
+                      )}
+                    </div>
+                  </MenuItems>
+                </Menu>
               </div>
             </div>
           </Link>

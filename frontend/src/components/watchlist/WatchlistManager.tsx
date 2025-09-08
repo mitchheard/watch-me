@@ -76,8 +76,9 @@ export default function WatchlistManager({ className = '' }: WatchlistManagerPro
         throw new Error('Failed to fetch watchlists');
       }
       const data = await response.json();
-      // Ensure data is always an array
-      setWatchlists(Array.isArray(data) ? data : []);
+      // Handle the response format: { watchlists: [...] }
+      const watchlistsArray = data.watchlists || data;
+      setWatchlists(Array.isArray(watchlistsArray) ? watchlistsArray : []);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch watchlists');
       setWatchlists([]); // Ensure watchlists is always an array

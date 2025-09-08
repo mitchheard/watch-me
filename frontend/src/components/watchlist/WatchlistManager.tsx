@@ -19,6 +19,9 @@ interface Watchlist {
   description?: string;
   isShared: boolean;
   isDefault: boolean;
+  ownerId: string;
+  createdAt: string;
+  updatedAt: string;
   owner: {
     id: string;
     email: string;

@@ -12,6 +12,7 @@ import Image from 'next/image';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'react-hot-toast';
 import { Dialog } from '@headlessui/react';
+import AddToMultipleListsModal from './AddToMultipleListsModal';
 
 // type FilterType = 'all' | 'movie' | 'show';
 type FilterStatus = 'all' | 'want-to-watch' | 'watching' | 'finished';
@@ -40,6 +41,8 @@ export default function WatchlistItems({ watchlistId }: WatchlistItemsProps = {}
   const [isRateSubmitting, setIsRateSubmitting] = useState(false);
   const [modalStep, setModalStep] = useState<'edit' | 'rate'>('edit');
   const [modalItem, setModalItem] = useState<WatchItem | null>(null);
+  const [showAddToListsModal, setShowAddToListsModal] = useState(false);
+  const [itemToAddToLists, setItemToAddToLists] = useState<WatchItem | null>(null);
 
   const fetchItems = async () => {
     try {
@@ -69,14 +72,23 @@ export default function WatchlistItems({ watchlistId }: WatchlistItemsProps = {}
   if (!user) return null;
 
   const handleDelete = async (id: number) => {
-    if (!window.confirm('Are you sure you want to remove this item from your watchlist?')) return;
+    const isMainList = !watchlistId;
+    const confirmMessage = isMainList 
+      ? 'Are you sure you want to remove this item from ALL your lists? This will remove it from every watchlist you have.'
+      : 'Are you sure you want to remove this item from this watchlist?';
+    
+    if (!window.confirm(confirmMessage)) return;
+    
     // Use different API endpoints based on whether watchlistId is provided
     const apiUrl = watchlistId ? `/api/watchlists/${watchlistId}/items/${id}` : `/api/watchlist?id=${id}`;
     const res = await fetch(apiUrl, { method: 'DELETE' });
     if (res.ok) {
       setModalItem(null); // Close details modal after delete
       fetchItems();
-      toast.error('Removed from list');
+      const successMessage = isMainList 
+        ? 'Removed from all lists'
+        : 'Removed from this list';
+      toast.success(successMessage);
     }
   };
 
@@ -105,6 +117,14 @@ export default function WatchlistItems({ watchlistId }: WatchlistItemsProps = {}
     setTimeout(() => {
       setSelectedItem(item);
       setModalStep('edit');
+    }, 0);
+  };
+
+  const handleAddToLists = (item: WatchItem) => {
+    setModalItem(null); // Close details modal first
+    setTimeout(() => {
+      setItemToAddToLists(item);
+      setShowAddToListsModal(true);
     }, 0);
   };
 
@@ -891,6 +911,15 @@ export default function WatchlistItems({ watchlistId }: WatchlistItemsProps = {}
                 >
                   Rate
                 </button>
+                {/* Only show "Add to Lists" button on main list (not on individual watchlists) */}
+                {!watchlistId && (
+                  <button
+                    className="px-4 py-2 rounded-lg border border-green-300 bg-green-50 text-green-700 text-sm font-medium hover:bg-green-100 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-colors"
+                    onClick={() => handleAddToLists(modalItem)}
+                  >
+                    Add to Lists
+                  </button>
+                )}
                 <button
                   className="px-4 py-2 rounded-lg border border-red-300 bg-red-50 text-red-700 text-sm font-medium hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-colors"
                   onClick={() => handleDelete(modalItem.id)}
@@ -902,6 +931,26 @@ export default function WatchlistItems({ watchlistId }: WatchlistItemsProps = {}
           </div>
         </Dialog>
       )}
+
+      {/* Add to Multiple Lists Modal */}
+      <AddToMultipleListsModal
+        isOpen={showAddToListsModal}
+        onClose={() => {
+          setShowAddToListsModal(false);
+          setItemToAddToLists(null);
+        }}
+        item={itemToAddToLists ? {
+          tmdbId: itemToAddToLists.tmdbId || 0,
+          title: itemToAddToLists.title,
+          type: itemToAddToLists.type === 'movie' ? 'movie' : 'tv',
+          posterPath: itemToAddToLists.tmdbPosterPath,
+          releaseYear: itemToAddToLists.tmdbMovieReleaseYear || itemToAddToLists.tmdbTvFirstAirYear
+        } : null}
+        onSuccess={() => {
+          // Optionally refresh the current list or show success message
+          toast.success('Item added to selected lists!');
+        }}
+      />
     </div>
   );
 }

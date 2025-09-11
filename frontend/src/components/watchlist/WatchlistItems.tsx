@@ -544,7 +544,30 @@ export default function WatchlistItems({ watchlistId }: WatchlistItemsProps = {}
           title="Add Movie or TV Show"
         >
           <WatchlistForm
-            _onAddItem={async () => {}}
+            _onAddItem={async (itemData) => {
+              try {
+                // Use different API endpoints based on whether watchlistId is provided
+                const apiUrl = watchlistId ? `/api/watchlists/${watchlistId}/items` : '/api/watchlist';
+                const res = await fetch(apiUrl, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify(itemData),
+                });
+                
+                if (!res.ok) {
+                  const errorData = await res.json();
+                  throw new Error(errorData.error || 'Failed to add item');
+                }
+                
+                const newItem = await res.json();
+                setItems([newItem, ...items]);
+                setShowAddModal(false);
+                toast.success('Item added successfully');
+              } catch (error) {
+                console.error('Failed to add item:', error);
+                toast.error('Failed to add item');
+              }
+            }}
             onAddSuccess={handleAddSuccess}
           />
         </Modal>

@@ -53,32 +53,25 @@ export default function WatchlistManager({ className = '' }: WatchlistManagerPro
   const [showRenameModal, setShowRenameModal] = useState(false);
   const [watchlistToRename, setWatchlistToRename] = useState<Watchlist | null>(null);
   const [hasMounted, setHasMounted] = useState(false);
-  const [showShareSubmenu, setShowShareSubmenu] = useState<string | null>(null);
+  const [lastFetchTime, setLastFetchTime] = useState<number>(0);
 
   useEffect(() => {
     setHasMounted(true);
   }, []);
 
-  // Close share submenu when clicking outside
-  useEffect(() => {
-    const handleClickOutside = () => {
-      setShowShareSubmenu(null);
-    };
-    
-    if (showShareSubmenu) {
-      document.addEventListener('click', handleClickOutside);
-      return () => document.removeEventListener('click', handleClickOutside);
-    }
-  }, [showShareSubmenu]);
 
   useEffect(() => {
     if (!authLoading && user) {
-      fetchWatchlists();
+      // Only fetch if we haven't fetched recently (within 30 seconds)
+      const now = Date.now();
+      if (now - lastFetchTime > 30000) {
+        fetchWatchlists();
+      }
     } else if (!authLoading && !user) {
       setLoading(false);
       setError('Please log in to view your watchlists');
     }
-  }, [user, authLoading, showSharedOnly]);
+  }, [user, authLoading, showSharedOnly, lastFetchTime]);
 
   const fetchWatchlists = async () => {
     setLoading(true);
@@ -92,6 +85,7 @@ export default function WatchlistManager({ className = '' }: WatchlistManagerPro
       // Handle the response format: { watchlists: [...] }
       const watchlistsArray = data.watchlists || data;
       setWatchlists(Array.isArray(watchlistsArray) ? watchlistsArray : []);
+      setLastFetchTime(Date.now()); // Update the last fetch time
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch watchlists');
       setWatchlists([]); // Ensure watchlists is always an array
@@ -177,9 +171,6 @@ export default function WatchlistManager({ className = '' }: WatchlistManagerPro
     setShowRenameModal(true);
   };
 
-  const closeShareSubmenu = () => {
-    setShowShareSubmenu(null);
-  };
 
   if (!hasMounted) {
     return (
@@ -324,58 +315,38 @@ export default function WatchlistManager({ className = '' }: WatchlistManagerPro
                       </MenuItem>
                       <MenuItem>
                         {({ active }) => (
-                          <div className="relative">
-                            <button
-                              onClick={(e) => {
-                                e.preventDefault();
-                                e.stopPropagation();
-                                setShowShareSubmenu(showShareSubmenu === watchlist.id ? null : watchlist.id);
-                              }}
-                              className={`${
-                                active ? 'bg-gray-100 text-gray-900' : 'text-gray-700'
-                              } group flex w-full items-center px-4 py-2 text-sm`}
-                            >
-                              <ShareIcon className="mr-3 h-4 w-4" aria-hidden="true" />
-                              Share
-                              <svg className="ml-auto h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
-                                <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
-                              </svg>
-                            </button>
-                            
-                            {/* Share Submenu */}
-                            {showShareSubmenu === watchlist.id && (
-                              <div className="absolute left-full top-0 ml-1 w-48 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5">
-                                <div className="py-1">
-                                  <button
-                                    onClick={(e) => {
-                                      e.preventDefault();
-                                      e.stopPropagation();
-                                      setShowShareSubmenu(null);
-                                      // TODO: Implement public link sharing
-                                      alert('Public link sharing coming soon!');
-                                    }}
-                                    className="flex w-full items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                                  >
-                                    <LinkIcon className="mr-3 h-4 w-4" aria-hidden="true" />
-                                    Share as Public Link
-                                  </button>
-                                  <button
-                                    onClick={(e) => {
-                                      e.preventDefault();
-                                      e.stopPropagation();
-                                      setShowShareSubmenu(null);
-                                      // TODO: Implement add member functionality
-                                      alert('Add member functionality coming soon!');
-                                    }}
-                                    className="flex w-full items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                                  >
-                                    <UserPlusIcon className="mr-3 h-4 w-4" aria-hidden="true" />
-                                    Add Member
-                                  </button>
-                                </div>
-                              </div>
-                            )}
-                          </div>
+                          <button
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              // TODO: Implement public link sharing
+                              alert('Public link sharing coming soon!');
+                            }}
+                            className={`${
+                              active ? 'bg-gray-100 text-gray-900' : 'text-gray-700'
+                            } group flex w-full items-center px-4 py-2 text-sm`}
+                          >
+                            <LinkIcon className="mr-3 h-4 w-4" aria-hidden="true" />
+                            Share as Public Link
+                          </button>
+                        )}
+                      </MenuItem>
+                      <MenuItem>
+                        {({ active }) => (
+                          <button
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              // TODO: Implement add member functionality
+                              alert('Add member functionality coming soon!');
+                            }}
+                            className={`${
+                              active ? 'bg-gray-100 text-gray-900' : 'text-gray-700'
+                            } group flex w-full items-center px-4 py-2 text-sm`}
+                          >
+                            <UserPlusIcon className="mr-3 h-4 w-4" aria-hidden="true" />
+                            Add Member
+                          </button>
                         )}
                       </MenuItem>
                       <MenuItem>

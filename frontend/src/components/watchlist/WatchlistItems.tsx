@@ -459,16 +459,29 @@ export default function WatchlistItems({ watchlistId }: WatchlistItemsProps = {}
               itemToEdit={selectedItem} 
               _onAddItem={handleDummyAddItem}
               onUpdateItem={async (id, data) => {
-                // After update, fetch the updated item to check status/rating
-                await fetch('/api/watchlist', {
-                  method: 'PUT',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ ...data, id }),
-                });
-                const res = await fetch(`/api/watchlist?id=${id}`);
-                const updated = await res.json();
-                console.log('Updated item after edit:', updated);
-                handleUpdateItemSuccess(updated);
+                try {
+                  // After update, fetch the updated item to check status/rating
+                  const updateRes = await fetch('/api/watchlist', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ ...data, id }),
+                  });
+                  
+                  if (!updateRes.ok) {
+                    const errorData = await updateRes.json();
+                    console.error('Update failed:', updateRes.status, errorData);
+                    toast.error('Failed to update item');
+                    return;
+                  }
+                  
+                  const res = await fetch(`/api/watchlist?id=${id}`);
+                  const updated = await res.json();
+                  console.log('Updated item after edit:', updated);
+                  handleUpdateItemSuccess(updated);
+                } catch (error) {
+                  console.error('Update error:', error);
+                  toast.error('Failed to update item');
+                }
               }}
               onCancelEdit={handleCancelEdit}
               onAddSuccess={() => {

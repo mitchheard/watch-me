@@ -5,6 +5,7 @@ import { PlusIcon, PencilIcon, TrashIcon, ShareIcon, EyeIcon, MagnifyingGlassIco
 import { Menu, MenuButton, MenuItems, MenuItem, Transition } from '@headlessui/react';
 import CreateWatchlistModal from './CreateWatchlistModal';
 import RenameWatchlistModal from './RenameWatchlistModal';
+import AddMemberModal from './AddMemberModal';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSearchParams } from 'next/navigation';
@@ -54,6 +55,8 @@ export default function WatchlistManager({ className = '' }: WatchlistManagerPro
   const [watchlistToRename, setWatchlistToRename] = useState<Watchlist | null>(null);
   const [hasMounted, setHasMounted] = useState(false);
   const [lastFetchTime, setLastFetchTime] = useState<number>(0);
+  const [showAddMemberModal, setShowAddMemberModal] = useState(false);
+  const [watchlistToAddMember, setWatchlistToAddMember] = useState<Watchlist | null>(null);
 
   useEffect(() => {
     setHasMounted(true);
@@ -169,6 +172,13 @@ export default function WatchlistManager({ className = '' }: WatchlistManagerPro
     e.stopPropagation();
     setWatchlistToRename(watchlist);
     setShowRenameModal(true);
+  };
+
+  const openAddMemberModal = (watchlist: Watchlist, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setWatchlistToAddMember(watchlist);
+    setShowAddMemberModal(true);
   };
 
 
@@ -334,12 +344,7 @@ export default function WatchlistManager({ className = '' }: WatchlistManagerPro
                       <MenuItem>
                         {({ active }) => (
                           <button
-                            onClick={(e) => {
-                              e.preventDefault();
-                              e.stopPropagation();
-                              // TODO: Implement add member functionality
-                              alert('Add member functionality coming soon!');
-                            }}
+                            onClick={(e) => openAddMemberModal(watchlist, e)}
                             className={`${
                               active ? 'bg-gray-100 text-gray-900' : 'text-gray-700'
                             } group flex w-full items-center px-4 py-2 text-sm`}
@@ -466,6 +471,23 @@ export default function WatchlistManager({ className = '' }: WatchlistManagerPro
           }}
           currentName={watchlistToRename.name}
           onRename={handleRenameWatchlist}
+        />
+      )}
+
+      {/* Add Member Modal */}
+      {watchlistToAddMember && (
+        <AddMemberModal
+          isOpen={showAddMemberModal}
+          onClose={() => {
+            setShowAddMemberModal(false);
+            setWatchlistToAddMember(null);
+          }}
+          watchlistId={watchlistToAddMember.id}
+          watchlistName={watchlistToAddMember.name}
+          onSuccess={() => {
+            // Refresh the watchlists to show updated member count
+            fetchWatchlists();
+          }}
         />
       )}
     </div>

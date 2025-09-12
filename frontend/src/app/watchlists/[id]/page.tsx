@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { notFound } from 'next/navigation';
 import WatchlistItems from '@/components/watchlist/WatchlistItems';
@@ -50,9 +50,11 @@ export default function WatchlistPage({ params }: WatchlistPageProps) {
         </div>
 
         {id ? (
-          <WatchlistItems 
-            watchlistId={id}
-          />
+          <Suspense fallback={<div className="text-center py-10">Loading watchlist...</div>}>
+            <WatchlistItems 
+              watchlistId={id}
+            />
+          </Suspense>
         ) : (
           <div className="text-center py-8">
             <p className="text-red-600">Invalid watchlist ID</p>

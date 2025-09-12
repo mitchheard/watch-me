@@ -100,6 +100,17 @@ export default function WatchlistItems({ watchlistId }: WatchlistItemsProps = {}
     .filter((item) => status === 'all' || item.status === status)
     .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
+  // Debug logging
+  console.log('WatchlistItems Debug:', {
+    watchlistId,
+    itemsCount: items.length,
+    items: items.map(item => ({ id: item.id, title: item.title, type: item.type, status: item.status })),
+    type,
+    status,
+    visibleItemsCount: visibleItems.length,
+    visibleItems: visibleItems.map(item => ({ id: item.id, title: item.title, type: item.type, status: item.status }))
+  });
+
   // Calculate counts for filter badges
   const movieCount = items.filter(item => item.type === 'movie').length;
   const showCount = items.filter(item => item.type === 'show').length;

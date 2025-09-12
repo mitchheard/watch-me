@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { PlusIcon, PencilIcon, TrashIcon, ShareIcon, EyeIcon, MagnifyingGlassIcon, FilmIcon, EllipsisVerticalIcon } from '@heroicons/react/24/outline';
-import { Menu, MenuButton, MenuItems, MenuItem } from '@headlessui/react';
+import { Menu, MenuButton, MenuItems, MenuItem, Transition } from '@headlessui/react';
 import CreateWatchlistModal from './CreateWatchlistModal';
 import RenameWatchlistModal from './RenameWatchlistModal';
 import Link from 'next/link';
@@ -267,16 +267,84 @@ export default function WatchlistManager({ className = '' }: WatchlistManagerPro
           >
             {/* Three-dot menu */}
             <div className="absolute top-2 right-2">
-              <button
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  openRenameModal(watchlist, e);
-                }}
-                className="inline-flex justify-center w-full rounded-md bg-white px-1 py-1 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 shadow-sm border border-gray-200"
-              >
-                <EllipsisVerticalIcon className="h-4 w-4" aria-hidden="true" />
-              </button>
+              <Menu as="div" className="relative inline-block text-left">
+                <MenuButton
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                  }}
+                  className="inline-flex justify-center w-full rounded-md bg-white px-1 py-1 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 shadow-sm border border-gray-200"
+                >
+                  <EllipsisVerticalIcon className="h-4 w-4" aria-hidden="true" />
+                </MenuButton>
+                
+                <Transition
+                  enter="transition ease-out duration-100"
+                  enterFrom="transform opacity-0 scale-95"
+                  enterTo="transform opacity-100 scale-100"
+                  leave="transition ease-in duration-75"
+                  leaveFrom="transform opacity-100 scale-100"
+                  leaveTo="transform opacity-0 scale-95"
+                >
+                  <MenuItems className="absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+                    <div className="py-1">
+                      <MenuItem>
+                        {({ active }) => (
+                          <button
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              openRenameModal(watchlist, e);
+                            }}
+                            className={`${
+                              active ? 'bg-gray-100 text-gray-900' : 'text-gray-700'
+                            } group flex w-full items-center px-4 py-2 text-sm`}
+                          >
+                            <PencilIcon className="mr-3 h-4 w-4" aria-hidden="true" />
+                            Rename
+                          </button>
+                        )}
+                      </MenuItem>
+                      <MenuItem>
+                        {({ active }) => (
+                          <button
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              // TODO: Implement share functionality
+                              alert('Share functionality coming soon!');
+                            }}
+                            className={`${
+                              active ? 'bg-gray-100 text-gray-900' : 'text-gray-700'
+                            } group flex w-full items-center px-4 py-2 text-sm`}
+                          >
+                            <ShareIcon className="mr-3 h-4 w-4" aria-hidden="true" />
+                            Share
+                          </button>
+                        )}
+                      </MenuItem>
+                      <MenuItem>
+                        {({ active }) => (
+                          <button
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              // TODO: Implement delete functionality
+                              alert('Delete functionality coming soon!');
+                            }}
+                            className={`${
+                              active ? 'bg-gray-100 text-red-600' : 'text-red-600'
+                            } group flex w-full items-center px-4 py-2 text-sm`}
+                          >
+                            <TrashIcon className="mr-3 h-4 w-4" aria-hidden="true" />
+                            Delete
+                          </button>
+                        )}
+                      </MenuItem>
+                    </div>
+                  </MenuItems>
+                </Transition>
+              </Menu>
             </div>
             {/* Header */}
             <div className="flex items-start justify-between mb-1">

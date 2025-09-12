@@ -47,7 +47,7 @@ export async function GET(request: NextRequest) {
           }
         },
         _count: {
-          select: { items: true }
+          select: { items: true, members: true }
         }
       },
       orderBy: [

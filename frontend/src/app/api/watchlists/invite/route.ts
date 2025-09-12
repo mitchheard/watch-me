@@ -58,6 +58,7 @@ export async function POST(request: NextRequest) {
     });
 
     if (existingMember) {
+      console.log('User is already a member:', email);
       return NextResponse.json(
         { error: 'User is already a member of this watchlist' },
         { status: 409 }
@@ -69,31 +70,38 @@ export async function POST(request: NextRequest) {
       where: { email: email.toLowerCase() }
     });
 
+    console.log('Invited user found:', invitedUser ? 'Yes' : 'No');
+
     // If user doesn't exist, create a placeholder user
     if (!invitedUser) {
+      console.log('Creating new user for email:', email);
       invitedUser = await prisma.user.create({
         data: {
           email: email.toLowerCase(),
           // We'll update this when they actually sign up
         }
       });
+      console.log('Created user with ID:', invitedUser.id);
     }
 
     // Add user to watchlist
-    await prisma.watchlistMember.create({
+    console.log('Adding user to watchlist:', { watchlistId, userId: invitedUser.id });
+    const member = await prisma.watchlistMember.create({
       data: {
         watchlistId,
         userId: invitedUser.id
       }
     });
+    console.log('Created watchlist member:', member.id);
 
     // Generate invitation link
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3001';
     const invitationLink = `${baseUrl}/watchlists/${watchlistId}?invited=true`;
 
     // Send invitation email
+    console.log('Sending invitation email to:', email);
     try {
-      await resend.emails.send({
+      const emailResult = await resend.emails.send({
         from: 'Watch Me <noreply@watch-me-app.com>',
         to: [email],
         subject: `You've been invited to collaborate on "${watchlistName}"`,
@@ -135,6 +143,7 @@ export async function POST(request: NextRequest) {
           </div>
         `
       });
+      console.log('Email sent successfully:', emailResult);
     } catch (emailError) {
       console.error('Failed to send invitation email:', emailError);
       // Don't fail the request if email fails, but log it

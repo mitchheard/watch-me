@@ -102,7 +102,7 @@ export async function POST(request: NextRequest) {
     console.log('Sending invitation email to:', email);
     try {
       const emailResult = await resend.emails.send({
-        from: 'Watch Me <noreply@watch-me-app.com>',
+        from: 'Watch Me <noreply@watchme.app>',
         to: [email],
         subject: `You've been invited to collaborate on "${watchlistName}"`,
         html: `

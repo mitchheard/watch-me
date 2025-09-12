@@ -58,18 +58,32 @@ export async function GET(
 
     // Transform the data to match the expected WatchItem interface
     const items = watchlistItemLists.map(itemList => ({
-      id: itemList.id,
+      id: itemList.watchlistItem.id, // Use the actual WatchItem ID
       tmdbId: itemList.watchlistItem.tmdbId,
       title: itemList.watchlistItem.title,
       type: itemList.watchlistItem.type,
       status: itemList.status,
       rating: itemList.rating,
       notes: itemList.notes,
-      addedAt: itemList.addedAt,
-      tmdbPosterPath: itemList.watchlistItem.tmdbPosterPath,
+      createdAt: itemList.addedAt, // Map addedAt to createdAt
+      updatedAt: itemList.addedAt, // Use addedAt for updatedAt as well
+      userId: user.id, // Add userId field
+      currentSeason: null, // Add required fields with null values
+      totalSeasons: null,
+      tmdbImdbId: itemList.watchlistItem.tmdbImdbId,
+      tmdbMovieCertification: itemList.watchlistItem.tmdbMovieCertification,
+      tmdbMovieRuntime: itemList.watchlistItem.tmdbMovieRuntime,
       tmdbOverview: itemList.watchlistItem.tmdbOverview,
-      tmdbMovieReleaseYear: itemList.watchlistItem.tmdbMovieReleaseYear,
+      tmdbPosterPath: itemList.watchlistItem.tmdbPosterPath,
+      tmdbTagline: itemList.watchlistItem.tmdbTagline,
+      tmdbTvCertification: itemList.watchlistItem.tmdbTvCertification,
       tmdbTvFirstAirYear: itemList.watchlistItem.tmdbTvFirstAirYear,
+      tmdbTvLastAirYear: itemList.watchlistItem.tmdbTvLastAirYear,
+      tmdbTvNetworks: itemList.watchlistItem.tmdbTvNetworks,
+      tmdbTvNumberOfEpisodes: itemList.watchlistItem.tmdbTvNumberOfEpisodes,
+      tmdbTvNumberOfSeasons: itemList.watchlistItem.tmdbTvNumberOfSeasons,
+      tmdbTvStatus: itemList.watchlistItem.tmdbTvStatus,
+      tmdbMovieReleaseYear: itemList.watchlistItem.tmdbMovieReleaseYear,
     }));
 
     return NextResponse.json(items);
@@ -228,7 +242,37 @@ export async function POST(
       }
     }
 
-    return NextResponse.json({ item: watchlistItemList }, { status: 201 });
+    // Transform the response to match the expected WatchItem interface
+    const transformedItem = {
+      id: watchlistItemList.watchlistItem.id,
+      tmdbId: watchlistItemList.watchlistItem.tmdbId,
+      title: watchlistItemList.watchlistItem.title,
+      type: watchlistItemList.watchlistItem.type,
+      status: watchlistItemList.status,
+      rating: watchlistItemList.rating,
+      notes: watchlistItemList.notes,
+      createdAt: watchlistItemList.addedAt,
+      updatedAt: watchlistItemList.addedAt,
+      userId: user.id,
+      currentSeason: null,
+      totalSeasons: null,
+      tmdbImdbId: watchlistItemList.watchlistItem.tmdbImdbId,
+      tmdbMovieCertification: watchlistItemList.watchlistItem.tmdbMovieCertification,
+      tmdbMovieRuntime: watchlistItemList.watchlistItem.tmdbMovieRuntime,
+      tmdbOverview: watchlistItemList.watchlistItem.tmdbOverview,
+      tmdbPosterPath: watchlistItemList.watchlistItem.tmdbPosterPath,
+      tmdbTagline: watchlistItemList.watchlistItem.tmdbTagline,
+      tmdbTvCertification: watchlistItemList.watchlistItem.tmdbTvCertification,
+      tmdbTvFirstAirYear: watchlistItemList.watchlistItem.tmdbTvFirstAirYear,
+      tmdbTvLastAirYear: watchlistItemList.watchlistItem.tmdbTvLastAirYear,
+      tmdbTvNetworks: watchlistItemList.watchlistItem.tmdbTvNetworks,
+      tmdbTvNumberOfEpisodes: watchlistItemList.watchlistItem.tmdbTvNumberOfEpisodes,
+      tmdbTvNumberOfSeasons: watchlistItemList.watchlistItem.tmdbTvNumberOfSeasons,
+      tmdbTvStatus: watchlistItemList.watchlistItem.tmdbTvStatus,
+      tmdbMovieReleaseYear: watchlistItemList.watchlistItem.tmdbMovieReleaseYear,
+    };
+
+    return NextResponse.json(transformedItem, { status: 201 });
   } catch (error) {
     console.error('Error adding item to watchlist:', error);
     return NextResponse.json(

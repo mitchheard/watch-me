@@ -52,12 +52,15 @@ export default function WatchlistItems({ watchlistId }: WatchlistItemsProps = {}
       const data = await res.json();
       
       if (!res.ok) {
+        console.log('fetchItems error:', res.status, data);
         setItems([]);
         return;
       }
       
+      console.log('fetchItems response:', data);
       setItems(Array.isArray(data) ? data : []);
-    } catch (_error) {
+    } catch (error) {
+      console.error('fetchItems error:', error);
       setItems([]);
     } finally {
       setLoading(false);
@@ -172,17 +175,26 @@ export default function WatchlistItems({ watchlistId }: WatchlistItemsProps = {}
     try {
       // Use different API endpoints based on whether watchlistId is provided
       const apiUrl = watchlistId ? `/api/watchlists/${watchlistId}/items/${item.id}` : '/api/watchlist';
-      await fetch(apiUrl, {
+      const response = await fetch(apiUrl, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id: item.id, rating: rateValue }),
       });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const updatedItem = await response.json();
+      console.log('Rating update response:', updatedItem);
+      
       setSelectedItem(null);
       setRateItem(null);
       setRateValue(null);
       fetchItems();
       toast.success('Rating saved');
-    } catch (_err) {
+    } catch (err) {
+      console.error('Failed to update rating:', err);
       toast.error('Failed to update rating');
     } finally {
       setIsRateSubmitting(false);

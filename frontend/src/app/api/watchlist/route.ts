@@ -320,12 +320,35 @@ export async function PUT(request: Request) {
     const data = await request.json();
     const { id, ...updateData } = data;
 
-    // Check if this is adding a rating for the first time
-    const existingItem = await prisma.watchItem.findUnique({
-      where: { id, userId: _userId },
+    // Find user's default watchlist
+    const defaultWatchlist = await prisma.watchlist.findFirst({
+      where: {
+        ownerId: _userId,
+        isDefault: true
+      }
     });
 
-    const isAddingRating = updateData.rating && !existingItem?.rating;
+    if (!defaultWatchlist) {
+      return NextResponse.json({ error: 'Default watchlist not found' }, { status: 404 });
+    }
+
+    // Find the watchlist item list entry
+    const watchlistItemList = await prisma.watchlistItemList.findFirst({
+      where: {
+        watchlistId: defaultWatchlist.id,
+        watchlistItemId: id
+      },
+      include: {
+        watchlistItem: true
+      }
+    });
+
+    if (!watchlistItemList) {
+      return NextResponse.json({ error: 'Item not found in watchlist' }, { status: 404 });
+    }
+
+    // Check if this is adding a rating for the first time
+    const isAddingRating = updateData.rating && !watchlistItemList.rating;
 
     // Only update fields that are present in the request
     const updateFields: Record<string, unknown> = { updatedAt: new Date() };
@@ -335,9 +358,13 @@ export async function PUT(request: Request) {
       }
     }
 
-    const item = await prisma.watchItem.update({
-      where: { id, userId: _userId },
+    // Update the watchlist item list entry
+    const updatedWatchlistItemList = await prisma.watchlistItemList.update({
+      where: { id: watchlistItemList.id },
       data: updateFields,
+      include: {
+        watchlistItem: true
+      }
     });
 
     // If this was the user's first review, send admin notification
@@ -351,7 +378,7 @@ export async function PUT(request: Request) {
           await notifyFirstReview(
             _userId,
             user.email,
-            item.title,
+            updatedWatchlistItemList.watchlistItem.title,
             updateData.rating as string
           );
         }
@@ -360,6 +387,36 @@ export async function PUT(request: Request) {
         // Non-critical, so we just log and continue
       }
     }
+
+    // Transform to old format for compatibility
+    const item = {
+      id: updatedWatchlistItemList.watchlistItem.id,
+      tmdbId: updatedWatchlistItemList.watchlistItem.tmdbId,
+      title: updatedWatchlistItemList.watchlistItem.title,
+      type: updatedWatchlistItemList.watchlistItem.type,
+      status: updatedWatchlistItemList.status,
+      rating: updatedWatchlistItemList.rating,
+      notes: updatedWatchlistItemList.notes,
+      createdAt: updatedWatchlistItemList.addedAt,
+      updatedAt: updatedWatchlistItemList.updatedAt,
+      userId: _userId,
+      currentSeason: null,
+      totalSeasons: null,
+      tmdbImdbId: updatedWatchlistItemList.watchlistItem.tmdbImdbId,
+      tmdbMovieCertification: updatedWatchlistItemList.watchlistItem.tmdbMovieCertification,
+      tmdbMovieRuntime: updatedWatchlistItemList.watchlistItem.tmdbMovieRuntime,
+      tmdbOverview: updatedWatchlistItemList.watchlistItem.tmdbOverview,
+      tmdbPosterPath: updatedWatchlistItemList.watchlistItem.tmdbPosterPath,
+      tmdbTagline: updatedWatchlistItemList.watchlistItem.tmdbTagline,
+      tmdbTvCertification: updatedWatchlistItemList.watchlistItem.tmdbTvCertification,
+      tmdbTvFirstAirYear: updatedWatchlistItemList.watchlistItem.tmdbTvFirstAirYear,
+      tmdbTvLastAirYear: updatedWatchlistItemList.watchlistItem.tmdbTvLastAirYear,
+      tmdbTvNetworks: updatedWatchlistItemList.watchlistItem.tmdbTvNetworks,
+      tmdbTvNumberOfEpisodes: updatedWatchlistItemList.watchlistItem.tmdbTvNumberOfEpisodes,
+      tmdbTvNumberOfSeasons: updatedWatchlistItemList.watchlistItem.tmdbTvNumberOfSeasons,
+      tmdbTvStatus: updatedWatchlistItemList.watchlistItem.tmdbTvStatus,
+      tmdbMovieReleaseYear: updatedWatchlistItemList.watchlistItem.tmdbMovieReleaseYear,
+    };
 
     return NextResponse.json(item);
   } catch (error) {

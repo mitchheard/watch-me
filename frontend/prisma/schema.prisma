@@ -19,6 +19,7 @@ model User {
   notificationPreferences NotificationPreferences?
   watchlists Watchlist[]
   watchlistMembers WatchlistMember[]
+  sentInvitations WatchlistInvitation[]
 }
 
 model UserSession {
@@ -122,6 +123,7 @@ model Watchlist {
   owner       User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
   members     WatchlistMember[]
   items       WatchlistItemList[]
+  invitations WatchlistInvitation[]
 
   @@index([ownerId])
   @@index([isShared])
@@ -185,4 +187,20 @@ model WatchlistItem {
 
   @@unique([tmdbId])
   @@index([type])
+}
+
+model WatchlistInvitation {
+  id          String   @id @default(cuid())
+  watchlistId String
+  email       String
+  invitedBy   String
+  createdAt   DateTime @default(now())
+  expiresAt   DateTime
+  
+  watchlist   Watchlist @relation(fields: [watchlistId], references: [id], onDelete: Cascade)
+  inviter     User      @relation(fields: [invitedBy], references: [id], onDelete: Cascade)
+
+  @@unique([watchlistId, email])
+  @@index([email])
+  @@index([expiresAt])
 }

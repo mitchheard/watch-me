@@ -72,27 +72,24 @@ export async function POST(request: NextRequest) {
 
     console.log('Invited user found:', invitedUser ? 'Yes' : 'No');
 
-    // If user doesn't exist, create a placeholder user
-    if (!invitedUser) {
-      console.log('Creating new user for email:', email);
-      invitedUser = await prisma.user.create({
+    if (invitedUser) {
+      // User exists, add them to the watchlist
+      console.log('Adding existing user to watchlist:', { watchlistId, userId: invitedUser.id });
+      const member = await prisma.watchlistMember.create({
         data: {
-          email: email.toLowerCase(),
-          // We'll update this when they actually sign up
+          watchlistId,
+          userId: invitedUser.id
         }
       });
-      console.log('Created user with ID:', invitedUser.id);
+      console.log('Created watchlist member:', member.id);
+    } else {
+      // For now, just return an error if user doesn't exist
+      // We'll handle this better in the future with a proper invitation system
+      return NextResponse.json(
+        { error: 'User not found. They need to sign up first before being added to a watchlist.' },
+        { status: 404 }
+      );
     }
-
-    // Add user to watchlist
-    console.log('Adding user to watchlist:', { watchlistId, userId: invitedUser.id });
-    const member = await prisma.watchlistMember.create({
-      data: {
-        watchlistId,
-        userId: invitedUser.id
-      }
-    });
-    console.log('Created watchlist member:', member.id);
 
     // Generate invitation link
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3001';

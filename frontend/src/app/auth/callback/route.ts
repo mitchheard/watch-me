@@ -94,12 +94,32 @@ export async function GET(request: NextRequest) {
         });
         
         if (!existingUser) {
-          // This is a new user, send admin notification
+          // This is a new user, create them in the database and send admin notification
           try {
+            await prisma.user.create({
+              data: {
+                id: userId,
+                email: userEmail
+              }
+            });
+            console.log(`[AuthCallback] Created new user record: ${userId}`);
+            
+            // Create default watchlist for new user
+            await prisma.watchlist.create({
+              data: {
+                name: 'My Watchlist',
+                description: 'Your personal watchlist',
+                isDefault: true,
+                isShared: false,
+                ownerId: userId
+              }
+            });
+            console.log(`[AuthCallback] Created default watchlist for user: ${userId}`);
+            
             await notifyNewUser(userId, userEmail);
             console.log(`[AuthCallback] Admin notification sent for new user: ${userId}`);
-          } catch (notificationError) {
-            console.error(`[AuthCallback] Failed to send new user notification:`, notificationError);
+          } catch (error) {
+            console.error(`[AuthCallback] Failed to create user or send notification:`, error);
             // Non-critical, so we just log and continue
           }
         } else {

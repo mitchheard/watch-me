@@ -252,7 +252,7 @@ export default function WatchlistManager({ className = '' }: WatchlistManagerPro
             onClick={() => setShowCreateModal(true)}
             className="flex items-center px-3 py-1.5 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 whitespace-nowrap"
           >
-            <PlusIcon className="h-4 w-4 mr-1" /> + New
+            <PlusIcon className="h-4 w-4 mr-1" /> New
           </button>
         </div>
       )}
@@ -265,7 +265,7 @@ export default function WatchlistManager({ className = '' }: WatchlistManagerPro
             href={`/watchlists/${watchlist.id}?name=${encodeURIComponent(watchlist.name)}`}
             className="group relative p-2 bg-white border border-gray-200 rounded hover:border-gray-300 hover:shadow-sm transition-all duration-200 block"
           >
-            {/* Simple Actions Button */}
+            {/* Three-dot menu */}
             <div className="absolute top-2 right-2">
               <button
                 onClick={(e) => {
@@ -275,12 +275,12 @@ export default function WatchlistManager({ className = '' }: WatchlistManagerPro
                 }}
                 className="inline-flex justify-center w-full rounded-md bg-white px-1 py-1 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 shadow-sm border border-gray-200"
               >
-                <PencilIcon className="h-4 w-4" aria-hidden="true" />
+                <EllipsisVerticalIcon className="h-4 w-4" aria-hidden="true" />
               </button>
             </div>
             {/* Header */}
             <div className="flex items-start justify-between mb-1">
-              <div className="flex-1 min-w-0">
+              <div className="flex-1 min-w-0 pr-8">
                 <div className="flex items-center gap-1.5 mb-0.5">
                   <h3 className="font-semibold text-gray-900 truncate text-sm">
                     {watchlist.name}
@@ -304,7 +304,11 @@ export default function WatchlistManager({ className = '' }: WatchlistManagerPro
                   </p>
                 )}
               </div>
-              <span className="text-gray-400 text-xs ml-2 whitespace-nowrap">
+            </div>
+            
+            {/* Item count - moved to separate line */}
+            <div className="mb-2">
+              <span className="text-gray-400 text-xs">
                 {watchlist._count.items} items
               </span>
             </div>

@@ -80,7 +80,7 @@ export default function WatchlistItems({ watchlistId }: WatchlistItemsProps = {}
     if (!window.confirm(confirmMessage)) return;
     
     // Use different API endpoints based on whether watchlistId is provided
-    const apiUrl = watchlistId ? `/api/watchlists/${watchlistId}/items/${id}` : `/api/watchlist?id=${id}`;
+    const apiUrl = watchlistId ? `/api/watchlists/${watchlistId}/items?id=${id}` : `/api/watchlist?id=${id}`;
     const res = await fetch(apiUrl, { method: 'DELETE' });
     if (res.ok) {
       setModalItem(null); // Close details modal after delete

@@ -28,9 +28,6 @@ export default function AddToMultipleListsModal({
   onSuccess
 }: AddToMultipleListsModalProps) {
   const [selectedWatchlistIds, setSelectedWatchlistIds] = useState<string[]>([]);
-  const [status, setStatus] = useState('Want to Watch');
-  const [rating, setRating] = useState('');
-  const [notes, setNotes] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -53,9 +50,9 @@ export default function AddToMultipleListsModal({
         body: JSON.stringify({
           tmdbId: item.tmdbId,
           watchlistIds: selectedWatchlistIds,
-          status,
-          rating: rating || null,
-          notes: notes.trim() || null,
+          status: 'Want to Watch', // Default status for shared lists
+          rating: null,
+          notes: null,
           title: item.title,
           type: item.type
         }),
@@ -93,9 +90,6 @@ export default function AddToMultipleListsModal({
 
   const handleClose = () => {
     setSelectedWatchlistIds([]);
-    setStatus('Want to Watch');
-    setRating('');
-    setNotes('');
     setError(null);
     onClose();
   };
@@ -146,52 +140,6 @@ export default function AddToMultipleListsModal({
             />
           </div>
 
-          {/* Status Selection */}
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Status
-            </label>
-            <select
-              value={status}
-              onChange={(e) => setStatus(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            >
-              <option value="Want to Watch">Want to Watch</option>
-              <option value="Watching">Watching</option>
-              <option value="Finished">Finished</option>
-            </select>
-          </div>
-
-          {/* Rating Selection */}
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Rating (Optional)
-            </label>
-            <select
-              value={rating}
-              onChange={(e) => setRating(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            >
-              <option value="">No rating</option>
-              <option value="Loved">Loved</option>
-              <option value="Liked">Liked</option>
-              <option value="Not for me">Not for me</option>
-            </select>
-          </div>
-
-          {/* Notes */}
-          <div className="mb-6">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Notes (Optional)
-            </label>
-            <textarea
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              placeholder="Add a note about this item..."
-              rows={3}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            />
-          </div>
 
           {/* Error Message */}
           {error && (

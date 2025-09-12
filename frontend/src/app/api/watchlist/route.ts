@@ -172,35 +172,86 @@ export async function POST(request: Request) {
     const _userId = await getUserId();
     const data: WatchlistFormData = await request.json();
     
+    // Find or create user's default watchlist
+    let defaultWatchlist = await prisma.watchlist.findFirst({
+      where: {
+        ownerId: _userId,
+        isDefault: true
+      }
+    });
+
+    if (!defaultWatchlist) {
+      defaultWatchlist = await prisma.watchlist.create({
+        data: {
+          name: 'My Watchlist',
+          description: 'Your personal watchlist',
+          isDefault: true,
+          isShared: false,
+          ownerId: _userId
+        }
+      });
+    }
+    
     // Check if this is the user's first item
-    const existingItems = await prisma.watchItem.count({
-      where: { userId: _userId },
+    const existingItems = await prisma.watchlistItemList.count({
+      where: { watchlistId: defaultWatchlist.id },
     });
     
-    const item = await prisma.watchItem.create({
+    // Find or create the WatchlistItem
+    let watchlistItem = await prisma.watchlistItem.findUnique({
+      where: { tmdbId: data.tmdbId || 0 }
+    });
+
+    if (!watchlistItem) {
+      watchlistItem = await prisma.watchlistItem.create({
+        data: {
+          tmdbId: data.tmdbId || 0,
+          title: data.title,
+          type: data.type,
+          tmdbImdbId: data.tmdbImdbId || null,
+          tmdbMovieCertification: data.tmdbMovieCertification || null,
+          tmdbMovieReleaseYear: data.tmdbMovieReleaseYear || null,
+          tmdbMovieRuntime: data.tmdbMovieRuntime || null,
+          tmdbOverview: data.tmdbOverview || null,
+          tmdbPosterPath: data.tmdbPosterPath || null,
+          tmdbTagline: data.tmdbTagline || null,
+          tmdbTvCertification: data.tmdbTvCertification || null,
+          tmdbTvFirstAirYear: data.tmdbTvFirstAirYear || null,
+          tmdbTvLastAirYear: data.tmdbTvLastAirYear || null,
+          tmdbTvNetworks: data.tmdbTvNetworks || null,
+          tmdbTvNumberOfEpisodes: data.tmdbTvNumberOfEpisodes || null,
+          tmdbTvNumberOfSeasons: data.tmdbTvNumberOfSeasons || null,
+          tmdbTvStatus: data.tmdbTvStatus || null,
+        }
+      });
+    }
+
+    // Check if item is already in this watchlist
+    const existingWatchlistItem = await prisma.watchlistItemList.findFirst({
+      where: {
+        watchlistId: defaultWatchlist.id,
+        watchlistItemId: watchlistItem.id
+      }
+    });
+
+    if (existingWatchlistItem) {
+      return NextResponse.json(
+        { error: 'This title is already in your watchlist.' },
+        { status: 409 }
+      );
+    }
+
+    // Add item to watchlist
+    const watchlistItemList = await prisma.watchlistItemList.create({
       data: {
-        userId: _userId,
-        title: data.title,
-        type: data.type,
-        status: data.status,
-        currentSeason: data.currentSeason ? Number(data.currentSeason) : null,
-        totalSeasons: data.totalSeasons ? Number(data.totalSeasons) : null,
-        tmdbId: data.tmdbId || null,
-        tmdbPosterPath: data.tmdbPosterPath || null,
-        tmdbOverview: data.tmdbOverview || null,
-        tmdbTagline: data.tmdbTagline || null,
-        tmdbImdbId: data.tmdbImdbId || null,
-        tmdbMovieCertification: data.tmdbMovieCertification || null,
-        tmdbMovieReleaseYear: data.tmdbMovieReleaseYear || null,
-        tmdbMovieRuntime: data.tmdbMovieRuntime || null,
-        tmdbTvCertification: data.tmdbTvCertification || null,
-        tmdbTvFirstAirYear: data.tmdbTvFirstAirYear || null,
-        tmdbTvLastAirYear: data.tmdbTvLastAirYear || null,
-        tmdbTvNetworks: data.tmdbTvNetworks || null,
-        tmdbTvNumberOfEpisodes: data.tmdbTvNumberOfEpisodes || null,
-        tmdbTvNumberOfSeasons: data.tmdbTvNumberOfSeasons || null,
-        tmdbTvStatus: data.tmdbTvStatus || null,
-        updatedAt: new Date(),
+        watchlistId: defaultWatchlist.id,
+        watchlistItemId: watchlistItem.id,
+        status: data.status || 'Want to Watch',
+        rating: data.rating || null,
+        notes: data.notes || null
+      },
+      include: {
+        watchlistItem: true
       }
     });
     
@@ -225,26 +276,38 @@ export async function POST(request: Request) {
       }
     }
     
+    // Transform to old format for compatibility
+    const item = {
+      id: watchlistItemList.watchlistItem.id,
+      tmdbId: watchlistItemList.watchlistItem.tmdbId,
+      title: watchlistItemList.watchlistItem.title,
+      type: watchlistItemList.watchlistItem.type,
+      status: watchlistItemList.status,
+      rating: watchlistItemList.rating,
+      notes: watchlistItemList.notes,
+      createdAt: watchlistItemList.addedAt,
+      updatedAt: watchlistItemList.updatedAt,
+      userId: _userId,
+      currentSeason: data.currentSeason ? Number(data.currentSeason) : null,
+      totalSeasons: data.totalSeasons ? Number(data.totalSeasons) : null,
+      tmdbImdbId: watchlistItemList.watchlistItem.tmdbImdbId,
+      tmdbMovieCertification: watchlistItemList.watchlistItem.tmdbMovieCertification,
+      tmdbMovieRuntime: watchlistItemList.watchlistItem.tmdbMovieRuntime,
+      tmdbOverview: watchlistItemList.watchlistItem.tmdbOverview,
+      tmdbPosterPath: watchlistItemList.watchlistItem.tmdbPosterPath,
+      tmdbTagline: watchlistItemList.watchlistItem.tmdbTagline,
+      tmdbTvCertification: watchlistItemList.watchlistItem.tmdbTvCertification,
+      tmdbTvFirstAirYear: watchlistItemList.watchlistItem.tmdbTvFirstAirYear,
+      tmdbTvLastAirYear: watchlistItemList.watchlistItem.tmdbTvLastAirYear,
+      tmdbTvNetworks: watchlistItemList.watchlistItem.tmdbTvNetworks,
+      tmdbTvNumberOfEpisodes: watchlistItemList.watchlistItem.tmdbTvNumberOfEpisodes,
+      tmdbTvNumberOfSeasons: watchlistItemList.watchlistItem.tmdbTvNumberOfSeasons,
+      tmdbTvStatus: watchlistItemList.watchlistItem.tmdbTvStatus,
+      tmdbMovieReleaseYear: watchlistItemList.watchlistItem.tmdbMovieReleaseYear,
+    };
+    
     return NextResponse.json(item);
   } catch (error) {
-    if (
-      typeof error === 'object' &&
-      error !== null &&
-      'code' in error &&
-      error.code === 'P2002' &&
-      'meta' in error &&
-      typeof error.meta === 'object' &&
-      error.meta !== null &&
-      'target' in error.meta &&
-      Array.isArray((error.meta as { target?: unknown }).target) &&
-      ((error.meta as { target?: unknown }).target as unknown[]).includes('userId') &&
-      ((error.meta as { target?: unknown }).target as unknown[]).includes('tmdbId')
-    ) {
-      return NextResponse.json(
-        { error: 'This title is already in your watchlist.' },
-        { status: 409 }
-      );
-    }
     console.error('Failed to create watchlist item:', error);
     return NextResponse.json({ error: 'Failed to create watchlist item' }, { status: 500 });
   }

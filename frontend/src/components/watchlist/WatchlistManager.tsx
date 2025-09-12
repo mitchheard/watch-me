@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { PlusIcon, PencilIcon, TrashIcon, ShareIcon, EyeIcon, MagnifyingGlassIcon, FilmIcon, EllipsisVerticalIcon } from '@heroicons/react/24/outline';
+import { PlusIcon, PencilIcon, TrashIcon, ShareIcon, EyeIcon, MagnifyingGlassIcon, FilmIcon, EllipsisVerticalIcon, UserPlusIcon, LinkIcon } from '@heroicons/react/24/outline';
 import { Menu, MenuButton, MenuItems, MenuItem, Transition } from '@headlessui/react';
 import CreateWatchlistModal from './CreateWatchlistModal';
 import RenameWatchlistModal from './RenameWatchlistModal';
@@ -53,10 +53,23 @@ export default function WatchlistManager({ className = '' }: WatchlistManagerPro
   const [showRenameModal, setShowRenameModal] = useState(false);
   const [watchlistToRename, setWatchlistToRename] = useState<Watchlist | null>(null);
   const [hasMounted, setHasMounted] = useState(false);
+  const [showShareSubmenu, setShowShareSubmenu] = useState<string | null>(null);
 
   useEffect(() => {
     setHasMounted(true);
   }, []);
+
+  // Close share submenu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = () => {
+      setShowShareSubmenu(null);
+    };
+    
+    if (showShareSubmenu) {
+      document.addEventListener('click', handleClickOutside);
+      return () => document.removeEventListener('click', handleClickOutside);
+    }
+  }, [showShareSubmenu]);
 
   useEffect(() => {
     if (!authLoading && user) {
@@ -162,6 +175,10 @@ export default function WatchlistManager({ className = '' }: WatchlistManagerPro
     e.stopPropagation();
     setWatchlistToRename(watchlist);
     setShowRenameModal(true);
+  };
+
+  const closeShareSubmenu = () => {
+    setShowShareSubmenu(null);
   };
 
   if (!hasMounted) {
@@ -307,20 +324,58 @@ export default function WatchlistManager({ className = '' }: WatchlistManagerPro
                       </MenuItem>
                       <MenuItem>
                         {({ active }) => (
-                          <button
-                            onClick={(e) => {
-                              e.preventDefault();
-                              e.stopPropagation();
-                              // TODO: Implement share functionality
-                              alert('Share functionality coming soon!');
-                            }}
-                            className={`${
-                              active ? 'bg-gray-100 text-gray-900' : 'text-gray-700'
-                            } group flex w-full items-center px-4 py-2 text-sm`}
-                          >
-                            <ShareIcon className="mr-3 h-4 w-4" aria-hidden="true" />
-                            Share
-                          </button>
+                          <div className="relative">
+                            <button
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                setShowShareSubmenu(showShareSubmenu === watchlist.id ? null : watchlist.id);
+                              }}
+                              className={`${
+                                active ? 'bg-gray-100 text-gray-900' : 'text-gray-700'
+                              } group flex w-full items-center px-4 py-2 text-sm`}
+                            >
+                              <ShareIcon className="mr-3 h-4 w-4" aria-hidden="true" />
+                              Share
+                              <svg className="ml-auto h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
+                                <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
+                              </svg>
+                            </button>
+                            
+                            {/* Share Submenu */}
+                            {showShareSubmenu === watchlist.id && (
+                              <div className="absolute left-full top-0 ml-1 w-48 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5">
+                                <div className="py-1">
+                                  <button
+                                    onClick={(e) => {
+                                      e.preventDefault();
+                                      e.stopPropagation();
+                                      setShowShareSubmenu(null);
+                                      // TODO: Implement public link sharing
+                                      alert('Public link sharing coming soon!');
+                                    }}
+                                    className="flex w-full items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                                  >
+                                    <LinkIcon className="mr-3 h-4 w-4" aria-hidden="true" />
+                                    Share as Public Link
+                                  </button>
+                                  <button
+                                    onClick={(e) => {
+                                      e.preventDefault();
+                                      e.stopPropagation();
+                                      setShowShareSubmenu(null);
+                                      // TODO: Implement add member functionality
+                                      alert('Add member functionality coming soon!');
+                                    }}
+                                    className="flex w-full items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                                  >
+                                    <UserPlusIcon className="mr-3 h-4 w-4" aria-hidden="true" />
+                                    Add Member
+                                  </button>
+                                </div>
+                              </div>
+                            )}
+                          </div>
                         )}
                       </MenuItem>
                       <MenuItem>

@@ -92,14 +92,14 @@ export async function POST(request: NextRequest) {
     }
 
     // Generate invitation link
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3001';
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://gowatchme.app';
     const invitationLink = `${baseUrl}/watchlists/${watchlistId}?invited=true`;
 
     // Send invitation email
     console.log('Sending invitation email to:', email);
     try {
       const emailResult = await resend.emails.send({
-        from: 'Watch Me <noreply@watchme.app>',
+        from: 'Watch Me <onboarding@resend.dev>',
         to: [email],
         subject: `You've been invited to collaborate on "${watchlistName}"`,
         html: `

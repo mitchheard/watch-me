@@ -21,7 +21,7 @@ async function testEmail() {
     console.log('Sending test email...');
     
     const result = await resend.emails.send({
-      from: 'Watch Me <onboarding@resend.dev>',
+      from: 'Watch Me <noreply@gowatchme.app>',
       to: ['mitchheard@gmail.com'], // Your email for testing
       subject: 'Test Email from Watch Me',
       html: `

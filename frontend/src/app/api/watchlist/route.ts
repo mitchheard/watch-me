@@ -320,6 +320,8 @@ export async function PUT(request: Request) {
     const data = await request.json();
     const { id, ...updateData } = data;
 
+    console.log('PUT /api/watchlist - Request data:', { id, updateData, userId: _userId });
+
     // Find user's default watchlist
     const defaultWatchlist = await prisma.watchlist.findFirst({
       where: {
@@ -329,8 +331,11 @@ export async function PUT(request: Request) {
     });
 
     if (!defaultWatchlist) {
+      console.log('PUT /api/watchlist - No default watchlist found');
       return NextResponse.json({ error: 'Default watchlist not found' }, { status: 404 });
     }
+
+    console.log('PUT /api/watchlist - Found default watchlist:', defaultWatchlist.id);
 
     // Find the watchlist item list entry
     const watchlistItemList = await prisma.watchlistItemList.findFirst({
@@ -344,8 +349,11 @@ export async function PUT(request: Request) {
     });
 
     if (!watchlistItemList) {
+      console.log('PUT /api/watchlist - Item not found in watchlist:', { id, watchlistId: defaultWatchlist.id });
       return NextResponse.json({ error: 'Item not found in watchlist' }, { status: 404 });
     }
+
+    console.log('PUT /api/watchlist - Found watchlist item list:', watchlistItemList.id);
 
     // Check if this is adding a rating for the first time
     const isAddingRating = updateData.rating && !watchlistItemList.rating;
@@ -420,7 +428,12 @@ export async function PUT(request: Request) {
 
     return NextResponse.json(item);
   } catch (error) {
-    console.error('Failed to update watchlist item:', error);
+    console.error('PUT /api/watchlist - Failed to update watchlist item:', error);
+    console.error('PUT /api/watchlist - Error details:', {
+      message: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined,
+      name: error instanceof Error ? error.name : undefined
+    });
     return NextResponse.json({ error: 'Failed to update watchlist item' }, { status: 500 });
   }
 }

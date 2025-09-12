@@ -66,7 +66,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if the invited user exists in our system
-    let invitedUser = await prisma.user.findUnique({
+    const invitedUser = await prisma.user.findUnique({
       where: { email: email.toLowerCase() }
     });
 

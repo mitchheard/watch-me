@@ -61,7 +61,16 @@ export async function GET() {
     console.log('[Admin API] Fetching item and session counts for users...');
     const usersWithCounts = await Promise.all(
       usersData.users.map(async (user) => {
-        const itemCount = await prisma.watchItem.count({ where: { userId: user.id } });
+        // Count items from the new watchlist system
+        const userWatchlists = await prisma.watchlist.findMany({
+          where: { ownerId: user.id },
+          include: {
+            items: true
+          }
+        });
+        
+        const itemCount = userWatchlists.reduce((total, watchlist) => total + watchlist.items.length, 0);
+        
         let sessionCount = 0;
         try {
           if (prisma.userSession) { 
@@ -71,12 +80,17 @@ export async function GET() {
           // console.warn(`[Admin API] Could not count sessions for user ${user.id} (UserSession model might be missing): ${(_e instanceof Error) ? _e.message : String(_e)}`);
         }
 
-        const mostRecentItem = await prisma.watchItem.findFirst({
-          where: { userId: user.id },
-          orderBy: { createdAt: 'desc' },
-          select: { createdAt: true },
+        // Find the most recent item from all user's watchlists
+        const mostRecentItem = await prisma.watchlistItemList.findFirst({
+          where: {
+            watchlist: {
+              ownerId: user.id
+            }
+          },
+          orderBy: { addedAt: 'desc' },
+          select: { addedAt: true },
         });
-        const lastItemAddedAt = mostRecentItem?.createdAt;
+        const lastItemAddedAt = mostRecentItem?.addedAt;
 
         return {
           id: user.id,

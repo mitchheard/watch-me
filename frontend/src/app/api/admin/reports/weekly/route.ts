@@ -18,17 +18,23 @@ export async function POST(_request: NextRequest) {
       prisma.user.count({
         where: { createdAt: { gte: weekAgo } },
       }),
-      prisma.watchItem.count(),
-      prisma.watchItem.count({
-        where: { createdAt: { gte: weekAgo } },
+      prisma.watchlistItemList.count(),
+      prisma.watchlistItemList.count({
+        where: { addedAt: { gte: weekAgo } },
       }),
     ]);
 
     // Get popular content this week
-    const popularContent = await prisma.watchItem.groupBy({
+    const popularContent = await prisma.watchlistItem.groupBy({
       by: ['title'],
       _count: { title: true },
-      where: { createdAt: { gte: weekAgo } },
+      where: { 
+        watchlists: {
+          some: {
+            addedAt: { gte: weekAgo }
+          }
+        }
+      },
       orderBy: { _count: { title: 'desc' } },
       take: 5,
     });
@@ -48,7 +54,7 @@ export async function POST(_request: NextRequest) {
     const repeatVisitors = Object.values(userVisitCounts).filter(count => count > 1).length;
 
     // Get rating stats
-    const ratingStats = await prisma.watchItem.groupBy({
+    const ratingStats = await prisma.watchlistItemList.groupBy({
       by: ['rating'],
       _count: { rating: true },
       where: { 

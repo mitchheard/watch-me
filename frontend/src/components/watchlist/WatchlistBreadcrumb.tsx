@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 
 interface WatchlistBreadcrumbProps {
   watchlistId: string;
@@ -40,9 +41,9 @@ export default function WatchlistBreadcrumb({ watchlistId, initialName = null }:
 
   return (
     <nav className="flex items-center space-x-2 text-sm text-gray-500">
-      <a href="/watchlists" className="hover:text-gray-700">
+      <Link href="/watchlists" className="hover:text-gray-700">
         Watchlists
-      </a>
+      </Link>
       <span>/</span>
       <span className="text-gray-900">
         {loading ? 'Loading...' : watchlistName || 'Watchlist'}

@@ -58,7 +58,7 @@ export async function GET(request: Request) {
 
     if (!defaultWatchlist) {
       // Create default watchlist if it doesn't exist
-      const newWatchlist = await prisma.watchlist.create({
+      await prisma.watchlist.create({
         data: {
           name: 'My Watchlist',
           description: 'Your personal watchlist',

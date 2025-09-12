@@ -96,14 +96,14 @@ export default function AddMemberModal({
               Invitation Sent!
             </h3>
             <p className="text-sm text-gray-600">
-              We've sent an invitation to <strong>{email}</strong> to join "{watchlistName}".
+              We&apos;ve sent an invitation to <strong>{email}</strong> to join &quot;{watchlistName}&quot;.
             </p>
           </div>
         ) : (
           <>
             <div className="mb-6">
               <p className="text-sm text-gray-600">
-                Invite someone to collaborate on <strong>"{watchlistName}"</strong> by entering their email address.
+                Invite someone to collaborate on <strong>&quot;{watchlistName}&quot;</strong> by entering their email address.
               </p>
             </div>
 

@@ -66,7 +66,7 @@ export default function AddToMultipleListsModal({
       const data = await response.json();
       
       // Show success message for each watchlist
-      const successMessages = data.results.map((result: any) => {
+      const successMessages = data.results.map((result: { status: string; watchlistName: string }) => {
         if (result.status === 'added') {
           return `✅ Added to "${result.watchlistName}"`;
         } else if (result.status === 'already_exists') {

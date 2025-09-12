@@ -2,7 +2,7 @@
 
 import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { notFound } from 'next/navigation';
+import Link from 'next/link';
 import WatchlistItems from '@/components/watchlist/WatchlistItems';
 import WatchlistBreadcrumb from '@/components/watchlist/WatchlistBreadcrumb';
 
@@ -58,9 +58,9 @@ export default function WatchlistPage({ params }: WatchlistPageProps) {
         ) : (
           <div className="text-center py-8">
             <p className="text-red-600">Invalid watchlist ID</p>
-            <a href="/watchlists" className="text-blue-600 hover:text-blue-700 mt-2 inline-block">
+            <Link href="/watchlists" className="text-blue-600 hover:text-blue-700 mt-2 inline-block">
               ← Back to Watchlists
-            </a>
+            </Link>
           </div>
         )}
       </div>

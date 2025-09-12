@@ -26,14 +26,14 @@ export async function GET(request: NextRequest) {
       prisma.user.count({
         where: { createdAt: { gte: startDate } },
       }),
-      prisma.watchItem.count(),
-      prisma.watchItem.count({
-        where: { createdAt: { gte: startDate } },
+      prisma.watchlistItemList.count(),
+      prisma.watchlistItemList.count({
+        where: { addedAt: { gte: startDate } },
       }),
     ]);
 
     // Get popular content
-    const popularContent = await prisma.watchItem.groupBy({
+    const popularContent = await prisma.watchlistItem.groupBy({
       by: ['title'],
       _count: { title: true },
       orderBy: { _count: { title: 'desc' } },
@@ -55,7 +55,7 @@ export async function GET(request: NextRequest) {
     const repeatVisitors = Object.values(userVisitCounts).filter(count => count > 1).length;
 
     // Get rating stats
-    const ratingStats = await prisma.watchItem.groupBy({
+    const ratingStats = await prisma.watchlistItemList.groupBy({
       by: ['rating'],
       _count: { rating: true },
       where: { rating: { not: null } },

@@ -39,17 +39,26 @@ export default function UserNotificationSettingsClient() {
   const fetchPreferences = async () => {
     try {
       setLoading(true);
+      setError(null);
       const response = await fetch('/api/user/notifications/preferences');
       
       if (!response.ok) {
-        throw new Error('Failed to fetch preferences');
+        const errorData = await response.json();
+        console.error('API Error:', response.status, errorData);
+        throw new Error(errorData.error || 'Failed to fetch preferences');
       }
       
       const data = await response.json();
+      console.log('Preferences data:', data);
+      
+      if (data.error) {
+        throw new Error(data.error);
+      }
+      
       setPreferences(data.preferences);
     } catch (err) {
       console.error('Error fetching preferences:', err);
-      setError('Failed to load notification preferences');
+      setError(err instanceof Error ? err.message : 'Failed to load notification preferences');
     } finally {
       setLoading(false);
     }

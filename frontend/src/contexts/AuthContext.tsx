@@ -56,11 +56,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     };
   }, []);
 
-  useEffect(() => {
-    if (user) {
-      fetch('/api/user/sync', { method: 'POST' });
-    }
-  }, [user]);
+  // Removed automatic sync call that was causing unnecessary network requests
+  // useEffect(() => {
+  //   if (user) {
+  //     fetch('/api/user/sync', { method: 'POST' });
+  //   }
+  // }, [user]);
 
   const loginWithGoogle = async () => {
     const redirectToUrl = `${window.location.origin}/auth/callback`;

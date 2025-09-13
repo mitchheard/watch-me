@@ -83,17 +83,15 @@ export async function POST(request: NextRequest) {
       });
       console.log('Created watchlist member:', member.id);
     } else {
-      // For now, just return an error if user doesn't exist
-      // We'll handle this better in the future with a proper invitation system
-      return NextResponse.json(
-        { error: 'User not found. They need to sign up first before being added to a watchlist.' },
-        { status: 404 }
-      );
+      // User doesn't exist yet - we'll send them an invitation email with signup link
+      // They can sign up and then access the watchlist
+      console.log('User does not exist, will send invitation with signup link');
     }
 
     // Generate invitation link
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://gowatchme.app';
     const invitationLink = `${baseUrl}/watchlists/${watchlistId}?invited=true`;
+    const signupLink = `${baseUrl}/auth/signup?email=${encodeURIComponent(email)}&redirect=${encodeURIComponent(invitationLink)}`;
 
     // Send invitation email
     console.log('Sending invitation email to:', email);
@@ -121,15 +119,28 @@ export async function POST(request: NextRequest) {
               </p>
               
               <div style="text-align: center; margin: 40px 0;">
-                <a href="${invitationLink}" 
-                   style="background: #3b82f6; color: white; padding: 16px 32px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px; display: inline-block;">
-                  View Watchlist
-                </a>
+                ${invitedUser ? `
+                  <a href="${invitationLink}" 
+                     style="background: #3b82f6; color: white; padding: 16px 32px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px; display: inline-block;">
+                    View Watchlist
+                  </a>
+                ` : `
+                  <a href="${signupLink}" 
+                     style="background: #3b82f6; color: white; padding: 16px 32px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px; display: inline-block;">
+                    Sign Up & View Watchlist
+                  </a>
+                `}
               </div>
               
-              <p style="color: #9ca3af; font-size: 14px; line-height: 1.6;">
-                If you don't have an account yet, you'll be prompted to sign up when you click the link above.
-              </p>
+              ${invitedUser ? `
+                <p style="color: #9ca3af; font-size: 14px; line-height: 1.6;">
+                  You already have an account, so you can access the watchlist directly.
+                </p>
+              ` : `
+                <p style="color: #9ca3af; font-size: 14px; line-height: 1.6;">
+                  You'll need to create a free account first, then you'll be automatically added to the watchlist.
+                </p>
+              `}
             </div>
             
             <div style="background: #f3f4f6; padding: 20px; text-align: center; border-top: 1px solid #e5e7eb;">

@@ -118,6 +118,30 @@ export async function GET(request: NextRequest) {
             
             await notifyNewUser(userId, userEmail);
             console.log(`[AuthCallback] Admin notification sent for new user: ${userId}`);
+            
+            // Check if this user was invited to a watchlist
+            // Look for watchlist invitation in the redirect URL
+            if (next.includes('/watchlists/') && next.includes('invited=true')) {
+              try {
+                const watchlistIdMatch = next.match(/\/watchlists\/([^?]+)/);
+                if (watchlistIdMatch) {
+                  const watchlistId = watchlistIdMatch[1];
+                  console.log(`[AuthCallback] New user was invited to watchlist: ${watchlistId}`);
+                  
+                  // Add user to the watchlist
+                  await prisma.watchlistMember.create({
+                    data: {
+                      watchlistId,
+                      userId
+                    }
+                  });
+                  console.log(`[AuthCallback] Added new user to invited watchlist: ${watchlistId}`);
+                }
+              } catch (error) {
+                console.error(`[AuthCallback] Failed to add user to invited watchlist:`, error);
+                // Non-critical, so we just log and continue
+              }
+            }
           } catch (error) {
             console.error(`[AuthCallback] Failed to create user or send notification:`, error);
             // Non-critical, so we just log and continue

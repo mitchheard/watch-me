@@ -28,6 +28,7 @@ export default function WatchlistPage({ params }: WatchlistPageProps) {
 
   // Get the watchlist name from URL parameters (passed from previous screen)
   const watchlistName = searchParams.get('name');
+  const isInvited = searchParams.get('invited') === 'true';
 
   // Show loading state while params are being resolved
   if (!id) {
@@ -48,6 +49,27 @@ export default function WatchlistPage({ params }: WatchlistPageProps) {
         <div className="mb-4 sm:mb-8">
           <WatchlistBreadcrumb watchlistId={id} initialName={watchlistName} />
         </div>
+
+        {/* Show welcome message for invited users */}
+        {isInvited && (
+          <div className="mb-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <div className="flex items-start">
+              <div className="flex-shrink-0">
+                <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                  <span className="text-blue-600 text-sm">🎉</span>
+                </div>
+              </div>
+              <div className="ml-3">
+                <h3 className="text-sm font-medium text-blue-800">
+                  Welcome to the watchlist!
+                </h3>
+                <p className="text-sm text-blue-700 mt-1">
+                  You've been invited to collaborate on this shared watchlist. You can now add movies and TV shows, track your progress, and collaborate with others.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
 
         {id ? (
           <Suspense fallback={<div className="text-center py-10">Loading watchlist...</div>}>

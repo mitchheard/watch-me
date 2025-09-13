@@ -239,12 +239,7 @@ export default function UserNotificationSettingsClient() {
       {/* Admin Section - Only visible to admins */}
       {isAdmin && (
         <div className="bg-white rounded-lg border border-slate-200 p-6">
-          <div className="flex items-center gap-2 mb-4">
-            <h2 className="text-lg font-semibold text-slate-900">👑 Admin Notifications</h2>
-            <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs font-medium rounded-full">
-              Admin Only
-            </span>
-          </div>
+          <h2 className="text-lg font-semibold text-slate-900 mb-4">👑 Admin Notifications</h2>
           <p className="text-slate-600 text-sm mb-6">
             All email notifications that are sent to your admin email address.
           </p>
@@ -253,66 +248,56 @@ export default function UserNotificationSettingsClient() {
             {/* New User Signup */}
             <div className="flex items-center justify-between p-4 bg-green-50 rounded-lg border border-green-200">
               <div className="flex-1 pr-4 min-w-0">
-                <div className="flex items-center gap-2 mb-1">
-                  <h4 className="font-medium text-slate-900 text-sm">🎉 New User Signup</h4>
-                  <span className="text-xs text-green-600 font-medium bg-green-100 px-2 py-1 rounded flex-shrink-0">Always On</span>
-                </div>
+                <h4 className="font-medium text-slate-900 text-sm mb-1">🎉 New User Signup</h4>
                 <p className="text-xs text-slate-600">
                   Sent when a new user registers for the first time
                 </p>
               </div>
+              <span className="text-xs text-green-600 font-medium bg-green-100 px-2 py-1 rounded flex-shrink-0">Always On</span>
             </div>
 
             {/* User Added First Item */}
             <div className="flex items-center justify-between p-4 bg-blue-50 rounded-lg border border-blue-200">
               <div className="flex-1 pr-4 min-w-0">
-                <div className="flex items-center gap-2 mb-1">
-                  <h4 className="font-medium text-slate-900 text-sm">📝 User Added First Item</h4>
-                  <span className="text-xs text-blue-600 font-medium bg-blue-100 px-2 py-1 rounded flex-shrink-0">Always On</span>
-                </div>
+                <h4 className="font-medium text-slate-900 text-sm mb-1">📝 User Added First Item</h4>
                 <p className="text-xs text-slate-600">
                   Sent when a user adds their first item to their watchlist
                 </p>
               </div>
+              <span className="text-xs text-blue-600 font-medium bg-blue-100 px-2 py-1 rounded flex-shrink-0">Always On</span>
             </div>
 
             {/* User Left First Review */}
             <div className="flex items-center justify-between p-4 bg-yellow-50 rounded-lg border border-yellow-200">
               <div className="flex-1 pr-4 min-w-0">
-                <div className="flex items-center gap-2 mb-1">
-                  <h4 className="font-medium text-slate-900 text-sm">⭐ User Left First Review</h4>
-                  <span className="text-xs text-yellow-600 font-medium bg-yellow-100 px-2 py-1 rounded flex-shrink-0">Always On</span>
-                </div>
+                <h4 className="font-medium text-slate-900 text-sm mb-1">⭐ User Left First Review</h4>
                 <p className="text-xs text-slate-600">
                   Sent when a user leaves their first rating or review
                 </p>
               </div>
+              <span className="text-xs text-yellow-600 font-medium bg-yellow-100 px-2 py-1 rounded flex-shrink-0">Always On</span>
             </div>
 
             {/* User Repeat Visit */}
             <div className="flex items-center justify-between p-4 bg-purple-50 rounded-lg border border-purple-200">
               <div className="flex-1 pr-4 min-w-0">
-                <div className="flex items-center gap-2 mb-1">
-                  <h4 className="font-medium text-slate-900 text-sm">🔄 User Repeat Visit</h4>
-                  <span className="text-xs text-purple-600 font-medium bg-purple-100 px-2 py-1 rounded flex-shrink-0">Always On</span>
-                </div>
+                <h4 className="font-medium text-slate-900 text-sm mb-1">🔄 User Repeat Visit</h4>
                 <p className="text-xs text-slate-600">
                   Sent when a user visits 3+ times within 7 days
                 </p>
               </div>
+              <span className="text-xs text-purple-600 font-medium bg-purple-100 px-2 py-1 rounded flex-shrink-0">Always On</span>
             </div>
 
             {/* User Returned After Inactivity */}
             <div className="flex items-center justify-between p-4 bg-orange-50 rounded-lg border border-orange-200">
               <div className="flex-1 pr-4 min-w-0">
-                <div className="flex items-center gap-2 mb-1">
-                  <h4 className="font-medium text-slate-900 text-sm">🎯 User Returned After Inactivity</h4>
-                  <span className="text-xs text-orange-600 font-medium bg-orange-100 px-2 py-1 rounded flex-shrink-0">Always On</span>
-                </div>
+                <h4 className="font-medium text-slate-900 text-sm mb-1">🎯 User Returned After Inactivity</h4>
                 <p className="text-xs text-slate-600">
                   Sent when a user returns after 7+ days of inactivity
                 </p>
               </div>
+              <span className="text-xs text-orange-600 font-medium bg-orange-100 px-2 py-1 rounded flex-shrink-0">Always On</span>
             </div>
 
             {/* Weekly Digest */}

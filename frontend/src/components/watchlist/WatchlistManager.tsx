@@ -74,7 +74,7 @@ export default function WatchlistManager({ className = '' }: WatchlistManagerPro
       setLoading(false);
       setError('Please log in to view your watchlists');
     }
-  }, [user, authLoading, showSharedOnly, lastFetchTime]);
+  }, [user, authLoading, showSharedOnly]); // Removed lastFetchTime from dependencies to prevent unnecessary re-runs
 
   const fetchWatchlists = async () => {
     setLoading(true);

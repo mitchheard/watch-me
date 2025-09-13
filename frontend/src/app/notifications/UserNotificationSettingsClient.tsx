@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 
 // TODO: Move this to env or a Profile table
@@ -27,11 +27,13 @@ export default function UserNotificationSettingsClient() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const hasFetched = useRef(false);
 
   const isAdmin = user?.id === ADMIN_USER_ID;
 
   useEffect(() => {
-    if (!isLoading && user) {
+    if (!isLoading && user && !hasFetched.current) {
+      hasFetched.current = true;
       fetchPreferences();
     }
   }, [user, isLoading]);
@@ -174,9 +176,9 @@ export default function UserNotificationSettingsClient() {
         <div className="space-y-4">
           {/* Email Notifications */}
           <div className="flex items-center justify-between p-4 bg-slate-50 rounded-lg">
-            <div className="flex-1">
+            <div className="flex-1 pr-4">
               <h3 className="font-medium text-slate-900">Email Notifications</h3>
-              <p className="text-sm text-slate-600 mt-1">
+              <p className="text-sm text-slate-600 mt-1 whitespace-nowrap">
                 Enable or disable all email notifications
               </p>
             </div>
@@ -194,9 +196,9 @@ export default function UserNotificationSettingsClient() {
 
           {/* New Season Alerts */}
           <div className="flex items-center justify-between p-4 bg-slate-50 rounded-lg">
-            <div className="flex-1">
+            <div className="flex-1 pr-4">
               <h3 className="font-medium text-slate-900">New Season Alerts</h3>
-              <p className="text-sm text-slate-600 mt-1">
+              <p className="text-sm text-slate-600 mt-1 whitespace-nowrap">
                 Get notified when new seasons of your watched shows are available
               </p>
             </div>
@@ -214,9 +216,9 @@ export default function UserNotificationSettingsClient() {
 
           {/* Friend Activity Alerts */}
           <div className="flex items-center justify-between p-4 bg-slate-50 rounded-lg">
-            <div className="flex-1">
+            <div className="flex-1 pr-4">
               <h3 className="font-medium text-slate-900">Friend Activity Alerts</h3>
-              <p className="text-sm text-slate-600 mt-1">
+              <p className="text-sm text-slate-600 mt-1 whitespace-nowrap">
                 Get notified about your friends&apos; watchlist activity
               </p>
             </div>
@@ -250,12 +252,12 @@ export default function UserNotificationSettingsClient() {
           <div className="space-y-3">
             {/* New User Signup */}
             <div className="flex items-center justify-between p-4 bg-green-50 rounded-lg border border-green-200">
-              <div className="flex-1">
+              <div className="flex-1 pr-4">
                 <div className="flex items-center gap-2 mb-1">
                   <h4 className="font-medium text-slate-900 text-sm">🎉 New User Signup</h4>
-                  <span className="text-xs text-green-600 font-medium bg-green-100 px-2 py-1 rounded">Always On</span>
+                  <span className="text-xs text-green-600 font-medium bg-green-100 px-2 py-1 rounded whitespace-nowrap">Always On</span>
                 </div>
-                <p className="text-xs text-slate-600">
+                <p className="text-xs text-slate-600 whitespace-nowrap">
                   Sent when a new user registers for the first time
                 </p>
               </div>
@@ -263,12 +265,12 @@ export default function UserNotificationSettingsClient() {
 
             {/* User Added First Item */}
             <div className="flex items-center justify-between p-4 bg-blue-50 rounded-lg border border-blue-200">
-              <div className="flex-1">
+              <div className="flex-1 pr-4">
                 <div className="flex items-center gap-2 mb-1">
                   <h4 className="font-medium text-slate-900 text-sm">📝 User Added First Item</h4>
-                  <span className="text-xs text-blue-600 font-medium bg-blue-100 px-2 py-1 rounded">Always On</span>
+                  <span className="text-xs text-blue-600 font-medium bg-blue-100 px-2 py-1 rounded whitespace-nowrap">Always On</span>
                 </div>
-                <p className="text-xs text-slate-600">
+                <p className="text-xs text-slate-600 whitespace-nowrap">
                   Sent when a user adds their first item to their watchlist
                 </p>
               </div>
@@ -276,12 +278,12 @@ export default function UserNotificationSettingsClient() {
 
             {/* User Left First Review */}
             <div className="flex items-center justify-between p-4 bg-yellow-50 rounded-lg border border-yellow-200">
-              <div className="flex-1">
+              <div className="flex-1 pr-4">
                 <div className="flex items-center gap-2 mb-1">
                   <h4 className="font-medium text-slate-900 text-sm">⭐ User Left First Review</h4>
-                  <span className="text-xs text-yellow-600 font-medium bg-yellow-100 px-2 py-1 rounded">Always On</span>
+                  <span className="text-xs text-yellow-600 font-medium bg-yellow-100 px-2 py-1 rounded whitespace-nowrap">Always On</span>
                 </div>
-                <p className="text-xs text-slate-600">
+                <p className="text-xs text-slate-600 whitespace-nowrap">
                   Sent when a user leaves their first rating or review
                 </p>
               </div>
@@ -289,12 +291,12 @@ export default function UserNotificationSettingsClient() {
 
             {/* User Repeat Visit */}
             <div className="flex items-center justify-between p-4 bg-purple-50 rounded-lg border border-purple-200">
-              <div className="flex-1">
+              <div className="flex-1 pr-4">
                 <div className="flex items-center gap-2 mb-1">
                   <h4 className="font-medium text-slate-900 text-sm">🔄 User Repeat Visit</h4>
-                  <span className="text-xs text-purple-600 font-medium bg-purple-100 px-2 py-1 rounded">Always On</span>
+                  <span className="text-xs text-purple-600 font-medium bg-purple-100 px-2 py-1 rounded whitespace-nowrap">Always On</span>
                 </div>
-                <p className="text-xs text-slate-600">
+                <p className="text-xs text-slate-600 whitespace-nowrap">
                   Sent when a user visits 3+ times within 7 days
                 </p>
               </div>
@@ -302,12 +304,12 @@ export default function UserNotificationSettingsClient() {
 
             {/* User Returned After Inactivity */}
             <div className="flex items-center justify-between p-4 bg-orange-50 rounded-lg border border-orange-200">
-              <div className="flex-1">
+              <div className="flex-1 pr-4">
                 <div className="flex items-center gap-2 mb-1">
                   <h4 className="font-medium text-slate-900 text-sm">🎯 User Returned After Inactivity</h4>
-                  <span className="text-xs text-orange-600 font-medium bg-orange-100 px-2 py-1 rounded">Always On</span>
+                  <span className="text-xs text-orange-600 font-medium bg-orange-100 px-2 py-1 rounded whitespace-nowrap">Always On</span>
                 </div>
-                <p className="text-xs text-slate-600">
+                <p className="text-xs text-slate-600 whitespace-nowrap">
                   Sent when a user returns after 7+ days of inactivity
                 </p>
               </div>
@@ -315,12 +317,12 @@ export default function UserNotificationSettingsClient() {
 
             {/* Weekly Digest */}
             <div className="flex items-center justify-between p-4 bg-slate-50 rounded-lg border border-slate-200">
-              <div className="flex-1">
+              <div className="flex-1 pr-4">
                 <div className="flex items-center gap-2 mb-1">
                   <h4 className="font-medium text-slate-900 text-sm">📊 Weekly Digest</h4>
-                  <span className="text-xs text-slate-600 font-medium bg-slate-100 px-2 py-1 rounded">Every Monday 9:00 AM UTC</span>
+                  <span className="text-xs text-slate-600 font-medium bg-slate-100 px-2 py-1 rounded whitespace-nowrap">Every Monday 9:00 AM UTC</span>
                 </div>
-                <p className="text-xs text-slate-600">
+                <p className="text-xs text-slate-600 whitespace-nowrap">
                   Automated weekly report including user activity, popular content, and growth metrics
                 </p>
               </div>
@@ -338,12 +340,12 @@ export default function UserNotificationSettingsClient() {
 
             {/* Monthly Digest */}
             <div className="flex items-center justify-between p-4 bg-slate-50 rounded-lg border border-slate-200">
-              <div className="flex-1">
+              <div className="flex-1 pr-4">
                 <div className="flex items-center gap-2 mb-1">
                   <h4 className="font-medium text-slate-900 text-sm">📈 Monthly Digest</h4>
-                  <span className="text-xs text-slate-600 font-medium bg-slate-100 px-2 py-1 rounded">1st of Month 9:00 AM UTC</span>
+                  <span className="text-xs text-slate-600 font-medium bg-slate-100 px-2 py-1 rounded whitespace-nowrap">1st of Month 9:00 AM UTC</span>
                 </div>
-                <p className="text-xs text-slate-600">
+                <p className="text-xs text-slate-600 whitespace-nowrap">
                   Automated monthly report including statistics, user engagement, and content trends
                 </p>
               </div>

@@ -52,7 +52,7 @@ export async function GET(request: Request) {
       // Return a single item by id - find in watchlistItemList first
       const watchlistItemList = await prisma.watchlistItemList.findFirst({
         where: { 
-          id: Number(id),
+          id: id,
           watchlist: { ownerId: _userId }
         },
         include: {
@@ -272,7 +272,7 @@ export async function PUT(request: Request) {
     // Find the watchlist item list
     const watchlistItemList = await prisma.watchlistItemList.findFirst({
       where: { 
-        id: Number(id),
+        id: id,
         watchlist: { ownerId: _userId }
       },
       include: {
@@ -296,7 +296,7 @@ export async function PUT(request: Request) {
     }
 
     const updatedItem = await prisma.watchlistItemList.update({
-      where: { id: Number(id) },
+      where: { id: id },
       data: updateFields,
       include: {
         watchlistItem: true
@@ -356,7 +356,7 @@ export async function DELETE(request: Request) {
   try {
     const _userId = await getUserId();
     const { searchParams } = new URL(request.url);
-    const id = Number(searchParams.get('id'));
+    const id = searchParams.get('id');
     if (!id) {
       return NextResponse.json({ error: 'Missing id' }, { status: 400 });
     }

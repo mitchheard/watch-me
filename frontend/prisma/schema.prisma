@@ -16,6 +16,8 @@ model User {
   updatedAt DateTime      @updatedAt
   sessions  UserSession[]
   WatchItem WatchItem[]
+  watchlists Watchlist[]
+  watchlistMembers WatchlistMember[]
   notificationPreferences NotificationPreferences?
 }
 
@@ -105,4 +107,72 @@ model EmailLog {
   @@index([to])
   @@index([status])
   @@index([createdAt])
+}
+
+model Watchlist {
+  id        String   @id @default(cuid())
+  name      String
+  ownerId   String
+  isDefault Boolean  @default(false)
+  isShared  Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  owner   User                @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  items   WatchlistItemList[]
+  members WatchlistMember[]
+  
+  @@index([ownerId])
+  @@index([isDefault])
+}
+
+model WatchlistItem {
+  id                     String   @id @default(cuid())
+  title                  String
+  type                   String
+  tmdbId                 Int?
+  tmdbOverview           String?
+  tmdbMovieReleaseYear   Int?
+  tmdbTvFirstAirYear     Int?
+  tmdbMovieRuntime       Int?
+  tmdbTvNumberOfSeasons  Int?
+  tmdbPosterPath         String?
+  createdAt              DateTime @default(now())
+  
+  watchlistItemLists WatchlistItemList[]
+  
+  @@index([title])
+  @@index([type])
+}
+
+model WatchlistItemList {
+  id             String   @id @default(cuid())
+  watchlistId    String
+  watchlistItemId String
+  status         String
+  rating         String?
+  notes          String?
+  addedAt        DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  
+  watchlist     Watchlist     @relation(fields: [watchlistId], references: [id], onDelete: Cascade)
+  watchlistItem WatchlistItem @relation(fields: [watchlistItemId], references: [id], onDelete: Cascade)
+  
+  @@index([watchlistId])
+  @@index([status])
+  @@index([addedAt])
+}
+
+model WatchlistMember {
+  id          String   @id @default(cuid())
+  watchlistId String
+  userId      String
+  createdAt   DateTime @default(now())
+  
+  watchlist Watchlist @relation(fields: [watchlistId], references: [id], onDelete: Cascade)
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@unique([watchlistId, userId])
+  @@index([watchlistId])
+  @@index([userId])
 }

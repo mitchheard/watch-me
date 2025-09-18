@@ -104,4 +104,5 @@ export interface WatchlistFormData {
   tmdbTvNumberOfEpisodes?: number | null;
   tmdbTvNumberOfSeasons?: number | null;
   tmdbTvStatus?: string | null;
+  notes?: string | null;
 }

@@ -48,46 +48,7 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
 
-    if (id) {
-      // Return a single item by id - find in watchlistItemList first
-      const watchlistItemList = await prisma.watchlistItemList.findFirst({
-        where: { 
-          id: id,
-          watchlist: { ownerId: _userId }
-        },
-        include: {
-          watchlistItem: true
-        }
-      });
-      
-      if (!watchlistItemList) {
-        return NextResponse.json(null);
-      }
-      
-      // Transform to old format for compatibility
-      const item = {
-        id: watchlistItemList.id,
-        userId: _userId,
-        title: watchlistItemList.watchlistItem.title,
-        type: watchlistItemList.watchlistItem.type,
-        status: watchlistItemList.status,
-        rating: watchlistItemList.rating,
-        notes: watchlistItemList.notes,
-        tmdbId: watchlistItemList.watchlistItem.tmdbId,
-        tmdbPosterPath: watchlistItemList.watchlistItem.tmdbPosterPath,
-        tmdbOverview: watchlistItemList.watchlistItem.tmdbOverview,
-        tmdbMovieReleaseYear: watchlistItemList.watchlistItem.tmdbMovieReleaseYear,
-        tmdbTvFirstAirYear: watchlistItemList.watchlistItem.tmdbTvFirstAirYear,
-        tmdbMovieRuntime: watchlistItemList.watchlistItem.tmdbMovieRuntime,
-        tmdbTvNumberOfSeasons: watchlistItemList.watchlistItem.tmdbTvNumberOfSeasons,
-        updatedAt: watchlistItemList.updatedAt,
-        createdAt: watchlistItemList.watchlistItem.createdAt
-      };
-      
-      return NextResponse.json(item);
-    }
-
-    // Get user's default watchlist
+    // Find user's default watchlist
     const defaultWatchlist = await prisma.watchlist.findFirst({
       where: {
         ownerId: _userId,
@@ -96,14 +57,72 @@ export async function GET(request: Request) {
     });
 
     if (!defaultWatchlist) {
-      return NextResponse.json([]);
+      // Create default watchlist if it doesn't exist
+      await prisma.watchlist.create({
+        data: {
+          name: 'My Watchlist',
+          description: 'Your personal watchlist',
+          isDefault: true,
+          isShared: false,
+          ownerId: _userId
+        }
+      });
+      
+      return NextResponse.json([]); // Return empty array for new user
     }
 
-    // Get items from the default watchlist
-    const watchlistItems = await prisma.watchlistItemList.findMany({
-      where: {
-        watchlistId: defaultWatchlist.id
-      },
+    if (id) {
+      // Return a single item by id from the new system
+      const watchlistItemList = await prisma.watchlistItemList.findFirst({
+        where: {
+          watchlistId: defaultWatchlist.id,
+          watchlistItemId: id
+        },
+        include: {
+          watchlistItem: true
+        }
+      });
+
+      if (!watchlistItemList) {
+        return NextResponse.json(null);
+      }
+
+      // Transform to old format for compatibility
+      const item = {
+        id: watchlistItemList.watchlistItem.id,
+        tmdbId: watchlistItemList.watchlistItem.tmdbId,
+        title: watchlistItemList.watchlistItem.title,
+        type: watchlistItemList.watchlistItem.type,
+        status: watchlistItemList.status,
+        rating: watchlistItemList.rating,
+        notes: watchlistItemList.notes,
+        createdAt: watchlistItemList.addedAt,
+        updatedAt: watchlistItemList.updatedAt,
+        userId: _userId,
+        currentSeason: null,
+        totalSeasons: null,
+        tmdbImdbId: watchlistItemList.watchlistItem.tmdbImdbId,
+        tmdbMovieCertification: watchlistItemList.watchlistItem.tmdbMovieCertification,
+        tmdbMovieRuntime: watchlistItemList.watchlistItem.tmdbMovieRuntime,
+        tmdbOverview: watchlistItemList.watchlistItem.tmdbOverview,
+        tmdbPosterPath: watchlistItemList.watchlistItem.tmdbPosterPath,
+        tmdbTagline: watchlistItemList.watchlistItem.tmdbTagline,
+        tmdbTvCertification: watchlistItemList.watchlistItem.tmdbTvCertification,
+        tmdbTvFirstAirYear: watchlistItemList.watchlistItem.tmdbTvFirstAirYear,
+        tmdbTvLastAirYear: watchlistItemList.watchlistItem.tmdbTvLastAirYear,
+        tmdbTvNetworks: watchlistItemList.watchlistItem.tmdbTvNetworks,
+        tmdbTvNumberOfEpisodes: watchlistItemList.watchlistItem.tmdbTvNumberOfEpisodes,
+        tmdbTvNumberOfSeasons: watchlistItemList.watchlistItem.tmdbTvNumberOfSeasons,
+        tmdbTvStatus: watchlistItemList.watchlistItem.tmdbTvStatus,
+        tmdbMovieReleaseYear: watchlistItemList.watchlistItem.tmdbMovieReleaseYear,
+      };
+
+      return NextResponse.json(item);
+    }
+
+    // Return all items from the default watchlist
+    const watchlistItemLists = await prisma.watchlistItemList.findMany({
+      where: { watchlistId: defaultWatchlist.id },
       include: {
         watchlistItem: true
       },
@@ -111,23 +130,33 @@ export async function GET(request: Request) {
     });
 
     // Transform to old format for compatibility
-    const items = watchlistItems.map(item => ({
-      id: item.id,
+    const items = watchlistItemLists.map(itemList => ({
+      id: itemList.watchlistItem.id,
+      tmdbId: itemList.watchlistItem.tmdbId,
+      title: itemList.watchlistItem.title,
+      type: itemList.watchlistItem.type,
+      status: itemList.status,
+      rating: itemList.rating,
+      notes: itemList.notes,
+      createdAt: itemList.addedAt,
+      updatedAt: itemList.updatedAt,
       userId: _userId,
-      title: item.watchlistItem.title,
-      type: item.watchlistItem.type,
-      status: item.status,
-      rating: item.rating,
-      notes: item.notes,
-      tmdbId: item.watchlistItem.tmdbId,
-      tmdbPosterPath: item.watchlistItem.tmdbPosterPath,
-      tmdbOverview: item.watchlistItem.tmdbOverview,
-      tmdbMovieReleaseYear: item.watchlistItem.tmdbMovieReleaseYear,
-      tmdbTvFirstAirYear: item.watchlistItem.tmdbTvFirstAirYear,
-      tmdbMovieRuntime: item.watchlistItem.tmdbMovieRuntime,
-      tmdbTvNumberOfSeasons: item.watchlistItem.tmdbTvNumberOfSeasons,
-      updatedAt: item.updatedAt,
-      createdAt: item.watchlistItem.createdAt
+      currentSeason: null,
+      totalSeasons: null,
+      tmdbImdbId: itemList.watchlistItem.tmdbImdbId,
+      tmdbMovieCertification: itemList.watchlistItem.tmdbMovieCertification,
+      tmdbMovieRuntime: itemList.watchlistItem.tmdbMovieRuntime,
+      tmdbOverview: itemList.watchlistItem.tmdbOverview,
+      tmdbPosterPath: itemList.watchlistItem.tmdbPosterPath,
+      tmdbTagline: itemList.watchlistItem.tmdbTagline,
+      tmdbTvCertification: itemList.watchlistItem.tmdbTvCertification,
+      tmdbTvFirstAirYear: itemList.watchlistItem.tmdbTvFirstAirYear,
+      tmdbTvLastAirYear: itemList.watchlistItem.tmdbTvLastAirYear,
+      tmdbTvNetworks: itemList.watchlistItem.tmdbTvNetworks,
+      tmdbTvNumberOfEpisodes: itemList.watchlistItem.tmdbTvNumberOfEpisodes,
+      tmdbTvNumberOfSeasons: itemList.watchlistItem.tmdbTvNumberOfSeasons,
+      tmdbTvStatus: itemList.watchlistItem.tmdbTvStatus,
+      tmdbMovieReleaseYear: itemList.watchlistItem.tmdbMovieReleaseYear,
     }));
 
     return NextResponse.json(items);
@@ -143,7 +172,7 @@ export async function POST(request: Request) {
     const _userId = await getUserId();
     const data: WatchlistFormData = await request.json();
     
-    // Get or create default watchlist
+    // Find or create user's default watchlist
     let defaultWatchlist = await prisma.watchlist.findFirst({
       where: {
         ownerId: _userId,
@@ -155,84 +184,76 @@ export async function POST(request: Request) {
       defaultWatchlist = await prisma.watchlist.create({
         data: {
           name: 'My Watchlist',
-          ownerId: _userId,
+          description: 'Your personal watchlist',
           isDefault: true,
-          isShared: false
+          isShared: false,
+          ownerId: _userId
         }
       });
     }
     
     // Check if this is the user's first item
     const existingItems = await prisma.watchlistItemList.count({
-      where: { 
-        watchlist: { ownerId: _userId }
-      },
+      where: { watchlistId: defaultWatchlist.id },
     });
     
-    // Check if item already exists in this watchlist
-    const existingItem = await prisma.watchlistItem.findFirst({
-      where: {
-        title: data.title,
-        type: data.type,
-        watchlistItemLists: {
-          some: {
-            watchlistId: defaultWatchlist.id
-          }
+    // Find or create the WatchlistItem
+    let watchlistItem = await prisma.watchlistItem.findUnique({
+      where: { tmdbId: data.tmdbId || 0 }
+    });
+
+    if (!watchlistItem) {
+      watchlistItem = await prisma.watchlistItem.create({
+        data: {
+          tmdbId: data.tmdbId || 0,
+          title: data.title,
+          type: data.type,
+          tmdbImdbId: data.tmdbImdbId || null,
+          tmdbMovieCertification: data.tmdbMovieCertification || null,
+          tmdbMovieReleaseYear: data.tmdbMovieReleaseYear || null,
+          tmdbMovieRuntime: data.tmdbMovieRuntime || null,
+          tmdbOverview: data.tmdbOverview || null,
+          tmdbPosterPath: data.tmdbPosterPath || null,
+          tmdbTagline: data.tmdbTagline || null,
+          tmdbTvCertification: data.tmdbTvCertification || null,
+          tmdbTvFirstAirYear: data.tmdbTvFirstAirYear || null,
+          tmdbTvLastAirYear: data.tmdbTvLastAirYear || null,
+          tmdbTvNetworks: data.tmdbTvNetworks || null,
+          tmdbTvNumberOfEpisodes: data.tmdbTvNumberOfEpisodes || null,
+          tmdbTvNumberOfSeasons: data.tmdbTvNumberOfSeasons || null,
+          tmdbTvStatus: data.tmdbTvStatus || null,
         }
+      });
+    }
+
+    // Check if item is already in this watchlist
+    const existingWatchlistItem = await prisma.watchlistItemList.findFirst({
+      where: {
+        watchlistId: defaultWatchlist.id,
+        watchlistItemId: watchlistItem.id
       }
     });
 
-    if (existingItem) {
+    if (existingWatchlistItem) {
       return NextResponse.json(
         { error: 'This title is already in your watchlist.' },
         { status: 409 }
       );
     }
-    
-    // Create the watchlist item
-    const watchlistItem = await prisma.watchlistItem.create({
-      data: {
-        title: data.title,
-        type: data.type,
-        tmdbId: data.tmdbId || Math.floor(Math.random() * 1000000) + 1,
-        tmdbPosterPath: data.tmdbPosterPath || null,
-        tmdbOverview: data.tmdbOverview || null,
-        tmdbMovieReleaseYear: data.tmdbMovieReleaseYear || null,
-        tmdbTvFirstAirYear: data.tmdbTvFirstAirYear || null,
-        tmdbMovieRuntime: data.tmdbMovieRuntime || null,
-        tmdbTvNumberOfSeasons: data.tmdbTvNumberOfSeasons || null,
-      }
-    });
-    
-    // Add it to the watchlist
+
+    // Add item to watchlist
     const watchlistItemList = await prisma.watchlistItemList.create({
       data: {
         watchlistId: defaultWatchlist.id,
         watchlistItemId: watchlistItem.id,
-        status: data.status,
-        addedAt: new Date()
+        status: data.status || 'Want to Watch',
+        rating: data.rating || null,
+        notes: data.notes || null
+      },
+      include: {
+        watchlistItem: true
       }
     });
-    
-    // Transform to old format for compatibility
-    const item = {
-      id: watchlistItemList.id,
-      userId: _userId,
-      title: watchlistItem.title,
-      type: watchlistItem.type,
-      status: watchlistItemList.status,
-      rating: watchlistItemList.rating,
-      notes: watchlistItemList.notes,
-      tmdbId: watchlistItem.tmdbId,
-      tmdbPosterPath: watchlistItem.tmdbPosterPath,
-      tmdbOverview: watchlistItem.tmdbOverview,
-      tmdbMovieReleaseYear: watchlistItem.tmdbMovieReleaseYear,
-      tmdbTvFirstAirYear: watchlistItem.tmdbTvFirstAirYear,
-      tmdbMovieRuntime: watchlistItem.tmdbMovieRuntime,
-      tmdbTvNumberOfSeasons: watchlistItem.tmdbTvNumberOfSeasons,
-      updatedAt: watchlistItemList.updatedAt,
-      createdAt: watchlistItem.createdAt
-    };
     
     // If this was the user's first item, send admin notification
     if (existingItems === 0) {
@@ -255,6 +276,36 @@ export async function POST(request: Request) {
       }
     }
     
+    // Transform to old format for compatibility
+    const item = {
+      id: watchlistItemList.watchlistItem.id,
+      tmdbId: watchlistItemList.watchlistItem.tmdbId,
+      title: watchlistItemList.watchlistItem.title,
+      type: watchlistItemList.watchlistItem.type,
+      status: watchlistItemList.status,
+      rating: watchlistItemList.rating,
+      notes: watchlistItemList.notes,
+      createdAt: watchlistItemList.addedAt,
+      updatedAt: watchlistItemList.updatedAt,
+      userId: _userId,
+      currentSeason: data.currentSeason ? Number(data.currentSeason) : null,
+      totalSeasons: data.totalSeasons ? Number(data.totalSeasons) : null,
+      tmdbImdbId: watchlistItemList.watchlistItem.tmdbImdbId,
+      tmdbMovieCertification: watchlistItemList.watchlistItem.tmdbMovieCertification,
+      tmdbMovieRuntime: watchlistItemList.watchlistItem.tmdbMovieRuntime,
+      tmdbOverview: watchlistItemList.watchlistItem.tmdbOverview,
+      tmdbPosterPath: watchlistItemList.watchlistItem.tmdbPosterPath,
+      tmdbTagline: watchlistItemList.watchlistItem.tmdbTagline,
+      tmdbTvCertification: watchlistItemList.watchlistItem.tmdbTvCertification,
+      tmdbTvFirstAirYear: watchlistItemList.watchlistItem.tmdbTvFirstAirYear,
+      tmdbTvLastAirYear: watchlistItemList.watchlistItem.tmdbTvLastAirYear,
+      tmdbTvNetworks: watchlistItemList.watchlistItem.tmdbTvNetworks,
+      tmdbTvNumberOfEpisodes: watchlistItemList.watchlistItem.tmdbTvNumberOfEpisodes,
+      tmdbTvNumberOfSeasons: watchlistItemList.watchlistItem.tmdbTvNumberOfSeasons,
+      tmdbTvStatus: watchlistItemList.watchlistItem.tmdbTvStatus,
+      tmdbMovieReleaseYear: watchlistItemList.watchlistItem.tmdbMovieReleaseYear,
+    };
+    
     return NextResponse.json(item);
   } catch (error) {
     console.error('Failed to create watchlist item:', error);
@@ -269,11 +320,28 @@ export async function PUT(request: Request) {
     const data = await request.json();
     const { id, ...updateData } = data;
 
-    // Find the watchlist item list
+    console.log('PUT /api/watchlist - Request data:', { id, updateData, userId: _userId });
+
+    // Find user's default watchlist
+    const defaultWatchlist = await prisma.watchlist.findFirst({
+      where: {
+        ownerId: _userId,
+        isDefault: true
+      }
+    });
+
+    if (!defaultWatchlist) {
+      console.log('PUT /api/watchlist - No default watchlist found');
+      return NextResponse.json({ error: 'Default watchlist not found' }, { status: 404 });
+    }
+
+    console.log('PUT /api/watchlist - Found default watchlist:', defaultWatchlist.id);
+
+    // Find the watchlist item list entry
     const watchlistItemList = await prisma.watchlistItemList.findFirst({
-      where: { 
-        id: id,
-        watchlist: { ownerId: _userId }
+      where: {
+        watchlistId: defaultWatchlist.id,
+        watchlistItemId: id
       },
       include: {
         watchlistItem: true
@@ -281,8 +349,11 @@ export async function PUT(request: Request) {
     });
 
     if (!watchlistItemList) {
-      return NextResponse.json({ error: 'Item not found' }, { status: 404 });
+      console.log('PUT /api/watchlist - Item not found in watchlist:', { id, watchlistId: defaultWatchlist.id });
+      return NextResponse.json({ error: 'Item not found in watchlist' }, { status: 404 });
     }
+
+    console.log('PUT /api/watchlist - Found watchlist item list:', watchlistItemList.id);
 
     // Check if this is adding a rating for the first time
     const isAddingRating = updateData.rating && !watchlistItemList.rating;
@@ -295,33 +366,14 @@ export async function PUT(request: Request) {
       }
     }
 
-    const updatedItem = await prisma.watchlistItemList.update({
-      where: { id: id },
+    // Update the watchlist item list entry
+    const updatedWatchlistItemList = await prisma.watchlistItemList.update({
+      where: { id: watchlistItemList.id },
       data: updateFields,
       include: {
         watchlistItem: true
       }
     });
-
-    // Transform to old format for compatibility
-    const item = {
-      id: updatedItem.id,
-      userId: _userId,
-      title: updatedItem.watchlistItem.title,
-      type: updatedItem.watchlistItem.type,
-      status: updatedItem.status,
-      rating: updatedItem.rating,
-      notes: updatedItem.notes,
-      tmdbId: updatedItem.watchlistItem.tmdbId,
-      tmdbPosterPath: updatedItem.watchlistItem.tmdbPosterPath,
-      tmdbOverview: updatedItem.watchlistItem.tmdbOverview,
-      tmdbMovieReleaseYear: updatedItem.watchlistItem.tmdbMovieReleaseYear,
-      tmdbTvFirstAirYear: updatedItem.watchlistItem.tmdbTvFirstAirYear,
-      tmdbMovieRuntime: updatedItem.watchlistItem.tmdbMovieRuntime,
-      tmdbTvNumberOfSeasons: updatedItem.watchlistItem.tmdbTvNumberOfSeasons,
-      updatedAt: updatedItem.updatedAt,
-      createdAt: updatedItem.watchlistItem.createdAt
-    };
 
     // If this was the user's first review, send admin notification
     if (isAddingRating) {
@@ -334,7 +386,7 @@ export async function PUT(request: Request) {
           await notifyFirstReview(
             _userId,
             user.email,
-            item.title,
+            updatedWatchlistItemList.watchlistItem.title,
             updateData.rating as string
           );
         }
@@ -344,9 +396,44 @@ export async function PUT(request: Request) {
       }
     }
 
+    // Transform to old format for compatibility
+    const item = {
+      id: updatedWatchlistItemList.watchlistItem.id,
+      tmdbId: updatedWatchlistItemList.watchlistItem.tmdbId,
+      title: updatedWatchlistItemList.watchlistItem.title,
+      type: updatedWatchlistItemList.watchlistItem.type,
+      status: updatedWatchlistItemList.status,
+      rating: updatedWatchlistItemList.rating,
+      notes: updatedWatchlistItemList.notes,
+      createdAt: updatedWatchlistItemList.addedAt,
+      updatedAt: updatedWatchlistItemList.updatedAt,
+      userId: _userId,
+      currentSeason: null,
+      totalSeasons: null,
+      tmdbImdbId: updatedWatchlistItemList.watchlistItem.tmdbImdbId,
+      tmdbMovieCertification: updatedWatchlistItemList.watchlistItem.tmdbMovieCertification,
+      tmdbMovieRuntime: updatedWatchlistItemList.watchlistItem.tmdbMovieRuntime,
+      tmdbOverview: updatedWatchlistItemList.watchlistItem.tmdbOverview,
+      tmdbPosterPath: updatedWatchlistItemList.watchlistItem.tmdbPosterPath,
+      tmdbTagline: updatedWatchlistItemList.watchlistItem.tmdbTagline,
+      tmdbTvCertification: updatedWatchlistItemList.watchlistItem.tmdbTvCertification,
+      tmdbTvFirstAirYear: updatedWatchlistItemList.watchlistItem.tmdbTvFirstAirYear,
+      tmdbTvLastAirYear: updatedWatchlistItemList.watchlistItem.tmdbTvLastAirYear,
+      tmdbTvNetworks: updatedWatchlistItemList.watchlistItem.tmdbTvNetworks,
+      tmdbTvNumberOfEpisodes: updatedWatchlistItemList.watchlistItem.tmdbTvNumberOfEpisodes,
+      tmdbTvNumberOfSeasons: updatedWatchlistItemList.watchlistItem.tmdbTvNumberOfSeasons,
+      tmdbTvStatus: updatedWatchlistItemList.watchlistItem.tmdbTvStatus,
+      tmdbMovieReleaseYear: updatedWatchlistItemList.watchlistItem.tmdbMovieReleaseYear,
+    };
+
     return NextResponse.json(item);
   } catch (error) {
-    console.error('Failed to update watchlist item:', error);
+    console.error('PUT /api/watchlist - Failed to update watchlist item:', error);
+    console.error('PUT /api/watchlist - Error details:', {
+      message: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined,
+      name: error instanceof Error ? error.name : undefined
+    });
     return NextResponse.json({ error: 'Failed to update watchlist item' }, { status: 500 });
   }
 }
@@ -356,28 +443,13 @@ export async function DELETE(request: Request) {
   try {
     const _userId = await getUserId();
     const { searchParams } = new URL(request.url);
-    const id = searchParams.get('id');
+    const id = Number(searchParams.get('id'));
     if (!id) {
       return NextResponse.json({ error: 'Missing id' }, { status: 400 });
     }
-    
-    // Find the watchlist item list to verify ownership
-    const watchlistItemList = await prisma.watchlistItemList.findFirst({
-      where: { 
-        id: id,
-        watchlist: { ownerId: _userId }
-      }
+    await prisma.watchItem.delete({
+      where: { id, userId: _userId }
     });
-
-    if (!watchlistItemList) {
-      return NextResponse.json({ error: 'Item not found' }, { status: 404 });
-    }
-    
-    // Delete the watchlist item list entry
-    await prisma.watchlistItemList.delete({
-      where: { id: id }
-    });
-    
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Failed to delete watchlist item:', error);

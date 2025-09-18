@@ -137,7 +137,7 @@ export default function WatchlistForm({
         tmdbTvLastAirYear: details.tmdbTvLastAirYear || null,
         tmdbTvNetworks: details.tmdbTvNetworks || null,
         tmdbTvNumberOfEpisodes: details.tmdbTvNumberOfEpisodes || null,
-        tmdbTvNumberOfSeasons: details.tmdbTvNumberOfSeasons || null,
+        tmdbTvNumberOfSeasons: totalSeasonsFromTmdb, // Use the same value as totalSeasons
         tmdbTvStatus: details.tmdbTvStatus || null,
         rating: null
       };

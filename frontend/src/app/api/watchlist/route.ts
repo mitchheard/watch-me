@@ -246,7 +246,7 @@ export async function POST(request: Request) {
       data: {
         watchlistId: defaultWatchlist.id,
         watchlistItemId: watchlistItem.id,
-        status: data.status || 'Want to Watch',
+        status: data.status || 'want-to-watch',
         rating: data.rating || null,
         notes: data.notes || null
       },

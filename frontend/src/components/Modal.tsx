@@ -33,12 +33,12 @@ export default function Modal({
       >
         <motion.div
           key="modal"
-          initial={{ scale: 0.95, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          exit={{ scale: 0.95, opacity: 0 }}
-          transition={{ duration: 0.2 }}
+          initial={{ scale: 0.95, opacity: 0, y: 20 }}
+          animate={{ scale: 1, opacity: 1, y: 0 }}
+          exit={{ scale: 0.95, opacity: 0, y: 20 }}
+          transition={{ duration: 0.2, ease: "easeOut" }}
           onClick={(e) => e.stopPropagation()}
-          className="bg-white text-slate-800 rounded-lg shadow-xl p-6 w-full max-w-sm max-h-[90vh] overflow-y-auto sm:max-w-lg sm:max-h-[90vh] relative"
+          className="bg-white text-slate-800 rounded-t-xl sm:rounded-lg shadow-xl p-6 w-full max-w-sm max-h-[90vh] overflow-y-auto sm:max-w-lg sm:max-h-[90vh] relative"
         >
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-xl font-semibold">{title}</h2>

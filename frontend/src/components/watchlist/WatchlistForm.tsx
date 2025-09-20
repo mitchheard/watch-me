@@ -5,6 +5,7 @@ import { useForm } from 'react-hook-form';
 import { WatchlistFormData, TMDBSearchResult, TMDBItemDetails, WatchItem } from '@/types/watchlist';
 import Image from 'next/image';
 import { useDebounceValue } from 'usehooks-ts';
+import MobileSelect from '@/components/ui/MobileSelect';
 
 console.log('WatchlistForm SCRIPT EXECUTING (Phase 6 Restore - RHF Integration)');
 
@@ -304,7 +305,7 @@ export default function WatchlistForm({
             id="title"
             {...register('title', { required: 'Title is required' })}
             onChange={handleTitleChange}
-            className="block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 sm:text-sm"
+            className="block w-full rounded-md border border-gray-300 px-3 py-3 shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 sm:text-sm transition-colors min-h-[44px]"
             placeholder="Search for a movie or show..."
           />
           {errors.title && (
@@ -360,35 +361,29 @@ export default function WatchlistForm({
         </div>
 
         {/* Type Selection */}
-        <div>
-          <label htmlFor="type" className="block text-sm font-medium text-gray-700 mb-1">
-            Type
-          </label>
-          <select
-            id="type"
-            {...register('type')}
-            className="block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 sm:text-sm"
-          >
-            <option value="movie">Movie</option>
-            <option value="show">TV Show</option>
-          </select>
-        </div>
+        <MobileSelect
+          label="Type"
+          id="type"
+          value={watch('type')}
+          onChange={(value) => setValue('type', value)}
+          options={[
+            { value: 'movie', label: 'Movie' },
+            { value: 'show', label: 'TV Show' }
+          ]}
+        />
 
         {/* Status Selection */}
-        <div>
-          <label htmlFor="status" className="block text-sm font-medium text-gray-700 mb-1">
-            Status
-          </label>
-          <select
-            id="status"
-            {...register('status')}
-            className="block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 sm:text-sm"
-          >
-            <option value="want-to-watch">Want to Watch</option>
-            <option value="watching">Watching</option>
-            <option value="finished">Finished</option>
-          </select>
-        </div>
+        <MobileSelect
+          label="Status"
+          id="status"
+          value={watch('status')}
+          onChange={(value) => setValue('status', value)}
+          options={[
+            { value: 'want-to-watch', label: 'Want to Watch' },
+            { value: 'watching', label: 'Watching' },
+            { value: 'finished', label: 'Finished' }
+          ]}
+        />
 
         {/* Show-specific fields */}
         {watch('type') === 'show' && (
@@ -401,7 +396,7 @@ export default function WatchlistForm({
                 type="number"
                 id="currentSeason"
                 {...register('currentSeason', { valueAsNumber: true })}
-                className="block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 sm:text-sm"
+                className="block w-full rounded-md border border-gray-300 px-3 py-3 shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 sm:text-sm transition-colors min-h-[44px]"
                 placeholder="e.g., 1"
               />
             </div>
@@ -413,7 +408,7 @@ export default function WatchlistForm({
                 type="number"
                 id="totalSeasons"
                 {...register('totalSeasons', { valueAsNumber: true })}
-                className="block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 sm:text-sm"
+                className="block w-full rounded-md border border-gray-300 px-3 py-3 shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 sm:text-sm transition-colors min-h-[44px]"
                 placeholder="e.g., 3"
                 disabled={isTotalSeasonsFromTmdb}
               />
@@ -434,7 +429,7 @@ export default function WatchlistForm({
             <button
               type="button"
               onClick={onCancelEdit}
-              className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+              className="flex-1 rounded-md border border-gray-300 bg-white px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors min-h-[44px]"
             >
               Cancel
             </button>
@@ -442,7 +437,7 @@ export default function WatchlistForm({
           <button
             type="submit"
             disabled={isSubmitting}
-            className="inline-flex justify-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50"
+            className="flex-1 inline-flex justify-center items-center rounded-md border border-transparent bg-blue-600 px-4 py-3 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 transition-colors min-h-[44px]"
           >
             {isSubmitting ? 'Saving...' : itemToEdit ? 'Update' : 'Add'}
           </button>

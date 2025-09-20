@@ -81,14 +81,14 @@ export default function MobileSelect({
 
         {/* Dropdown Menu */}
         {isOpen && (
-          <div className="absolute z-50 mt-1 w-full rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
-            <ul className="max-h-60 overflow-auto rounded-md py-1 text-base">
+          <div className="absolute z-50 mb-1 w-full rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none bottom-full">
+            <ul className="rounded-md py-1 text-base">
               {options.map((option) => (
                 <li key={option.value}>
                   <button
                     type="button"
                     onClick={() => handleSelect(option)}
-                    className={`relative w-full cursor-pointer select-none py-2 pl-3 pr-9 text-left hover:bg-blue-50 hover:text-blue-900 ${
+                    className={`relative w-full cursor-pointer select-none py-3 pl-3 pr-9 text-left hover:bg-blue-50 hover:text-blue-900 ${
                       option.value === value 
                         ? 'bg-blue-100 text-blue-900' 
                         : 'text-gray-900'

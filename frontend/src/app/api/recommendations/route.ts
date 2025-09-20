@@ -47,32 +47,46 @@ interface AIRecommendation {
 }
 
 async function getUserId() {
-  const cookieStore = await cookies();
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        get(name: string) {
-          return cookieStore.get(name)?.value;
+  try {
+    console.log('getUserId: Starting authentication check...');
+    const cookieStore = await cookies();
+    console.log('getUserId: Got cookie store');
+    
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          get(name: string) {
+            const value = cookieStore.get(name)?.value;
+            console.log(`getUserId: Cookie ${name}:`, value ? 'present' : 'missing');
+            return value;
+          },
+          set(name: string, value: string, options: CookieOptions) {
+            cookieStore.set({ name, value, ...options });
+          },
+          remove(name: string, options: CookieOptions) {
+            cookieStore.delete({ name, ...options });
+          },
         },
-        set(name: string, value: string, options: CookieOptions) {
-          cookieStore.set({ name, value, ...options });
-        },
-        remove(name: string, options: CookieOptions) {
-          cookieStore.delete({ name, ...options });
-        },
-      },
+      }
+    );
+
+    console.log('getUserId: Created Supabase client');
+    const { data: { user }, error } = await supabase.auth.getUser();
+    console.log('getUserId: Got user data, error:', error?.message || 'none');
+    console.log('getUserId: User ID:', user?.id || 'none');
+
+    if (error || !user) {
+      console.log('getUserId: Authentication failed, error:', error?.message);
+      throw new Error('Not authenticated');
     }
-  );
-
-  const { data: { user }, error } = await supabase.auth.getUser();
-
-  if (error || !user) {
-    throw new Error('Not authenticated');
+    
+    return user.id;
+  } catch (error) {
+    console.error('getUserId: Error in getUserId:', error);
+    throw error;
   }
-  
-  return user.id;
 }
 
 async function getOpenAIRecommendations(watchlist: WatchItem[]): Promise<{
@@ -444,32 +458,64 @@ export async function GET(request: NextRequest) {
       return NextResponse.json(cached.data);
     }
 
-    // Get user's watchlist
+    // Get user's watchlist from new schema
     console.log('Fetching watchlist from database...');
     try {
-      watchlist = await prisma.watchItem.findMany({
+      // First, get the user's default watchlist
+      const defaultWatchlist = await prisma.watchlist.findFirst({
         where: {
-          userId: userId,
+          ownerId: userId,
+          isDefault: true,
         },
-        select: {
-          id: true,
-          title: true,
-          type: true,
-          status: true,
-          rating: true,
-          tmdbOverview: true,
-          tmdbMovieReleaseYear: true,
-          tmdbTvFirstAirYear: true,
-          tmdbMovieRuntime: true,
-          tmdbTvNumberOfSeasons: true,
-          tmdbPosterPath: true,
-          createdAt: true,
-        },
-        orderBy: {
-          createdAt: 'desc',
-        },
-        take: 50, // Limit to 50 items for faster processing
       });
+
+      if (!defaultWatchlist) {
+        console.log('No default watchlist found for user');
+        watchlist = [];
+      } else {
+        // Get items from the default watchlist
+        const watchlistItems = await prisma.watchlistItemList.findMany({
+          where: {
+            watchlistId: defaultWatchlist.id,
+          },
+          include: {
+            watchlistItem: {
+              select: {
+                id: true,
+                title: true,
+                type: true,
+                tmdbOverview: true,
+                tmdbMovieReleaseYear: true,
+                tmdbTvFirstAirYear: true,
+                tmdbMovieRuntime: true,
+                tmdbTvNumberOfSeasons: true,
+                tmdbPosterPath: true,
+                createdAt: true,
+              },
+            },
+          },
+          orderBy: {
+            addedAt: 'desc',
+          },
+          take: 50, // Limit to 50 items for faster processing
+        });
+
+        // Transform to the expected format
+        watchlist = watchlistItems.map(item => ({
+          id: item.watchlistItem.id,
+          title: item.watchlistItem.title,
+          type: item.watchlistItem.type,
+          status: item.status,
+          rating: item.rating,
+          tmdbOverview: item.watchlistItem.tmdbOverview,
+          tmdbMovieReleaseYear: item.watchlistItem.tmdbMovieReleaseYear,
+          tmdbTvFirstAirYear: item.watchlistItem.tmdbTvFirstAirYear,
+          tmdbMovieRuntime: item.watchlistItem.tmdbMovieRuntime,
+          tmdbTvNumberOfSeasons: item.watchlistItem.tmdbTvNumberOfSeasons,
+          tmdbPosterPath: item.watchlistItem.tmdbPosterPath,
+          createdAt: item.watchlistItem.createdAt,
+        }));
+      }
 
       console.log('Watchlist items found:', watchlist.length);
       console.log('Watchlist statuses:', watchlist.map(item => item.status));
@@ -549,6 +595,9 @@ export async function GET(request: NextRequest) {
 
   } catch (error) {
     console.error('Recommendations API error:', error);
+    console.error('Error type:', typeof error);
+    console.error('Error message:', error instanceof Error ? error.message : 'Unknown error');
+    console.error('Error stack:', error instanceof Error ? error.stack : 'No stack trace');
     
     // Always return some recommendations, even if there's an error
     // If watchlist is not available due to database error, return empty recommendations

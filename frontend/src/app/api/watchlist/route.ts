@@ -7,7 +7,6 @@ import { notifyFirstItem, notifyFirstReview } from '@/lib/adminNotifications';
 
 async function getUserId() {
   const cookieStore = await cookies();
-  // console.log('All cookies:', cookieStore.getAll()); // Debug log - can be removed if not needed
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -30,9 +29,10 @@ async function getUserId() {
   const { data: { user }, error } = await supabase.auth.getUser();
 
   if (error || !user) {
-    console.error('Error getting user or no user:', error); // Added more detailed logging
+    console.error('Error getting user or no user:', error);
     throw new Error('Not authenticated');
   }
+  
   // Auto-create user in User table if not found
   const existingUser = await prisma.user.findUnique({ where: { id: user.id } });
   if (!existingUser) {
@@ -320,8 +320,6 @@ export async function PUT(request: Request) {
     const data = await request.json();
     const { id, ...updateData } = data;
 
-    console.log('PUT /api/watchlist - Request data:', { id, updateData, userId: _userId });
-
     // Find user's default watchlist
     const defaultWatchlist = await prisma.watchlist.findFirst({
       where: {
@@ -331,13 +329,10 @@ export async function PUT(request: Request) {
     });
 
     if (!defaultWatchlist) {
-      console.log('PUT /api/watchlist - No default watchlist found');
       return NextResponse.json({ error: 'Default watchlist not found' }, { status: 404 });
     }
 
-    console.log('PUT /api/watchlist - Found default watchlist:', defaultWatchlist.id);
-
-    // Find the watchlist item list entry
+    // Find the watchlist item list entry by watchlistItemId
     const watchlistItemList = await prisma.watchlistItemList.findFirst({
       where: {
         watchlistId: defaultWatchlist.id,
@@ -349,8 +344,37 @@ export async function PUT(request: Request) {
     });
 
     if (!watchlistItemList) {
-      console.log('PUT /api/watchlist - Item not found in watchlist:', { id, watchlistId: defaultWatchlist.id });
-      return NextResponse.json({ error: 'Item not found in watchlist' }, { status: 404 });
+      console.log('PUT /api/watchlist - Item not found in new schema, trying old schema');
+      
+      // Try old schema (watchItem) - but only if ID is numeric
+      if (!isNaN(Number(id))) {
+        const oldItem = await prisma.watchItem.findFirst({
+          where: {
+            id: parseInt(id),
+            userId: _userId
+          }
+        });
+
+        if (oldItem) {
+          // Update old schema item
+          const updateFields: Record<string, unknown> = { updatedAt: new Date() };
+          for (const key in updateData) {
+            if (Object.prototype.hasOwnProperty.call(updateData, key)) {
+              updateFields[key] = updateData[key];
+            }
+          }
+
+          const updatedOldItem = await prisma.watchItem.update({
+            where: { id: parseInt(id) },
+            data: updateFields
+          });
+
+          return NextResponse.json(updatedOldItem);
+        }
+      }
+      
+      console.log('PUT /api/watchlist - Item not found in any schema');
+      return NextResponse.json({ error: 'Item not found' }, { status: 404 });
     }
 
     console.log('PUT /api/watchlist - Found watchlist item list:', watchlistItemList.id);
@@ -358,13 +382,13 @@ export async function PUT(request: Request) {
     // Check if this is adding a rating for the first time
     const isAddingRating = updateData.rating && !watchlistItemList.rating;
 
-    // Only update fields that are present in the request
+    // Only update fields that are present in the request and valid for watchlistItemList
     const updateFields: Record<string, unknown> = { updatedAt: new Date() };
-    for (const key in updateData) {
-      if (Object.prototype.hasOwnProperty.call(updateData, key)) {
-        updateFields[key] = updateData[key];
-      }
-    }
+    
+    // Only allow specific fields that exist on the watchlistItemList table
+    if (updateData.status !== undefined) updateFields.status = updateData.status;
+    if (updateData.rating !== undefined) updateFields.rating = updateData.rating;
+    if (updateData.notes !== undefined) updateFields.notes = updateData.notes;
 
     // Update the watchlist item list entry
     const updatedWatchlistItemList = await prisma.watchlistItemList.update({
@@ -396,44 +420,21 @@ export async function PUT(request: Request) {
       }
     }
 
-    // Transform to old format for compatibility
-    const item = {
+    // Return a simple success response
+    return NextResponse.json({ 
+      success: true, 
       id: updatedWatchlistItemList.watchlistItem.id,
-      tmdbId: updatedWatchlistItemList.watchlistItem.tmdbId,
-      title: updatedWatchlistItemList.watchlistItem.title,
-      type: updatedWatchlistItemList.watchlistItem.type,
       status: updatedWatchlistItemList.status,
-      rating: updatedWatchlistItemList.rating,
-      notes: updatedWatchlistItemList.notes,
-      createdAt: updatedWatchlistItemList.addedAt,
-      updatedAt: updatedWatchlistItemList.updatedAt,
-      userId: _userId,
-      currentSeason: null,
-      totalSeasons: null,
-      tmdbImdbId: updatedWatchlistItemList.watchlistItem.tmdbImdbId,
-      tmdbMovieCertification: updatedWatchlistItemList.watchlistItem.tmdbMovieCertification,
-      tmdbMovieRuntime: updatedWatchlistItemList.watchlistItem.tmdbMovieRuntime,
-      tmdbOverview: updatedWatchlistItemList.watchlistItem.tmdbOverview,
-      tmdbPosterPath: updatedWatchlistItemList.watchlistItem.tmdbPosterPath,
-      tmdbTagline: updatedWatchlistItemList.watchlistItem.tmdbTagline,
-      tmdbTvCertification: updatedWatchlistItemList.watchlistItem.tmdbTvCertification,
-      tmdbTvFirstAirYear: updatedWatchlistItemList.watchlistItem.tmdbTvFirstAirYear,
-      tmdbTvLastAirYear: updatedWatchlistItemList.watchlistItem.tmdbTvLastAirYear,
-      tmdbTvNetworks: updatedWatchlistItemList.watchlistItem.tmdbTvNetworks,
-      tmdbTvNumberOfEpisodes: updatedWatchlistItemList.watchlistItem.tmdbTvNumberOfEpisodes,
-      tmdbTvNumberOfSeasons: updatedWatchlistItemList.watchlistItem.tmdbTvNumberOfSeasons,
-      tmdbTvStatus: updatedWatchlistItemList.watchlistItem.tmdbTvStatus,
-      tmdbMovieReleaseYear: updatedWatchlistItemList.watchlistItem.tmdbMovieReleaseYear,
-    };
-
-    return NextResponse.json(item);
-  } catch (error) {
-    console.error('PUT /api/watchlist - Failed to update watchlist item:', error);
-    console.error('PUT /api/watchlist - Error details:', {
-      message: error instanceof Error ? error.message : 'Unknown error',
-      stack: error instanceof Error ? error.stack : undefined,
-      name: error instanceof Error ? error.name : undefined
+      rating: updatedWatchlistItemList.rating
     });
+  } catch (error) {
+    console.error('Failed to update watchlist item:', error);
+    
+    // Check if it's an authentication error
+    if (error instanceof Error && error.message === 'Not authenticated') {
+      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
+    }
+    
     return NextResponse.json({ error: 'Failed to update watchlist item' }, { status: 500 });
   }
 }
@@ -447,24 +448,55 @@ export async function DELETE(request: Request) {
     if (!id) {
       return NextResponse.json({ error: 'Missing id' }, { status: 400 });
     }
-    // Find the watchlist item list entry to verify ownership
-    const watchlistItemList = await prisma.watchlistItemList.findFirst({
+    // First try to find by watchlistItemList.id (direct ID match)
+    const watchlistItemListById = await prisma.watchlistItemList.findFirst({
       where: {
         id: id,
         watchlist: { ownerId: _userId }
       }
     });
 
-    if (!watchlistItemList) {
-      return NextResponse.json({ error: 'Item not found or not authorized' }, { status: 404 });
+    if (watchlistItemListById) {
+      // Delete from new schema by direct ID
+      await prisma.watchlistItemList.delete({
+        where: { id: id }
+      });
+      return NextResponse.json({ success: true });
     }
 
-    // Delete the watchlist item list entry
-    await prisma.watchlistItemList.delete({
-      where: { id: id }
+    // If not found by direct ID, try to find by watchlistItemId (the item ID)
+    const watchlistItemListByItemId = await prisma.watchlistItemList.findFirst({
+      where: {
+        watchlistItemId: id,
+        watchlist: { ownerId: _userId }
+      }
     });
 
-    return NextResponse.json({ success: true });
+    if (watchlistItemListByItemId) {
+      // Delete from new schema by item ID
+      await prisma.watchlistItemList.delete({
+        where: { id: watchlistItemListByItemId.id }
+      });
+      return NextResponse.json({ success: true });
+    }
+
+    // If not found in new schema, try old schema (watchItem)
+    const oldItem = await prisma.watchItem.findFirst({
+      where: {
+        id: parseInt(id), // Old schema uses integer IDs
+        userId: _userId
+      }
+    });
+
+    if (oldItem) {
+      // Delete from old schema
+      await prisma.watchItem.delete({
+        where: { id: parseInt(id) }
+      });
+      return NextResponse.json({ success: true });
+    }
+
+    return NextResponse.json({ error: 'Item not found or not authorized' }, { status: 404 });
   } catch (error) {
     console.error('Failed to delete watchlist item:', error);
     return NextResponse.json({ error: 'Failed to delete watchlist item' }, { status: 500 });

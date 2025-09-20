@@ -443,13 +443,27 @@ export async function DELETE(request: Request) {
   try {
     const _userId = await getUserId();
     const { searchParams } = new URL(request.url);
-    const id = Number(searchParams.get('id'));
+    const id = searchParams.get('id');
     if (!id) {
       return NextResponse.json({ error: 'Missing id' }, { status: 400 });
     }
-    await prisma.watchItem.delete({
-      where: { id, userId: _userId }
+    // Find the watchlist item list entry to verify ownership
+    const watchlistItemList = await prisma.watchlistItemList.findFirst({
+      where: {
+        id: id,
+        watchlist: { ownerId: _userId }
+      }
     });
+
+    if (!watchlistItemList) {
+      return NextResponse.json({ error: 'Item not found or not authorized' }, { status: 404 });
+    }
+
+    // Delete the watchlist item list entry
+    await prisma.watchlistItemList.delete({
+      where: { id: id }
+    });
+
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Failed to delete watchlist item:', error);

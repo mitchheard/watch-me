@@ -6,7 +6,7 @@ import { WatchlistFormData } from '@/types/watchlist';
 import { notifyFirstItem, notifyFirstReview } from '@/lib/adminNotifications';
 
 async function getUserId() {
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
   // console.log('All cookies:', cookieStore.getAll()); // Debug log - can be removed if not needed
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,

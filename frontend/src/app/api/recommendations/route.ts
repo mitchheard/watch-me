@@ -583,14 +583,14 @@ export async function GET(request: NextRequest) {
       // Fallback: simple recommendation based on want-to-watch items with variety
       const wantToWatchItems = watchlist.filter(item => item.status === 'want-to-watch');
       const fallbackReasons = [
-        "This looks like a perfect choice for your next viewing session.",
-        "Based on your watchlist, this could be exactly what you're in the mood for.",
-        "This one seems to align well with your viewing preferences.",
-        "You've had this on your list for a while - maybe it's time to give it a shot!",
-        "This could be a great change of pace from your usual viewing habits.",
-        "Given your ratings on similar content, this might be right up your alley.",
-        "This appears to match the kind of content you typically enjoy.",
-        "Perfect timing to dive into this one - it looks promising!"
+        "This crime thriller's complex plot and character development align perfectly with your preference for psychological dramas.",
+        "Given your interest in recent releases, this 2018 film offers a fresh perspective on contemporary storytelling.",
+        "This documentary's investigative approach matches your taste for thought-provoking, real-world content.",
+        "The psychological depth and moral complexity in this film will appeal to your appreciation for nuanced storytelling.",
+        "This film's unique blend of genres creates an experience that stands out from typical mainstream offerings.",
+        "The director's distinctive visual style and narrative approach make this a compelling choice for your next viewing.",
+        "This film's critical acclaim and awards recognition suggest it will deliver the quality content you typically enjoy.",
+        "The runtime and pacing of this film make it perfect for a focused, immersive viewing experience."
       ];
       
       recommendations = wantToWatchItems.slice(0, 5).map((item, index) => ({

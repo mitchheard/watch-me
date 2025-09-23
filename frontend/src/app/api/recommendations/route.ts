@@ -8,7 +8,7 @@ const recommendationCache = new Map<string, { data: unknown; timestamp: number }
 const CACHE_DURATION = 5 * 1000; // 5 seconds (very short cache for testing)
 
 interface WatchItem {
-  id: number;
+  id: string; // Changed from number to string for CUID
   title: string;
   type: string;
   status: string;
@@ -24,7 +24,7 @@ interface WatchItem {
 }
 
 interface Recommendation {
-  id: number;
+  id: string; // Changed from number to string for CUID
   title: string;
   type: string;
   status: string;
@@ -40,7 +40,7 @@ interface Recommendation {
 }
 
 interface AIRecommendation {
-  id: number;
+  id: string; // Changed from number to string for CUID
   title: string;
   reason: string;
   confidence: number;

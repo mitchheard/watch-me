@@ -213,13 +213,47 @@ async function getOpenAIRecommendations(watchlist: WatchItem[]): Promise<{
   const timeContext = hour < 12 ? "morning" : hour < 17 ? "afternoon" : hour < 21 ? "evening" : "night";
   
   // const timestamp = Date.now(); // Removed unused variable
-  const prompt = `Pick 5 from: ${strategyFocus}. Time: ${timeContext}.
+  // Create a more detailed user profile for better recommendations
+  const userProfile = {
+    preferences: {
+      genres: [...new Set(shuffledWatchlist.map(item => {
+        // Simple genre inference from titles and years
+        if (item.title.toLowerCase().includes('horror') || item.title.toLowerCase().includes('scary')) return 'Horror';
+        if (item.title.toLowerCase().includes('comedy') || item.title.toLowerCase().includes('funny')) return 'Comedy';
+        if (item.title.toLowerCase().includes('drama') || item.title.toLowerCase().includes('serious')) return 'Drama';
+        if (item.year && item.year > 2020) return 'Recent Releases';
+        if (item.year && item.year < 2000) return 'Classic Films';
+        return 'General';
+      }))],
+      types: [...new Set(shuffledWatchlist.map(item => item.type))],
+      ratings: shuffledWatchlist.filter(item => item.rating).map(item => item.rating)
+    },
+    recentActivity: shuffledWatchlist.slice(0, 5).map(item => ({
+      title: item.title,
+      type: item.type,
+      rating: item.rating
+    }))
+  };
 
+  const prompt = `You are a personalized movie and TV recommendation expert. Analyze this user's watchlist and provide compelling, specific reasons for your recommendations.
+
+USER PROFILE:
+- Recent additions: ${userProfile.recentActivity.map(item => `${item.title} (${item.type})${item.rating ? ` - rated ${item.rating}` : ''}`).join(', ')}
+- Preferred content types: ${userProfile.preferences.types.join(', ')}
+- Time of day: ${timeContext}
+- Strategy focus: ${strategyFocus}
+
+WATCHLIST (pick 5 from these):
 ${watchlistSummary.map(item => `${item.id}: ${item.title} (${item.type})${item.rating ? `, ${item.rating}` : ''}${item.year ? `, ${item.year}` : ''}${item.seasons ? `, ${item.seasons}s` : ''}`).join('\n')}
 
-Strategy: ${randomStrategy.name}. Use IDs: ${shuffledWatchlist.map(item => item.id).join(', ')}.
+REQUIREMENTS:
+- Write compelling, specific reasons that reference the user's actual preferences
+- Mention specific aspects like genre, tone, themes, or what makes it perfect for them
+- Avoid generic phrases like "looks good" or "might enjoy"
+- Make each reason feel personalized and thoughtful
+- Reference their recent activity or preferences when relevant
 
-Return: [{"id": [exact_id], "title": "[exact_title]", "reason": "[2-3 sentence reason]", "confidence": [0.1-1.0]}]`;
+Return: [{"id": [exact_id], "title": "[exact_title]", "reason": "[compelling 2-3 sentence personalized reason]", "confidence": [0.1-1.0]}]`;
 
   try {
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -229,19 +263,20 @@ Return: [{"id": [exact_id], "title": "[exact_title]", "reason": "[2-3 sentence r
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4o-mini', // Using GPT-4o-mini (formerly GPT-4o-mini) for cost efficiency
+        model: 'gpt-4o-mini', // Fast and cost-effective model
         messages: [
           {
             role: 'system',
-            content: 'You are a helpful assistant that provides movie and TV show recommendations. Always respond with valid JSON.'
+            content: 'You are a personalized movie and TV recommendation expert. Always respond with valid JSON. Be specific and compelling in your reasons.'
           },
           {
             role: 'user',
             content: prompt
           }
         ],
-        temperature: 0.8 + (Math.random() * 0.2), // Random temperature between 0.8-1.0 for more variety
-        max_tokens: 600, // Reduced for faster response
+        temperature: 0.7, // Slightly lower for more consistent, faster responses
+        max_tokens: 500, // Further reduced for faster response
+        top_p: 0.9, // Add top_p for faster generation
       }),
     });
 
@@ -459,10 +494,11 @@ export async function GET(request: NextRequest) {
         console.log('No default watchlist found for user');
         watchlist = [];
       } else {
-        // Get items from the default watchlist
+        // Get items from the default watchlist (optimized for AI processing)
         const watchlistItems = await prisma.watchlistItemList.findMany({
           where: {
             watchlistId: defaultWatchlist.id,
+            status: 'want-to-watch', // Only get want-to-watch items for recommendations
           },
           include: {
             watchlistItem: {
@@ -470,12 +506,9 @@ export async function GET(request: NextRequest) {
                 id: true,
                 title: true,
                 type: true,
-                tmdbOverview: true,
                 tmdbMovieReleaseYear: true,
                 tmdbTvFirstAirYear: true,
-                tmdbMovieRuntime: true,
                 tmdbTvNumberOfSeasons: true,
-                tmdbPosterPath: true,
                 createdAt: true,
               },
             },
@@ -483,22 +516,19 @@ export async function GET(request: NextRequest) {
           orderBy: {
             addedAt: 'desc',
           },
-          take: 50, // Limit to 50 items for faster processing
+          take: 20, // Reduced to 20 items for faster AI processing
         });
 
-        // Transform to the expected format
+        // Transform to the expected format (optimized)
         watchlist = watchlistItems.map(item => ({
           id: item.watchlistItem.id,
           title: item.watchlistItem.title,
           type: item.watchlistItem.type,
           status: item.status,
           rating: item.rating,
-          tmdbOverview: item.watchlistItem.tmdbOverview,
           tmdbMovieReleaseYear: item.watchlistItem.tmdbMovieReleaseYear,
           tmdbTvFirstAirYear: item.watchlistItem.tmdbTvFirstAirYear,
-          tmdbMovieRuntime: item.watchlistItem.tmdbMovieRuntime,
           tmdbTvNumberOfSeasons: item.watchlistItem.tmdbTvNumberOfSeasons,
-          tmdbPosterPath: item.watchlistItem.tmdbPosterPath,
           createdAt: item.watchlistItem.createdAt,
         }));
       }

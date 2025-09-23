@@ -107,7 +107,7 @@ export default function RecommendationsPage() {
       setHasInitialized(true);
       fetchRecommendations();
     }
-  }, [user, hasInitialized]); // Remove fetchRecommendations from dependencies to prevent double loading
+  }, [user, hasInitialized, fetchRecommendations]); // Include fetchRecommendations to satisfy ESLint
 
   const getStatusColor = (status: string) => {
     switch (status) {

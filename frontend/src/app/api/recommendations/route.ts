@@ -221,8 +221,9 @@ async function getOpenAIRecommendations(watchlist: WatchItem[]): Promise<{
         if (item.title.toLowerCase().includes('horror') || item.title.toLowerCase().includes('scary')) return 'Horror';
         if (item.title.toLowerCase().includes('comedy') || item.title.toLowerCase().includes('funny')) return 'Comedy';
         if (item.title.toLowerCase().includes('drama') || item.title.toLowerCase().includes('serious')) return 'Drama';
-        if (item.year && item.year > 2020) return 'Recent Releases';
-        if (item.year && item.year < 2000) return 'Classic Films';
+        const year = item.tmdbMovieReleaseYear || item.tmdbTvFirstAirYear;
+        if (year && year > 2020) return 'Recent Releases';
+        if (year && year < 2000) return 'Classic Films';
         return 'General';
       }))],
       types: [...new Set(shuffledWatchlist.map(item => item.type))],

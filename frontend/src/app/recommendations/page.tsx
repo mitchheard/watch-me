@@ -60,10 +60,17 @@ export default function RecommendationsPage() {
       setLastUpdated(null);
     }
     
-    // Simulate progress stages
+    // Simulate progress stages with better timing
     const progressInterval = setInterval(() => {
-      setLoadingStage(prev => Math.min(prev + 1, 3));
-    }, 800);
+      setLoadingStage(prev => {
+        const next = prev + 1;
+        if (next >= 3) {
+          clearInterval(progressInterval);
+          return 3; // Stop at 100%
+        }
+        return next;
+      });
+    }, 600); // Slightly faster progression
     
     try {
       const url = resetState ? '/api/recommendations?refresh=true' : '/api/recommendations';
@@ -75,15 +82,26 @@ export default function RecommendationsPage() {
       }
       
       const data: RecommendationsResponse = await response.json();
-      // Received recommendations
-      setRecommendations(data.recommendations);
-      setStrategy(data.strategy || '');
-      setStrategyFocus(data.strategyFocus || '');
-      setLastUpdated(new Date());
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
-    } finally {
+      
+      // Clear interval immediately when data is received
       clearInterval(progressInterval);
+      
+      // Set final stage and then update data
+      setLoadingStage(3);
+      
+      // Small delay to show 100% briefly, then update
+      setTimeout(() => {
+        setRecommendations(data.recommendations);
+        setStrategy(data.strategy || '');
+        setStrategyFocus(data.strategyFocus || '');
+        setLastUpdated(new Date());
+        setIsLoading(false);
+        setLoadingStage(0);
+      }, 200); // Brief delay to show completion
+      
+    } catch (err) {
+      clearInterval(progressInterval);
+      setError(err instanceof Error ? err.message : 'An error occurred');
       setIsLoading(false);
       setLoadingStage(0);
     }

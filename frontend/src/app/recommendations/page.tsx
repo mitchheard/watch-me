@@ -86,18 +86,13 @@ export default function RecommendationsPage() {
       // Clear interval immediately when data is received
       clearInterval(progressInterval);
       
-      // Set final stage and then update data
-      setLoadingStage(3);
-      
-      // Small delay to show 100% briefly, then update
-      setTimeout(() => {
-        setRecommendations(data.recommendations);
-        setStrategy(data.strategy || '');
-        setStrategyFocus(data.strategyFocus || '');
-        setLastUpdated(new Date());
-        setIsLoading(false);
-        setLoadingStage(0);
-      }, 200); // Brief delay to show completion
+      // Update data immediately - no artificial delay
+      setRecommendations(data.recommendations);
+      setStrategy(data.strategy || '');
+      setStrategyFocus(data.strategyFocus || '');
+      setLastUpdated(new Date());
+      setIsLoading(false);
+      setLoadingStage(0);
       
     } catch (err) {
       clearInterval(progressInterval);

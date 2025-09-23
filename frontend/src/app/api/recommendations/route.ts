@@ -5,7 +5,7 @@ import { cookies } from 'next/headers';
 
 // Simple in-memory cache (in production, use Redis or similar)
 const recommendationCache = new Map<string, { data: unknown; timestamp: number }>();
-const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+const CACHE_DURATION = 30 * 1000; // 30 seconds (much shorter cache)
 
 interface WatchItem {
   id: number;
@@ -249,11 +249,12 @@ ${watchlistSummary.map(item => `${item.id}: ${item.title} (${item.type})${item.r
 REQUIREMENTS:
 - Write compelling, specific reasons that reference the user's actual preferences
 - Mention specific aspects like genre, tone, themes, or what makes it perfect for them
-- Avoid generic phrases like "looks good", "might enjoy", "perfect choice", "exactly what you're in the mood for"
+- NEVER use these generic phrases: "looks good", "might enjoy", "perfect choice", "exactly what you're in the mood for", "this looks like a perfect choice", "based on your watchlist", "this one seems to align well"
 - Make each reason feel personalized and thoughtful
 - Reference their recent activity or preferences when relevant
 - Be specific about WHY this particular item matches their taste
 - Use concrete details about the content, not vague statements
+- Mention specific genres, themes, or unique aspects of the content
 
 EXAMPLES OF GOOD REASONS:
 - "Given your interest in psychological thrillers like [recent item], this crime drama's complex character development will keep you engaged"
@@ -279,7 +280,7 @@ Return: [{"id": [exact_id], "title": "[exact_title]", "reason": "[compelling 2-3
         messages: [
           {
             role: 'system',
-            content: 'You are a personalized movie and TV recommendation expert. Always respond with valid JSON. Write compelling, specific reasons that avoid generic phrases. Reference the user\'s actual preferences and be concrete about why each recommendation matches their taste.'
+            content: 'You are a personalized movie and TV recommendation expert. Always respond with valid JSON. Write compelling, specific reasons that avoid generic phrases. Reference the user\'s actual preferences and be concrete about why each recommendation matches their taste. NEVER use phrases like "perfect choice", "exactly what you\'re in the mood for", "looks good", or "might enjoy". Be specific about genres, themes, or what makes it unique.'
           },
           {
             role: 'user',

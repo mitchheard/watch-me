@@ -249,9 +249,21 @@ ${watchlistSummary.map(item => `${item.id}: ${item.title} (${item.type})${item.r
 REQUIREMENTS:
 - Write compelling, specific reasons that reference the user's actual preferences
 - Mention specific aspects like genre, tone, themes, or what makes it perfect for them
-- Avoid generic phrases like "looks good" or "might enjoy"
+- Avoid generic phrases like "looks good", "might enjoy", "perfect choice", "exactly what you're in the mood for"
 - Make each reason feel personalized and thoughtful
 - Reference their recent activity or preferences when relevant
+- Be specific about WHY this particular item matches their taste
+- Use concrete details about the content, not vague statements
+
+EXAMPLES OF GOOD REASONS:
+- "Given your interest in psychological thrillers like [recent item], this crime drama's complex character development will keep you engaged"
+- "Since you've been exploring [genre] recently, this [specific aspect] will appeal to your current viewing mood"
+- "This [specific element] aligns perfectly with your preference for [specific preference]"
+
+EXAMPLES OF BAD REASONS (DO NOT USE):
+- "This looks like a perfect choice for your next viewing session"
+- "Based on your watchlist, this could be exactly what you're in the mood for"
+- "This one seems to align well with your viewing preferences"
 
 Return: [{"id": [exact_id], "title": "[exact_title]", "reason": "[compelling 2-3 sentence personalized reason]", "confidence": [0.1-1.0]}]`;
 
@@ -267,7 +279,7 @@ Return: [{"id": [exact_id], "title": "[exact_title]", "reason": "[compelling 2-3
         messages: [
           {
             role: 'system',
-            content: 'You are a personalized movie and TV recommendation expert. Always respond with valid JSON. Be specific and compelling in your reasons.'
+            content: 'You are a personalized movie and TV recommendation expert. Always respond with valid JSON. Write compelling, specific reasons that avoid generic phrases. Reference the user\'s actual preferences and be concrete about why each recommendation matches their taste.'
           },
           {
             role: 'user',
@@ -506,6 +518,7 @@ export async function GET(request: NextRequest) {
                 id: true,
                 title: true,
                 type: true,
+                tmdbPosterPath: true,
                 tmdbMovieReleaseYear: true,
                 tmdbTvFirstAirYear: true,
                 tmdbTvNumberOfSeasons: true,
@@ -526,6 +539,7 @@ export async function GET(request: NextRequest) {
           type: item.watchlistItem.type,
           status: item.status,
           rating: item.rating,
+          tmdbPosterPath: item.watchlistItem.tmdbPosterPath,
           tmdbMovieReleaseYear: item.watchlistItem.tmdbMovieReleaseYear,
           tmdbTvFirstAirYear: item.watchlistItem.tmdbTvFirstAirYear,
           tmdbTvNumberOfSeasons: item.watchlistItem.tmdbTvNumberOfSeasons,

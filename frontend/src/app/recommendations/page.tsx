@@ -43,15 +43,12 @@ export default function RecommendationsPage() {
   const [expandedDescriptions, setExpandedDescriptions] = useState<Set<number>>(new Set());
   const [loadingStage, setLoadingStage] = useState(0);
   
-  // Debug logging for state changes
-  useEffect(() => {
-    console.log('Recommendations state changed:', recommendations.length);
-  }, [recommendations]);
+  // Debug logging for state changes (removed to improve performance)
 
   const fetchRecommendations = useCallback(async (resetState = false) => {
     if (!user) return;
     
-    console.log('Fetching recommendations...', resetState ? '(manual refresh)' : '(initial load)');
+    // Fetching recommendations...
     setIsLoading(true);
     setLoadingStage(0);
     setError(null);
@@ -78,7 +75,7 @@ export default function RecommendationsPage() {
       }
       
       const data: RecommendationsResponse = await response.json();
-      console.log('Received recommendations:', data.recommendations.length);
+      // Received recommendations
       setRecommendations(data.recommendations);
       setStrategy(data.strategy || '');
       setStrategyFocus(data.strategyFocus || '');
@@ -97,7 +94,7 @@ export default function RecommendationsPage() {
       setHasInitialized(true);
       fetchRecommendations();
     }
-  }, [user, hasInitialized, fetchRecommendations]); // Include fetchRecommendations to satisfy ESLint
+  }, [user, hasInitialized]); // Remove fetchRecommendations from dependencies to prevent double loading
 
   const getStatusColor = (status: string) => {
     switch (status) {

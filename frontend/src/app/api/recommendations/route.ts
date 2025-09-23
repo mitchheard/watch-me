@@ -47,46 +47,32 @@ interface AIRecommendation {
 }
 
 async function getUserId() {
-  try {
-    console.log('getUserId: Starting authentication check...');
-    const cookieStore = await cookies();
-    console.log('getUserId: Got cookie store');
-    
-    const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        cookies: {
-          get(name: string) {
-            const value = cookieStore.get(name)?.value;
-            console.log(`getUserId: Cookie ${name}:`, value ? 'present' : 'missing');
-            return value;
-          },
-          set(name: string, value: string, options: CookieOptions) {
-            cookieStore.set({ name, value, ...options });
-          },
-          remove(name: string, options: CookieOptions) {
-            cookieStore.delete({ name, ...options });
-          },
+  const cookieStore = await cookies();
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        get(name: string) {
+          return cookieStore.get(name)?.value;
         },
-      }
-    );
-
-    console.log('getUserId: Created Supabase client');
-    const { data: { user }, error } = await supabase.auth.getUser();
-    console.log('getUserId: Got user data, error:', error?.message || 'none');
-    console.log('getUserId: User ID:', user?.id || 'none');
-
-    if (error || !user) {
-      console.log('getUserId: Authentication failed, error:', error?.message);
-      throw new Error('Not authenticated');
+        set(name: string, value: string, options: CookieOptions) {
+          cookieStore.set({ name, value, ...options });
+        },
+        remove(name: string, options: CookieOptions) {
+          cookieStore.delete({ name, ...options });
+        },
+      },
     }
-    
-    return user.id;
-  } catch (error) {
-    console.error('getUserId: Error in getUserId:', error);
-    throw error;
+  );
+
+  const { data: { user }, error } = await supabase.auth.getUser();
+
+  if (error || !user) {
+    throw new Error('Not authenticated');
   }
+  
+  return user.id;
 }
 
 async function getOpenAIRecommendations(watchlist: WatchItem[]): Promise<{
@@ -595,9 +581,6 @@ export async function GET(request: NextRequest) {
 
   } catch (error) {
     console.error('Recommendations API error:', error);
-    console.error('Error type:', typeof error);
-    console.error('Error message:', error instanceof Error ? error.message : 'Unknown error');
-    console.error('Error stack:', error instanceof Error ? error.stack : 'No stack trace');
     
     // Always return some recommendations, even if there's an error
     // If watchlist is not available due to database error, return empty recommendations

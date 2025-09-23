@@ -5,7 +5,7 @@ import { cookies } from 'next/headers';
 
 // Simple in-memory cache (in production, use Redis or similar)
 const recommendationCache = new Map<string, { data: unknown; timestamp: number }>();
-const CACHE_DURATION = 30 * 1000; // 30 seconds (much shorter cache)
+const CACHE_DURATION = 5 * 1000; // 5 seconds (very short cache for testing)
 
 interface WatchItem {
   id: number;
@@ -593,12 +593,16 @@ export async function GET(request: NextRequest) {
         "The runtime and pacing of this film make it perfect for a focused, immersive viewing experience."
       ];
       
-      recommendations = wantToWatchItems.slice(0, 5).map((item, index) => ({
+      // Shuffle the items to get different recommendations each time
+      const shuffledItems = [...wantToWatchItems].sort(() => Math.random() - 0.5);
+      const shuffledReasons = [...fallbackReasons].sort(() => Math.random() - 0.5);
+      
+      recommendations = shuffledItems.slice(0, 5).map((item, index) => ({
         id: item.id,
         title: item.title,
         type: item.type,
         status: item.status,
-        reason: fallbackReasons[index % fallbackReasons.length],
+        reason: shuffledReasons[index % shuffledReasons.length],
         confidence: 0.8 - (index * 0.1), // Decreasing confidence for each item
         tmdbPosterPath: item.tmdbPosterPath,
         tmdbOverview: item.tmdbOverview,

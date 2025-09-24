@@ -5,7 +5,7 @@ import { cookies } from 'next/headers';
 
 // Simple in-memory cache (in production, use Redis or similar)
 const recommendationCache = new Map<string, { data: unknown; timestamp: number }>();
-const CACHE_DURATION = 5 * 1000; // 5 seconds (very short cache for testing)
+const CACHE_DURATION = 1 * 1000; // 1 second (minimal cache for maximum variety)
 
 interface WatchItem {
   id: string; // Changed from number to string for CUID
@@ -598,16 +598,29 @@ export async function GET(request: NextRequest) {
         "The runtime and pacing of this film make it perfect for a focused, immersive viewing experience."
       ];
       
-      // Shuffle the items to get different recommendations each time
-      const shuffledItems = [...wantToWatchItems].sort(() => Math.random() - 0.5);
-      const shuffledReasons = [...fallbackReasons].sort(() => Math.random() - 0.5);
+      // Better randomization using Fisher-Yates shuffle
+      const shuffleArray = <T>(array: T[]): T[] => {
+        const shuffled = [...array];
+        for (let i = shuffled.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+        }
+        return shuffled;
+      };
+      
+      const shuffledItems = shuffleArray(wantToWatchItems);
+      const shuffledReasons = shuffleArray(fallbackReasons);
+      
+      // Add timestamp-based randomization for even more variety
+      const timeBasedSeed = Date.now() % 1000;
+      const additionalShuffle = shuffleArray([...Array(5).keys()]);
       
       recommendations = shuffledItems.slice(0, 5).map((item, index) => ({
         id: item.id,
         title: item.title,
         type: item.type,
         status: item.status,
-        reason: shuffledReasons[index % shuffledReasons.length],
+        reason: shuffledReasons[(index + timeBasedSeed) % shuffledReasons.length],
         confidence: 0.8 - (index * 0.1), // Decreasing confidence for each item
         tmdbPosterPath: item.tmdbPosterPath,
         tmdbOverview: item.tmdbOverview,

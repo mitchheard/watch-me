@@ -8,7 +8,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 
 interface Recommendation {
-  id: number;
+  id: string; // Changed from number to string for CUID
   title: string;
   type: string;
   status: string;
@@ -40,7 +40,7 @@ export default function RecommendationsPage() {
   const [strategy, setStrategy] = useState<string>('');
   const [strategyFocus, setStrategyFocus] = useState<string>('');
   const [hasInitialized, setHasInitialized] = useState(false);
-  const [expandedDescriptions, setExpandedDescriptions] = useState<Set<number>>(new Set());
+  const [expandedDescriptions, setExpandedDescriptions] = useState<Set<string>>(new Set());
   const [loadingStage, setLoadingStage] = useState(0);
   
   // Debug logging for state changes (removed to improve performance)
@@ -64,13 +64,13 @@ export default function RecommendationsPage() {
     const progressInterval = setInterval(() => {
       setLoadingStage(prev => {
         const next = prev + 1;
-        if (next >= 3) {
+        if (next >= 4) { // Add one more stage for "Finalizing"
           clearInterval(progressInterval);
-          return 3; // Stop at 100%
+          return 4; // Stop at 100%
         }
         return next;
       });
-    }, 600); // Slightly faster progression
+    }, 800); // Slower progression to match actual API timing
     
     try {
       const url = resetState ? '/api/recommendations?refresh=true' : '/api/recommendations';
@@ -141,7 +141,7 @@ export default function RecommendationsPage() {
     return null;
   };
 
-  const toggleDescription = (id: number) => {
+  const toggleDescription = (id: string) => {
     setExpandedDescriptions(prev => {
       const newSet = new Set(prev);
       if (newSet.has(id)) {
@@ -153,7 +153,7 @@ export default function RecommendationsPage() {
     });
   };
 
-  const updateItemStatus = async (id: number, newStatus: string) => {
+  const updateItemStatus = async (id: string, newStatus: string) => {
     try {
       const response = await fetch('/api/watchlist', {
         method: 'PUT',
@@ -249,12 +249,12 @@ export default function RecommendationsPage() {
           <div className="w-full max-w-md">
             <div className="flex items-center justify-between mb-2">
               <span className="text-sm font-medium text-gray-700">Generating recommendations...</span>
-              <span className="text-sm text-gray-500">{Math.round((loadingStage / 3) * 100)}%</span>
+              <span className="text-sm text-gray-500">{Math.round((loadingStage / 4) * 100)}%</span>
             </div>
             <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
               <div 
                 className="bg-blue-600 h-2 rounded-full transition-all duration-500 ease-out"
-                style={{ width: `${(loadingStage / 3) * 100}%` }}
+                style={{ width: `${(loadingStage / 4) * 100}%` }}
               ></div>
             </div>
           </div>
@@ -265,6 +265,7 @@ export default function RecommendationsPage() {
               {loadingStage === 1 && "Selecting best strategy..."}
               {loadingStage === 2 && "Generating personalized recommendations..."}
               {loadingStage === 3 && "Finalizing your picks..."}
+              {loadingStage === 4 && "Almost ready..."}
             </span>
           </div>
         </div>

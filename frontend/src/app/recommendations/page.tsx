@@ -6,6 +6,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { SparklesIcon, ClockIcon, HeartIcon, EyeIcon } from '@heroicons/react/24/outline';
 import Image from 'next/image';
 import Link from 'next/link';
+import { trackUmamiEvent } from '@/lib/umami-bootstrap';
 
 interface Recommendation {
   id: string; // Changed from number to string for CUID
@@ -85,6 +86,8 @@ export default function RecommendationsPage() {
       
       // Clear interval immediately when data is received
       clearInterval(progressInterval);
+
+      trackUmamiEvent('ai_recommendation_requested');
       
       // Update data immediately - no artificial delay
       setRecommendations(data.recommendations);

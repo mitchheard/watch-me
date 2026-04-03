@@ -6,6 +6,7 @@ import { WatchlistFormData, TMDBSearchResult, TMDBItemDetails, WatchItem } from 
 import Image from 'next/image';
 import { useDebounceValue } from 'usehooks-ts';
 import MobileSelect from '@/components/ui/MobileSelect';
+import { trackUmamiEvent } from '@/lib/umami-bootstrap';
 
 console.log('WatchlistForm SCRIPT EXECUTING (Phase 6 Restore - RHF Integration)');
 
@@ -215,6 +216,9 @@ export default function WatchlistForm({
         const data = await response.json();
         setTmdbResults(data.results || []);
         setShowTmdbResults(true);
+        if (response.ok) {
+          trackUmamiEvent('search_performed');
+        }
       } catch (error) {
         console.error('Error searching TMDB:', error);
         setTmdbSearchError('Failed to search for titles. Please try again.');
@@ -263,11 +267,21 @@ export default function WatchlistForm({
       if (itemToEdit) {
         // Make PUT request to update the item
         const updatePayload = { ...itemToEdit, ...data, id: itemToEdit.id };
-        await fetch('/api/watchlist', {
+        const putRes = await fetch('/api/watchlist', {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(updatePayload),
         });
+        if (!putRes.ok) {
+          setError('An error occurred while saving the item');
+          return;
+        }
+        if (
+          updatePayload.status === 'finished' &&
+          itemToEdit.status !== 'finished'
+        ) {
+          trackUmamiEvent('item_marked_watched');
+        }
         onUpdateItem?.(itemToEdit.id, updatePayload);
       } else {
         const res = await fetch('/api/watchlist', {
@@ -283,6 +297,7 @@ export default function WatchlistForm({
           setError('An error occurred while saving the item');
           return;
         }
+        trackUmamiEvent('item_added_to_watchlist');
         reset();
         setTmdbSearchQuery('');
         if (typeof onAddSuccess === 'function') onAddSuccess();

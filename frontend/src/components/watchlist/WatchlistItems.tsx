@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { WatchItem, WatchlistFormData } from '@/types/watchlist';
 // import EditWatchItemModal from './EditWatchItemModal'; // Temporarily disable EditWatchItemModal
 import WatchlistForm from './WatchlistForm'; // Import our test form
@@ -12,6 +12,7 @@ import Image from 'next/image';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'react-hot-toast';
 import { Dialog } from '@headlessui/react';
+import { trackUmamiEvent } from '@/lib/umami-bootstrap';
 
 // type FilterType = 'all' | 'movie' | 'show';
 type FilterStatus = 'all' | 'want-to-watch' | 'watching' | 'finished';
@@ -36,11 +37,24 @@ export default function WatchlistItems() {
   const [isRateSubmitting, setIsRateSubmitting] = useState(false);
   const [modalStep, setModalStep] = useState<'edit' | 'rate'>('edit');
   const [modalItem, setModalItem] = useState<WatchItem | null>(null);
+  const hasTrackedWatchlistView = useRef(false);
 
   useEffect(() => {
     setHasMounted(true);
     fetchItems();
   }, []);
+
+  useEffect(() => {
+    if (
+      !loading &&
+      hasMounted &&
+      user &&
+      !hasTrackedWatchlistView.current
+    ) {
+      hasTrackedWatchlistView.current = true;
+      trackUmamiEvent('watchlist_viewed');
+    }
+  }, [loading, hasMounted, user]);
 
   if (!user) return null;
 

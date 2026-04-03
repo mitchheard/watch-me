@@ -1,10 +1,15 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import Script from "next/script";
 import { AuthProvider } from "@/contexts/AuthContext";
 // import { Header } from "../components/Header"; // Removed Header import
 import LayoutShell from "@/components/LayoutShell"; // Added LayoutShell import
 import "./globals.css";
 import { Toaster } from 'react-hot-toast';
+import {
+  UMAMI_SCRIPT_SRC,
+  UMAMI_WEBSITE_ID,
+} from "@/lib/umami-bootstrap";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -28,6 +33,13 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning={true}>
+      <head>
+        <Script
+          src={UMAMI_SCRIPT_SRC}
+          strategy="beforeInteractive"
+          data-website-id={UMAMI_WEBSITE_ID}
+        />
+      </head>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <AuthProvider>
           <LayoutShell>

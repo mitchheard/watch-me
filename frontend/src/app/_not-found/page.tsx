@@ -15,6 +15,17 @@ export default function NotFound() {
       >
         Return Home
       </Link>
+      <nav className="mt-10 flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-sm text-gray-500">
+        <Link href="/privacy" className="hover:text-gray-800">
+          Privacy Policy
+        </Link>
+        <span className="text-gray-300" aria-hidden>
+          ·
+        </span>
+        <Link href="/terms" className="hover:text-gray-800">
+          Terms of Service
+        </Link>
+      </nav>
     </div>
   );
 } 

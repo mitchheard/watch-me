@@ -129,6 +129,19 @@ export default function LayoutShell({ children }: { children: ReactNode }) {
         {children}
       </main>
 
+      <footer className="mt-auto border-t border-slate-200 bg-white py-4">
+        <div className="container mx-auto px-4 flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-sm text-slate-500">
+          <Link href="/privacy" className="hover:text-slate-800">
+            Privacy Policy
+          </Link>
+          <span className="text-slate-300" aria-hidden>
+            ·
+          </span>
+          <Link href="/terms" className="hover:text-slate-800">
+            Terms of Service
+          </Link>
+        </div>
+      </footer>
     </div>
   );
 }

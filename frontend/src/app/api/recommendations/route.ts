@@ -227,7 +227,7 @@ async function fetchRecommendationModelOutput(
           { role: 'user', content: userPrompt },
         ],
         temperature: 0.7,
-        max_tokens: 500,
+        max_tokens: 2048,
         top_p: 0.9,
       }),
     });

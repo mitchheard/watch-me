@@ -104,20 +104,137 @@ async function getUserId() {
   return user.id;
 }
 
-async function getOpenAIRecommendations(watchlist: WatchItem[]): Promise<{
+const DEFAULT_CLAUDE_RECOMMENDATIONS_MODEL = 'claude-sonnet-4-20250514';
+
+/** Prefer Anthropic (project stack + typical Render env); fall back to OpenAI if only that key exists */
+async function fetchRecommendationModelOutput(
+  systemPrompt: string,
+  userPrompt: string
+): Promise<string> {
+  const anthropicKey = process.env.ANTHROPIC_API_KEY;
+  const openaiKey = process.env.OPENAI_API_KEY;
+
+  if (anthropicKey) {
+    const model =
+      process.env.ANTHROPIC_RECOMMENDATIONS_MODEL?.trim() ||
+      DEFAULT_CLAUDE_RECOMMENDATIONS_MODEL;
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'x-api-key': anthropicKey,
+        'anthropic-version': '2023-06-01',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model,
+        max_tokens: 2048,
+        temperature: 0.7,
+        system: systemPrompt,
+        messages: [{ role: 'user', content: userPrompt }],
+      }),
+    });
+
+    const raw = await response.text();
+    if (!response.ok) {
+      let anthropicErrorType = '';
+      let anthropicMessage = '';
+      try {
+        const parsed = JSON.parse(raw) as {
+          type?: string;
+          error?: { type?: string; message?: string };
+        };
+        anthropicErrorType = parsed.error?.type ?? parsed.type ?? '';
+        anthropicMessage = (parsed.error?.message ?? '').slice(0, 240);
+      } catch {
+        // non-JSON body
+      }
+      logRecommendationsFailure('anthropic_http', {
+        httpStatus: response.status,
+        anthropicErrorType,
+        message: anthropicMessage || `HTTP ${response.status}`,
+      });
+      throw new Error(`Anthropic API error: ${response.status}`);
+    }
+
+    const data = JSON.parse(raw) as {
+      content?: Array<{ type: string; text?: string }>;
+    };
+    const textBlock = data.content?.find((b) => b.type === 'text');
+    const text = textBlock?.text?.trim();
+    if (!text) {
+      logRecommendationsFailure('anthropic_empty_content', {
+        message: 'no text content block in response',
+      });
+      throw new Error('No response from Anthropic');
+    }
+    return text;
+  }
+
+  if (openaiKey) {
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${openaiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'gpt-4o-mini',
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userPrompt },
+        ],
+        temperature: 0.7,
+        max_tokens: 500,
+        top_p: 0.9,
+      }),
+    });
+
+    if (!response.ok) {
+      let openaiErrorType = '';
+      let openaiErrorCode = '';
+      let openaiMessage = '';
+      try {
+        const errRaw = await response.text();
+        const parsed = JSON.parse(errRaw) as {
+          error?: { message?: string; type?: string; code?: string };
+        };
+        openaiErrorType = parsed.error?.type ?? '';
+        openaiErrorCode = parsed.error?.code ?? '';
+        openaiMessage = (parsed.error?.message ?? '').slice(0, 240);
+      } catch {
+        // non-JSON error body
+      }
+      logRecommendationsFailure('openai_http', {
+        httpStatus: response.status,
+        openaiErrorType,
+        openaiErrorCode,
+        message: openaiMessage || `HTTP ${response.status}`,
+      });
+      throw new Error(`OpenAI API error: ${response.status}`);
+    }
+
+    const data = await response.json();
+    const content = data.choices[0]?.message?.content as string | undefined;
+    if (!content) {
+      logRecommendationsFailure('openai_empty_content', {
+        message: 'choices[0].message.content missing',
+      });
+      throw new Error('No response from OpenAI');
+    }
+    return content;
+  }
+
+  logRecommendationsFailure('llm_missing_api_key', {
+    message: 'Neither ANTHROPIC_API_KEY nor OPENAI_API_KEY is set',
+  });
+  throw new Error('No LLM API key configured');
+}
+
+async function getAIRecommendations(watchlist: WatchItem[]): Promise<{
   recommendations: Recommendation[];
   strategy: string;
   strategyFocus: string;
 }> {
-  console.log('OpenAI API key configured:', !!process.env.OPENAI_API_KEY);
-  console.log('OpenAI API key length:', process.env.OPENAI_API_KEY?.length || 0);
-  if (!process.env.OPENAI_API_KEY) {
-    logRecommendationsFailure('openai_missing_api_key', {
-      message: 'OPENAI_API_KEY is not set',
-    });
-    throw new Error('OpenAI API key not configured');
-  }
-
   // Create different recommendation strategies with limited data subsets (optimized for speed)
   const strategies = [
     {
@@ -301,64 +418,11 @@ EXAMPLES OF BAD REASONS (DO NOT USE):
 
 Return: [{"id": [exact_id], "title": "[exact_title]", "reason": "[compelling 2-3 sentence personalized reason]", "confidence": [0.1-1.0]}]`;
 
+  const systemPrompt =
+    'You are a personalized movie and TV recommendation expert. Always respond with valid JSON. Write compelling, specific reasons that avoid generic phrases. Reference the user\'s actual preferences and be concrete about why each recommendation matches their taste. NEVER use phrases like "perfect choice", "exactly what you\'re in the mood for", "looks good", or "might enjoy". Be specific about genres, themes, or what makes it unique.';
+
   try {
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'gpt-4o-mini', // Fast and cost-effective model
-        messages: [
-          {
-            role: 'system',
-            content: 'You are a personalized movie and TV recommendation expert. Always respond with valid JSON. Write compelling, specific reasons that avoid generic phrases. Reference the user\'s actual preferences and be concrete about why each recommendation matches their taste. NEVER use phrases like "perfect choice", "exactly what you\'re in the mood for", "looks good", or "might enjoy". Be specific about genres, themes, or what makes it unique.'
-          },
-          {
-            role: 'user',
-            content: prompt
-          }
-        ],
-        temperature: 0.7, // Slightly lower for more consistent, faster responses
-        max_tokens: 500, // Further reduced for faster response
-        top_p: 0.9, // Add top_p for faster generation
-      }),
-    });
-
-    if (!response.ok) {
-      let openaiErrorType = '';
-      let openaiErrorCode = '';
-      let openaiMessage = '';
-      try {
-        const raw = await response.text();
-        const parsed = JSON.parse(raw) as {
-          error?: { message?: string; type?: string; code?: string };
-        };
-        openaiErrorType = parsed.error?.type ?? '';
-        openaiErrorCode = parsed.error?.code ?? '';
-        openaiMessage = (parsed.error?.message ?? '').slice(0, 240);
-      } catch {
-        // non-JSON error body
-      }
-      logRecommendationsFailure('openai_http', {
-        httpStatus: response.status,
-        openaiErrorType,
-        openaiErrorCode,
-        message: openaiMessage || `HTTP ${response.status}`,
-      });
-      throw new Error(`OpenAI API error: ${response.status}`);
-    }
-
-    const data = await response.json();
-    const content = data.choices[0]?.message?.content;
-    
-    if (!content) {
-      logRecommendationsFailure('openai_empty_content', {
-        message: 'choices[0].message.content missing',
-      });
-      throw new Error('No response from OpenAI');
-    }
+    const content = await fetchRecommendationModelOutput(systemPrompt, prompt);
 
     // Parse the JSON response - handle markdown formatting
     let cleanContent = content.trim();
@@ -368,14 +432,14 @@ Return: [{"id": [exact_id], "title": "[exact_title]", "reason": "[compelling 2-3
       cleanContent = cleanContent.replace(/^```\n/, '').replace(/\n```$/, '');
     }
     
-    console.log('Cleaned OpenAI response:', cleanContent.substring(0, 200) + '...');
+    console.log('Cleaned LLM response:', cleanContent.substring(0, 200) + '...');
     let aiRecommendations: unknown;
     try {
       aiRecommendations = JSON.parse(cleanContent);
     } catch (parseErr) {
       const msg =
         parseErr instanceof Error ? parseErr.message.slice(0, 240) : 'json_parse_error';
-      logRecommendationsFailure('openai_json_parse', {
+      logRecommendationsFailure('llm_json_parse', {
         message: msg,
         contentLength: cleanContent.length,
       });
@@ -383,11 +447,11 @@ Return: [{"id": [exact_id], "title": "[exact_title]", "reason": "[compelling 2-3
     }
 
     if (!Array.isArray(aiRecommendations)) {
-      logRecommendationsFailure('openai_json_shape', {
+      logRecommendationsFailure('llm_json_shape', {
         message: 'response JSON is not an array',
         receivedType: typeof aiRecommendations,
       });
-      throw new Error('OpenAI returned invalid JSON shape');
+      throw new Error('LLM returned invalid JSON shape');
     }
 
     const parsedAiRecommendations = aiRecommendations as AIRecommendation[];
@@ -548,11 +612,11 @@ Return: [{"id": [exact_id], "title": "[exact_title]", "reason": "[compelling 2-3
     };
   } catch (error) {
     const err = error instanceof Error ? error : new Error(String(error));
-    logRecommendationsFailure('openai_pipeline', {
+    logRecommendationsFailure('llm_pipeline', {
       errorName: err.name,
       message: err.message.slice(0, 320),
     });
-    console.error('OpenAI API error:', error);
+    console.error('LLM recommendation error:', error);
     throw new Error('Failed to generate recommendations');
   }
 }
@@ -658,12 +722,12 @@ export async function GET(request: NextRequest) {
     let strategyFocus = "recommend from your want-to-watch list";
     
     try {
-      console.log('Attempting OpenAI recommendations...');
-      const result = await getOpenAIRecommendations(watchlist);
+      console.log('Attempting AI recommendations...');
+      const result = await getAIRecommendations(watchlist);
       recommendations = result.recommendations;
       strategyName = result.strategy;
       strategyFocus = result.strategyFocus;
-      console.log('OpenAI recommendations successful:', recommendations.length);
+      console.log('AI recommendations successful:', recommendations.length);
     } catch (error) {
       const err = error instanceof Error ? error : new Error(String(error));
       logRecommendationsFailure('route_ai_fallback', {

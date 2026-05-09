@@ -5,19 +5,26 @@ import { prisma } from '@/lib/prisma';
 import { notifyNewUser, notifyRepeatVisit, notifyUserReturned } from '@/lib/adminNotifications';
 
 export async function GET(request: NextRequest) {
-  // Determine the application origin for redirects
-  // Priority: NEXTAUTH_URL env var > request origin > fallback
-  let appOrigin = process.env.NEXTAUTH_URL;
-  
+  // Use the URL the browser actually hit for this callback so custom domains (e.g. gowatchme.app)
+  // stay on that host after OAuth. NEXTAUTH_URL alone would force redirects to Render's hostname.
+  let appOrigin = request.nextUrl.origin;
+
   if (!appOrigin) {
-    // Fallback to request origin for local development
+    appOrigin = process.env.NEXTAUTH_URL ?? '';
+  }
+  if (!appOrigin) {
     const requestOrigin = request.headers.get('origin') || request.headers.get('host');
     if (requestOrigin) {
       appOrigin = requestOrigin.startsWith('http') ? requestOrigin : `http://${requestOrigin}`;
-      console.log(`[AuthCallback] Using request origin as fallback: ${appOrigin}`);
+      console.log(`[AuthCallback] Using Host/origin fallback: ${appOrigin}`);
     } else {
-      console.error("[AuthCallback] CRITICAL: Application origin is not configured. Set NEXTAUTH_URL environment variable.");
-      return NextResponse.json({ error: "Internal server configuration error: App origin not set." }, { status: 500 });
+      console.error(
+        '[AuthCallback] CRITICAL: Could not determine app origin. Set NEXTAUTH_URL or ensure Host is present.'
+      );
+      return NextResponse.json(
+        { error: 'Internal server configuration error: App origin not set.' },
+        { status: 500 }
+      );
     }
   }
 

@@ -11,6 +11,7 @@ import {
   RecommendationsDebugToolbar,
   type RecommendationsDebugPayload,
 } from './RecommendationsDebugToolbar';
+import { isFallbackPhase } from './analytics';
 
 const showRecDebugUi = process.env.NEXT_PUBLIC_SHOW_RECOMMENDATIONS_DEBUG === 'true';
 
@@ -38,10 +39,6 @@ interface RecommendationsResponse {
   strategyFocus?: string;
   phase?: string;
   debug?: RecommendationsDebugPayload;
-}
-
-function isFallbackPhase(phase?: string): phase is string {
-  return Boolean(phase && phase !== 'llm-success');
 }
 
 export default function RecommendationsPage() {

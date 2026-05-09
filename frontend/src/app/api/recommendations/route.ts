@@ -437,7 +437,8 @@ Return: [{"id": [exact_id], "title": "[exact_title]", "reason": "[compelling 2-3
       console.log(`  AI wants ID ${rec.id}: "${rec.reason.substring(0, 50)}..."`);
     });
     
-    let recommendations: Recommendation[] = validRecommendations.map((rec: AIRecommendation) => {
+    let recommendations: Recommendation[] = validRecommendations
+      .map((rec: AIRecommendation): Recommendation | null => {
       // Try to find by ID in the shuffled watchlist (the items sent to AI)
       let item = shuffledWatchlist.find(w => String(w.id) === String(rec.id));
       
@@ -470,7 +471,8 @@ Return: [{"id": [exact_id], "title": "[exact_title]", "reason": "[compelling 2-3
         tmdbTvNumberOfSeasons: item.tmdbTvNumberOfSeasons,
         createdAt: item.createdAt?.toISOString(),
       };
-    }).filter(Boolean);
+    })
+      .filter((r): r is Recommendation => r !== null);
 
     // If we have some AI recommendations but not enough, try to match the AI reasons to actual items
     if (recommendations.length > 0 && recommendations.length < 5) {

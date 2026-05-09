@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { createServerClient, type CookieOptions } from '@supabase/ssr';
 import { cookies } from 'next/headers';
+import Anthropic from '@anthropic-ai/sdk';
 
 // Simple in-memory cache (in production, use Redis or similar)
 const recommendationCache = new Map<string, { data: unknown; timestamp: number }>();
@@ -75,47 +76,10 @@ interface AIRecommendation {
   confidence: number;
 }
 
-/**
- * Included in GET JSON only when RECOMMENDATIONS_DEBUG=true.
- * REMOVE_ME alongside RecommendationsDebugToolbar + NEXT_PUBLIC_SHOW_RECOMMENDATIONS_DEBUG.
- */
-export type RecommendationsApiDebugPayload = {
-  llmUsed: string;
-  prompt: string | null;
-  rawResponse: string | null;
-  phase?: string;
-  error?: string;
-};
-
-function isRecommendationsDebugEnabled(): boolean {
-  return process.env.RECOMMENDATIONS_DEBUG === 'true';
-}
-
-class RecommendationsInferenceError extends Error {
-  readonly recommendationsDebugPartial: RecommendationsApiDebugPayload;
-
-  constructor(partial: RecommendationsApiDebugPayload) {
-    super('Failed to generate recommendations');
-    this.name = 'RecommendationsInferenceError';
-    this.recommendationsDebugPartial = partial;
-  }
-}
-
 interface LlmCallResult {
   rawText: string;
-  provider: 'anthropic' | 'openai';
+  provider: 'anthropic';
   model: string;
-}
-
-function formatDebugPrompt(systemPrompt: string, userPrompt: string): string {
-  return `[SYSTEM]\n${systemPrompt}\n\n---\n[USER]\n${userPrompt}`;
-}
-
-function llmUsedLabel(llm?: LlmCallResult): string {
-  if (llm) return `${llm.provider}:${llm.model}`;
-  if (process.env.ANTHROPIC_API_KEY) return 'anthropic:(failed before/with request)';
-  if (process.env.OPENAI_API_KEY) return 'openai:(failed before/with request)';
-  return '(no LLM credentials)';
 }
 
 async function getUserId() {
@@ -147,140 +111,64 @@ async function getUserId() {
   return user.id;
 }
 
-const DEFAULT_CLAUDE_RECOMMENDATIONS_MODEL = 'claude-sonnet-4-20250514';
+const DEFAULT_CLAUDE_RECOMMENDATIONS_MODEL = 'claude-haiku-4-5-20251001';
 
-/** Prefer Anthropic (project stack + typical Render env); fall back to OpenAI if only that key exists */
 async function fetchRecommendationModelOutput(
   systemPrompt: string,
   userPrompt: string
 ): Promise<LlmCallResult> {
   const anthropicKey = process.env.ANTHROPIC_API_KEY;
-  const openaiKey = process.env.OPENAI_API_KEY;
+  const model =
+    process.env.ANTHROPIC_RECOMMENDATIONS_MODEL?.trim() ||
+    DEFAULT_CLAUDE_RECOMMENDATIONS_MODEL;
 
   if (anthropicKey) {
-    const model =
-      process.env.ANTHROPIC_RECOMMENDATIONS_MODEL?.trim() ||
-      DEFAULT_CLAUDE_RECOMMENDATIONS_MODEL;
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'x-api-key': anthropicKey,
-        'anthropic-version': '2023-06-01',
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
+    const client = new Anthropic({ apiKey: anthropicKey });
+    try {
+      const message = await client.messages.create({
         model,
         max_tokens: 2048,
         temperature: 0.7,
         system: systemPrompt,
         messages: [{ role: 'user', content: userPrompt }],
-      }),
-    });
-
-    const raw = await response.text();
-    if (!response.ok) {
-      let anthropicErrorType = '';
-      let anthropicMessage = '';
-      try {
-        const parsed = JSON.parse(raw) as {
-          type?: string;
-          error?: { type?: string; message?: string };
-        };
-        anthropicErrorType = parsed.error?.type ?? parsed.type ?? '';
-        anthropicMessage = (parsed.error?.message ?? '').slice(0, 240);
-      } catch {
-        // non-JSON body
+      });
+      const textBlock = message.content.find((block) => block.type === 'text');
+      const text = textBlock?.text?.trim();
+      if (!text) {
+        logRecommendationsFailure('anthropic_empty_content', {
+          message: 'no text content block in response',
+        });
+        throw new Error('No response from Anthropic');
       }
+      return { rawText: text, provider: 'anthropic', model };
+    } catch (error) {
+      const err = error as {
+        status?: number;
+        error?: { type?: string; message?: string };
+        message?: string;
+      };
       logRecommendationsFailure('anthropic_http', {
-        httpStatus: response.status,
-        anthropicErrorType,
-        message: anthropicMessage || `HTTP ${response.status}`,
+        httpStatus: err.status,
+        anthropicErrorType: err.error?.type ?? '',
+        message: (err.error?.message ?? err.message ?? 'anthropic request failed').slice(0, 240),
       });
-      throw new Error(`Anthropic API error: ${response.status}`);
+      throw error;
     }
-
-    const data = JSON.parse(raw) as {
-      content?: Array<{ type: string; text?: string }>;
-    };
-    const textBlock = data.content?.find((b) => b.type === 'text');
-    const text = textBlock?.text?.trim();
-    if (!text) {
-      logRecommendationsFailure('anthropic_empty_content', {
-        message: 'no text content block in response',
-      });
-      throw new Error('No response from Anthropic');
-    }
-    return { rawText: text, provider: 'anthropic', model };
-  }
-
-  if (openaiKey) {
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${openaiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'gpt-4o-mini',
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: userPrompt },
-        ],
-        temperature: 0.7,
-        max_tokens: 2048,
-        top_p: 0.9,
-      }),
-    });
-
-    if (!response.ok) {
-      let openaiErrorType = '';
-      let openaiErrorCode = '';
-      let openaiMessage = '';
-      try {
-        const errRaw = await response.text();
-        const parsed = JSON.parse(errRaw) as {
-          error?: { message?: string; type?: string; code?: string };
-        };
-        openaiErrorType = parsed.error?.type ?? '';
-        openaiErrorCode = parsed.error?.code ?? '';
-        openaiMessage = (parsed.error?.message ?? '').slice(0, 240);
-      } catch {
-        // non-JSON error body
-      }
-      logRecommendationsFailure('openai_http', {
-        httpStatus: response.status,
-        openaiErrorType,
-        openaiErrorCode,
-        message: openaiMessage || `HTTP ${response.status}`,
-      });
-      throw new Error(`OpenAI API error: ${response.status}`);
-    }
-
-    const data = await response.json();
-    const content = data.choices[0]?.message?.content as string | undefined;
-    if (!content) {
-      logRecommendationsFailure('openai_empty_content', {
-        message: 'choices[0].message.content missing',
-      });
-      throw new Error('No response from OpenAI');
-    }
-    return { rawText: content.trim(), provider: 'openai', model: 'gpt-4o-mini' };
   }
 
   logRecommendationsFailure('llm_missing_api_key', {
-    message: 'Neither ANTHROPIC_API_KEY nor OPENAI_API_KEY is set',
+    message: 'ANTHROPIC_API_KEY is not set',
   });
   throw new Error('No LLM API key configured');
 }
 
 async function getAIRecommendations(
-  watchlist: WatchItem[],
-  includeDebug: boolean
+  watchlist: WatchItem[]
 ): Promise<{
   recommendations: Recommendation[];
   strategy: string;
   strategyFocus: string;
-  debug?: RecommendationsApiDebugPayload;
+  phase: string;
 }> {
   // Create different recommendation strategies with limited data subsets (optimized for speed)
   const strategies = [
@@ -468,14 +356,11 @@ Return: [{"id": [exact_id], "title": "[exact_title]", "reason": "[compelling 2-3
   const systemPrompt =
     'You are a personalized movie and TV recommendation expert. Always respond with valid JSON. Write compelling, specific reasons that avoid generic phrases. Reference the user\'s actual preferences and be concrete about why each recommendation matches their taste. NEVER use phrases like "perfect choice", "exactly what you\'re in the mood for", "looks good", or "might enjoy". Be specific about genres, themes, or what makes it unique.';
 
-  const fullPromptForDebug = formatDebugPrompt(systemPrompt, prompt);
-  let lastLlm: LlmCallResult | undefined;
-
   try {
-    lastLlm = await fetchRecommendationModelOutput(systemPrompt, prompt);
+    const llmResult = await fetchRecommendationModelOutput(systemPrompt, prompt);
 
     // Parse the JSON response - handle markdown formatting
-    let cleanContent = lastLlm.rawText.trim();
+    let cleanContent = llmResult.rawText.trim();
     if (cleanContent.startsWith('```json')) {
       cleanContent = cleanContent.replace(/^```json\n/, '').replace(/\n```$/, '');
     } else if (cleanContent.startsWith('```')) {
@@ -661,18 +546,9 @@ Return: [{"id": [exact_id], "title": "[exact_title]", "reason": "[compelling 2-3
       recommendations,
       strategy: randomStrategy.name,
       strategyFocus: randomStrategy.focus,
-      ...(includeDebug && lastLlm
-        ? {
-            debug: {
-              llmUsed: `${lastLlm.provider}:${lastLlm.model}`,
-              prompt: fullPromptForDebug,
-              rawResponse: lastLlm.rawText,
-              phase: usedStockReasonFallback
-                ? 'llm-mapping-fallback-stock-reasons'
-                : 'llm-success',
-            } satisfies RecommendationsApiDebugPayload,
-          }
-        : {}),
+      phase: usedStockReasonFallback
+        ? 'llm-mapping-fallback-stock-reasons'
+        : 'llm-success',
     };
   } catch (error) {
     const err = error instanceof Error ? error : new Error(String(error));
@@ -681,16 +557,6 @@ Return: [{"id": [exact_id], "title": "[exact_title]", "reason": "[compelling 2-3
       message: err.message.slice(0, 320),
     });
     console.error('LLM recommendation error:', error);
-
-    if (includeDebug) {
-      throw new RecommendationsInferenceError({
-        llmUsed: llmUsedLabel(lastLlm),
-        prompt: fullPromptForDebug,
-        rawResponse: lastLlm?.rawText ?? null,
-        phase: 'llm-pipeline-error',
-        error: err.message,
-      });
-    }
 
     throw new Error('Failed to generate recommendations');
   }
@@ -709,13 +575,11 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const forceRefresh = searchParams.get('refresh') === 'true';
     
-    const debugEnabled = isRecommendationsDebugEnabled();
     const cacheKey = `recommendations_${userId}`;
     const cached = recommendationCache.get(cacheKey);
 
     // Never serve cached payloads for debug builds (would omit or stale-copy prompt/response)
     if (
-      !debugEnabled &&
       !forceRefresh &&
       cached &&
       Date.now() - cached.timestamp < CACHE_DURATION
@@ -802,17 +666,15 @@ export async function GET(request: NextRequest) {
     let recommendations: Recommendation[];
     let strategyName = "fallback";
     let strategyFocus = "recommend from your want-to-watch list";
-    let recommendationsDebugPayload: RecommendationsApiDebugPayload | undefined;
+    let phase = 'route-init';
 
     try {
       console.log('Attempting AI recommendations...');
-      const result = await getAIRecommendations(watchlist, debugEnabled);
+      const result = await getAIRecommendations(watchlist);
       recommendations = result.recommendations;
       strategyName = result.strategy;
       strategyFocus = result.strategyFocus;
-      if (debugEnabled && result.debug) {
-        recommendationsDebugPayload = result.debug;
-      }
+      phase = result.phase;
       console.log('AI recommendations successful:', recommendations.length);
     } catch (error) {
       const err = error instanceof Error ? error : new Error(String(error));
@@ -821,12 +683,10 @@ export async function GET(request: NextRequest) {
         message: err.message.slice(0, 320),
       });
       console.error('AI recommendations failed, using fallback:', error);
-      if (debugEnabled && error instanceof RecommendationsInferenceError) {
-        recommendationsDebugPayload = error.recommendationsDebugPartial;
-      }
       strategyName = 'ai-unavailable';
       strategyFocus =
         'Could not reach the AI model or parse its response; showing picks from your want-to-watch list.';
+      phase = 'llm-pipeline-error';
       // Fallback: simple recommendation based on want-to-watch items with variety
       const wantToWatchItems = watchlist.filter(item => item.status === 'want-to-watch');
       const fallbackReasons = [
@@ -878,21 +738,19 @@ export async function GET(request: NextRequest) {
       totalItems: number;
       strategy: string;
       strategyFocus: string;
-      debug?: RecommendationsApiDebugPayload;
+      phase: string;
     } = {
       recommendations,
       totalItems: watchlist.length,
       strategy: strategyName,
       strategyFocus: strategyFocus,
-      ...(recommendationsDebugPayload ? { debug: recommendationsDebugPayload } : {}),
+      phase,
     };
 
-    if (!debugEnabled) {
-      recommendationCache.set(cacheKey, {
-        data: responseData,
-        timestamp: Date.now(),
-      });
-    }
+    recommendationCache.set(cacheKey, {
+      data: responseData,
+      timestamp: Date.now(),
+    });
 
     return NextResponse.json(responseData);
 
@@ -935,23 +793,14 @@ export async function GET(request: NextRequest) {
       totalItems: number;
       strategy: string;
       strategyFocus: string;
-      debug?: RecommendationsApiDebugPayload;
+      phase: string;
     } = {
       recommendations,
       totalItems: (watchlist || []).length,
       strategy: 'error-fallback',
       strategyFocus: 'recommendations from your want-to-watch list due to an error',
+      phase: 'route-fatal',
     };
-
-    if (isRecommendationsDebugEnabled()) {
-      fatalBody.debug = {
-        llmUsed: '(none — route fatal before LLM)',
-        prompt: null,
-        rawResponse: null,
-        phase: 'route-fatal',
-        error: err.message.slice(0, 500),
-      };
-    }
 
     return NextResponse.json(fatalBody);
   }

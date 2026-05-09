@@ -2,7 +2,7 @@
 
 ## Overview
 
-The Watch Me app features an intelligent recommendations engine that uses Anthropic's Claude Haiku 4.5 to suggest personalized content from your watchlist. The engine combines multiple strategies, smart data filtering, and robust fallback mechanisms to provide varied and relevant recommendations.
+The Watch Me app features an intelligent recommendations engine that uses OpenAI's GPT-4o-mini to suggest personalized content from your watchlist. The engine combines multiple strategies, smart data filtering, and robust fallback mechanisms to provide varied and relevant recommendations.
 
 ## How It Works
 
@@ -161,11 +161,11 @@ The engine enriches recommendations with:
 - **Route**: `/api/recommendations`
 - **Method**: GET
 - **Authentication**: Required (Supabase session)
-- **Response Time**: ~5-10 seconds (Anthropic API dependent)
+- **Response Time**: ~5-10 seconds (OpenAI API dependent)
 
 ### Error Handling
 - **Database Failures**: Graceful degradation with empty watchlist
-- **Anthropic Failures**: Fallback to random recommendations
+- **OpenAI Failures**: Fallback to random recommendations
 - **Mapping Failures**: Smart fallback preserving AI quality where possible
 - **Network Issues**: Retry logic and timeout handling
 
@@ -179,7 +179,7 @@ The engine enriches recommendations with:
 
 ### Environment Variables
 ```bash
-ANTHROPIC_API_KEY=sk-ant-... # Required for AI recommendations
+OPENAI_API_KEY=sk-... # Required for AI recommendations
 ```
 
 ### Strategy Configuration
@@ -234,7 +234,7 @@ The engine provides comprehensive logging:
 ### Common Issues
 1. **Same Recommendations**: Check strategy rotation and data shuffling
 2. **Generic Reasons**: Verify AI response parsing and fallback logic
-3. **Slow Response**: Monitor Anthropic API performance and caching
+3. **Slow Response**: Monitor OpenAI API performance and caching
 4. **Mapping Failures**: Review AI prompt clarity and ID validation
 5. **Title/Reason Mismatches**: Check AI title validation and prompt examples
 6. **AI Using Non-existent Titles**: Verify available titles list in prompt
@@ -243,12 +243,8 @@ The engine provides comprehensive logging:
 
 ### Debug Commands
 ```bash
-# Check Anthropic API key
-curl https://api.anthropic.com/v1/messages \
-  -H "x-api-key: $ANTHROPIC_API_KEY" \
-  -H "anthropic-version: 2023-06-01" \
-  -H "content-type: application/json" \
-  -d '{"model":"claude-haiku-4-5-20251001","max_tokens":8,"messages":[{"role":"user","content":"ping"}]}'
+# Check OpenAI API key
+curl -H "Authorization: Bearer $OPENAI_API_KEY" https://api.openai.com/v1/models
 
 # Test recommendation endpoint
 curl -H "Cookie: [session_cookie]" http://localhost:3001/api/recommendations

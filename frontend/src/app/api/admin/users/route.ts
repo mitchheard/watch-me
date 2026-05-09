@@ -57,11 +57,24 @@ export async function GET() {
     }
     console.log(`[Admin API] Successfully listed ${usersData.users.length} users.`);
 
-    // For each user, count their watchlist items and session count
+    // For each user, count their items and session count
     console.log('[Admin API] Fetching item and session counts for users...');
     const usersWithCounts = await Promise.all(
       usersData.users.map(async (user) => {
-        const itemCount = await prisma.watchItem.count({ where: { userId: user.id } });
+        // Primary source: new shared watchlist schema.
+        // Include all items from watchlists owned by the user.
+        const watchlistItemCount = await prisma.watchlistItemList.count({
+          where: {
+            watchlist: {
+              ownerId: user.id,
+            },
+          },
+        });
+
+        // Backward-compatible fallback for legacy schema data.
+        const legacyItemCount = await prisma.watchItem.count({ where: { userId: user.id } });
+        const itemCount = watchlistItemCount > 0 ? watchlistItemCount : legacyItemCount;
+
         let sessionCount = 0;
         try {
           if (prisma.userSession) { 
@@ -71,12 +84,23 @@ export async function GET() {
           // console.warn(`[Admin API] Could not count sessions for user ${user.id} (UserSession model might be missing): ${(_e instanceof Error) ? _e.message : String(_e)}`);
         }
 
-        const mostRecentItem = await prisma.watchItem.findFirst({
+        const mostRecentWatchlistItem = await prisma.watchlistItemList.findFirst({
+          where: {
+            watchlist: {
+              ownerId: user.id,
+            },
+          },
+          orderBy: { addedAt: 'desc' },
+          select: { addedAt: true },
+        });
+        const mostRecentLegacyItem = await prisma.watchItem.findFirst({
           where: { userId: user.id },
           orderBy: { createdAt: 'desc' },
           select: { createdAt: true },
         });
-        const lastItemAddedAt = mostRecentItem?.createdAt;
+
+        const lastItemAddedAt =
+          mostRecentWatchlistItem?.addedAt ?? mostRecentLegacyItem?.createdAt ?? null;
 
         return {
           id: user.id,

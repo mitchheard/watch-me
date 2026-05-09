@@ -7,6 +7,35 @@ import { cookies } from 'next/headers';
 const recommendationCache = new Map<string, { data: unknown; timestamp: number }>();
 const CACHE_DURATION = 1 * 1000; // 1 second (minimal cache for maximum variety)
 
+/** One JSON line per failure — easy to grep in Render; no secrets or raw prompts */
+function logRecommendationsFailure(
+  phase: string,
+  fields: Record<string, string | number | boolean | undefined | null> = {}
+): void {
+  console.log(
+    JSON.stringify({
+      event: 'recommendations_ai_failure',
+      phase,
+      ts: new Date().toISOString(),
+      ...fields,
+    })
+  );
+}
+
+function logRecommendationsApiError(
+  phase: string,
+  fields: Record<string, string | number | boolean | undefined | null> = {}
+): void {
+  console.log(
+    JSON.stringify({
+      event: 'recommendations_api_error',
+      phase,
+      ts: new Date().toISOString(),
+      ...fields,
+    })
+  );
+}
+
 interface WatchItem {
   id: string; // Changed from number to string for CUID
   title: string;
@@ -83,6 +112,9 @@ async function getOpenAIRecommendations(watchlist: WatchItem[]): Promise<{
   console.log('OpenAI API key configured:', !!process.env.OPENAI_API_KEY);
   console.log('OpenAI API key length:', process.env.OPENAI_API_KEY?.length || 0);
   if (!process.env.OPENAI_API_KEY) {
+    logRecommendationsFailure('openai_missing_api_key', {
+      message: 'OPENAI_API_KEY is not set',
+    });
     throw new Error('OpenAI API key not configured');
   }
 
@@ -295,6 +327,26 @@ Return: [{"id": [exact_id], "title": "[exact_title]", "reason": "[compelling 2-3
     });
 
     if (!response.ok) {
+      let openaiErrorType = '';
+      let openaiErrorCode = '';
+      let openaiMessage = '';
+      try {
+        const raw = await response.text();
+        const parsed = JSON.parse(raw) as {
+          error?: { message?: string; type?: string; code?: string };
+        };
+        openaiErrorType = parsed.error?.type ?? '';
+        openaiErrorCode = parsed.error?.code ?? '';
+        openaiMessage = (parsed.error?.message ?? '').slice(0, 240);
+      } catch {
+        // non-JSON error body
+      }
+      logRecommendationsFailure('openai_http', {
+        httpStatus: response.status,
+        openaiErrorType,
+        openaiErrorCode,
+        message: openaiMessage || `HTTP ${response.status}`,
+      });
       throw new Error(`OpenAI API error: ${response.status}`);
     }
 
@@ -302,6 +354,9 @@ Return: [{"id": [exact_id], "title": "[exact_title]", "reason": "[compelling 2-3
     const content = data.choices[0]?.message?.content;
     
     if (!content) {
+      logRecommendationsFailure('openai_empty_content', {
+        message: 'choices[0].message.content missing',
+      });
       throw new Error('No response from OpenAI');
     }
 
@@ -314,17 +369,40 @@ Return: [{"id": [exact_id], "title": "[exact_title]", "reason": "[compelling 2-3
     }
     
     console.log('Cleaned OpenAI response:', cleanContent.substring(0, 200) + '...');
-    const aiRecommendations = JSON.parse(cleanContent);
+    let aiRecommendations: unknown;
+    try {
+      aiRecommendations = JSON.parse(cleanContent);
+    } catch (parseErr) {
+      const msg =
+        parseErr instanceof Error ? parseErr.message.slice(0, 240) : 'json_parse_error';
+      logRecommendationsFailure('openai_json_parse', {
+        message: msg,
+        contentLength: cleanContent.length,
+      });
+      throw parseErr;
+    }
+
+    if (!Array.isArray(aiRecommendations)) {
+      logRecommendationsFailure('openai_json_shape', {
+        message: 'response JSON is not an array',
+        receivedType: typeof aiRecommendations,
+      });
+      throw new Error('OpenAI returned invalid JSON shape');
+    }
+
+    const parsedAiRecommendations = aiRecommendations as AIRecommendation[];
     
     // Map AI recommendations back to full watchlist items
-    console.log('AI recommendations received:', aiRecommendations.length);
-    console.log('AI recommendation IDs:', aiRecommendations.map((rec: AIRecommendation) => rec.id));
-    console.log('Full AI response:', JSON.stringify(aiRecommendations, null, 2));
+    console.log('AI recommendations received:', parsedAiRecommendations.length);
+    console.log('AI recommendation IDs:', parsedAiRecommendations.map((rec: AIRecommendation) => rec.id));
+    console.log('Full AI response:', JSON.stringify(parsedAiRecommendations, null, 2));
     
-    // Filter out any recommendations with undefined or invalid IDs
-    let validRecommendations = aiRecommendations.filter((rec: AIRecommendation) => 
-      rec.id && rec.id !== undefined && !isNaN(Number(rec.id))
-    );
+    // Filter out any recommendations with undefined or invalid IDs (watchlist uses CUID strings, not numeric IDs)
+    let validRecommendations = parsedAiRecommendations.filter((rec: AIRecommendation) => {
+      const idStr = rec.id != null ? String(rec.id).trim() : '';
+      const titleStr = rec.title != null ? String(rec.title).trim() : '';
+      return idStr.length > 0 && titleStr.length > 0;
+    });
     
     // Additional validation: ensure the AI's title matches an item in our shuffled watchlist
     validRecommendations = validRecommendations.filter((rec: AIRecommendation) => {
@@ -339,8 +417,8 @@ Return: [{"id": [exact_id], "title": "[exact_title]", "reason": "[compelling 2-3
         return false;
       }
       
-      // Also verify the ID matches the title
-      if (matchingItem.id !== rec.id) {
+      // Also verify the ID matches the title (string compare — IDs are CUIDs)
+      if (String(matchingItem.id) !== String(rec.id)) {
         console.log('❌ AI ID and title mismatch:', rec.id, 'vs', matchingItem.id, 'for title:', rec.title);
         return false;
       }
@@ -361,7 +439,7 @@ Return: [{"id": [exact_id], "title": "[exact_title]", "reason": "[compelling 2-3
     
     let recommendations: Recommendation[] = validRecommendations.map((rec: AIRecommendation) => {
       // Try to find by ID in the shuffled watchlist (the items sent to AI)
-      let item = shuffledWatchlist.find(w => w.id === rec.id);
+      let item = shuffledWatchlist.find(w => String(w.id) === String(rec.id));
       
       // If not found by ID, try to find by title (case-insensitive)
       if (!item && rec.title) {
@@ -399,7 +477,7 @@ Return: [{"id": [exact_id], "title": "[exact_title]", "reason": "[compelling 2-3
       console.log('Partial AI success, trying to match remaining AI reasons to items');
       const usedIds = new Set(recommendations.map(r => r.id));
       const remainingAiRecs = validRecommendations.filter((rec: AIRecommendation) => 
-        !recommendations.some(r => r.id === rec.id)
+        !recommendations.some(r => String(r.id) === String(rec.id))
       );
       
       for (const aiRec of remainingAiRecs) {
@@ -467,6 +545,11 @@ Return: [{"id": [exact_id], "title": "[exact_title]", "reason": "[compelling 2-3
       strategyFocus: randomStrategy.focus,
     };
   } catch (error) {
+    const err = error instanceof Error ? error : new Error(String(error));
+    logRecommendationsFailure('openai_pipeline', {
+      errorName: err.name,
+      message: err.message.slice(0, 320),
+    });
     console.error('OpenAI API error:', error);
     throw new Error('Failed to generate recommendations');
   }
@@ -580,11 +663,15 @@ export async function GET(request: NextRequest) {
       strategyFocus = result.strategyFocus;
       console.log('OpenAI recommendations successful:', recommendations.length);
     } catch (error) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      logRecommendationsFailure('route_ai_fallback', {
+        errorName: err.name,
+        message: err.message.slice(0, 320),
+      });
       console.error('OpenAI recommendations failed, using fallback:', error);
-      if (error instanceof Error) {
-        console.error('Error details:', error.message);
-        console.error('Error stack:', error.stack);
-      }
+      strategyName = 'ai-unavailable';
+      strategyFocus =
+        'Could not reach the AI model or parse its response; showing picks from your want-to-watch list.';
       // Fallback: simple recommendation based on want-to-watch items with variety
       const wantToWatchItems = watchlist.filter(item => item.status === 'want-to-watch');
       const fallbackReasons = [
@@ -613,7 +700,7 @@ export async function GET(request: NextRequest) {
       
       // Add timestamp-based randomization for even more variety
       const timeBasedSeed = Date.now() % 1000;
-      const additionalShuffle = shuffleArray([...Array(5).keys()]);
+      const _additionalShuffle = shuffleArray([...Array(5).keys()]);
       
       recommendations = shuffledItems.slice(0, 5).map((item, index) => ({
         id: item.id,
@@ -647,6 +734,11 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(responseData);
 
   } catch (error) {
+    const err = error instanceof Error ? error : new Error(String(error));
+    logRecommendationsApiError('route_fatal', {
+      errorName: err.name,
+      message: err.message.slice(0, 320),
+    });
     console.error('Recommendations API error:', error);
     
     // Always return some recommendations, even if there's an error

@@ -75,6 +75,49 @@ interface AIRecommendation {
   confidence: number;
 }
 
+/**
+ * Included in GET JSON only when RECOMMENDATIONS_DEBUG=true.
+ * REMOVE_ME alongside RecommendationsDebugToolbar + NEXT_PUBLIC_SHOW_RECOMMENDATIONS_DEBUG.
+ */
+export type RecommendationsApiDebugPayload = {
+  llmUsed: string;
+  prompt: string | null;
+  rawResponse: string | null;
+  phase?: string;
+  error?: string;
+};
+
+function isRecommendationsDebugEnabled(): boolean {
+  return process.env.RECOMMENDATIONS_DEBUG === 'true';
+}
+
+class RecommendationsInferenceError extends Error {
+  readonly recommendationsDebugPartial: RecommendationsApiDebugPayload;
+
+  constructor(partial: RecommendationsApiDebugPayload) {
+    super('Failed to generate recommendations');
+    this.name = 'RecommendationsInferenceError';
+    this.recommendationsDebugPartial = partial;
+  }
+}
+
+interface LlmCallResult {
+  rawText: string;
+  provider: 'anthropic' | 'openai';
+  model: string;
+}
+
+function formatDebugPrompt(systemPrompt: string, userPrompt: string): string {
+  return `[SYSTEM]\n${systemPrompt}\n\n---\n[USER]\n${userPrompt}`;
+}
+
+function llmUsedLabel(llm?: LlmCallResult): string {
+  if (llm) return `${llm.provider}:${llm.model}`;
+  if (process.env.ANTHROPIC_API_KEY) return 'anthropic:(failed before/with request)';
+  if (process.env.OPENAI_API_KEY) return 'openai:(failed before/with request)';
+  return '(no LLM credentials)';
+}
+
 async function getUserId() {
   const cookieStore = await cookies();
   const supabase = createServerClient(
@@ -110,7 +153,7 @@ const DEFAULT_CLAUDE_RECOMMENDATIONS_MODEL = 'claude-sonnet-4-20250514';
 async function fetchRecommendationModelOutput(
   systemPrompt: string,
   userPrompt: string
-): Promise<string> {
+): Promise<LlmCallResult> {
   const anthropicKey = process.env.ANTHROPIC_API_KEY;
   const openaiKey = process.env.OPENAI_API_KEY;
 
@@ -167,7 +210,7 @@ async function fetchRecommendationModelOutput(
       });
       throw new Error('No response from Anthropic');
     }
-    return text;
+    return { rawText: text, provider: 'anthropic', model };
   }
 
   if (openaiKey) {
@@ -221,7 +264,7 @@ async function fetchRecommendationModelOutput(
       });
       throw new Error('No response from OpenAI');
     }
-    return content;
+    return { rawText: content.trim(), provider: 'openai', model: 'gpt-4o-mini' };
   }
 
   logRecommendationsFailure('llm_missing_api_key', {
@@ -230,10 +273,14 @@ async function fetchRecommendationModelOutput(
   throw new Error('No LLM API key configured');
 }
 
-async function getAIRecommendations(watchlist: WatchItem[]): Promise<{
+async function getAIRecommendations(
+  watchlist: WatchItem[],
+  includeDebug: boolean
+): Promise<{
   recommendations: Recommendation[];
   strategy: string;
   strategyFocus: string;
+  debug?: RecommendationsApiDebugPayload;
 }> {
   // Create different recommendation strategies with limited data subsets (optimized for speed)
   const strategies = [
@@ -421,11 +468,14 @@ Return: [{"id": [exact_id], "title": "[exact_title]", "reason": "[compelling 2-3
   const systemPrompt =
     'You are a personalized movie and TV recommendation expert. Always respond with valid JSON. Write compelling, specific reasons that avoid generic phrases. Reference the user\'s actual preferences and be concrete about why each recommendation matches their taste. NEVER use phrases like "perfect choice", "exactly what you\'re in the mood for", "looks good", or "might enjoy". Be specific about genres, themes, or what makes it unique.';
 
+  const fullPromptForDebug = formatDebugPrompt(systemPrompt, prompt);
+  let lastLlm: LlmCallResult | undefined;
+
   try {
-    const content = await fetchRecommendationModelOutput(systemPrompt, prompt);
+    lastLlm = await fetchRecommendationModelOutput(systemPrompt, prompt);
 
     // Parse the JSON response - handle markdown formatting
-    let cleanContent = content.trim();
+    let cleanContent = lastLlm.rawText.trim();
     if (cleanContent.startsWith('```json')) {
       cleanContent = cleanContent.replace(/^```json\n/, '').replace(/\n```$/, '');
     } else if (cleanContent.startsWith('```')) {
@@ -578,7 +628,9 @@ Return: [{"id": [exact_id], "title": "[exact_title]", "reason": "[compelling 2-3
     }
 
     // If AI mapping failed for most items, pick random items from the watchlist
+    let usedStockReasonFallback = false;
     if (recommendations.length < 3) {
+      usedStockReasonFallback = true;
       console.log('AI mapping failed, picking random items from watchlist');
       const availableItems = [...watchlist].sort(() => Math.random() - 0.5).slice(0, 5);
       const fallbackReasons = [
@@ -609,6 +661,18 @@ Return: [{"id": [exact_id], "title": "[exact_title]", "reason": "[compelling 2-3
       recommendations,
       strategy: randomStrategy.name,
       strategyFocus: randomStrategy.focus,
+      ...(includeDebug && lastLlm
+        ? {
+            debug: {
+              llmUsed: `${lastLlm.provider}:${lastLlm.model}`,
+              prompt: fullPromptForDebug,
+              rawResponse: lastLlm.rawText,
+              phase: usedStockReasonFallback
+                ? 'llm-mapping-fallback-stock-reasons'
+                : 'llm-success',
+            } satisfies RecommendationsApiDebugPayload,
+          }
+        : {}),
     };
   } catch (error) {
     const err = error instanceof Error ? error : new Error(String(error));
@@ -617,6 +681,17 @@ Return: [{"id": [exact_id], "title": "[exact_title]", "reason": "[compelling 2-3
       message: err.message.slice(0, 320),
     });
     console.error('LLM recommendation error:', error);
+
+    if (includeDebug) {
+      throw new RecommendationsInferenceError({
+        llmUsed: llmUsedLabel(lastLlm),
+        prompt: fullPromptForDebug,
+        rawResponse: lastLlm?.rawText ?? null,
+        phase: 'llm-pipeline-error',
+        error: err.message,
+      });
+    }
+
     throw new Error('Failed to generate recommendations');
   }
 }
@@ -634,10 +709,17 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const forceRefresh = searchParams.get('refresh') === 'true';
     
-    // Check cache first (unless force refresh is requested)
+    const debugEnabled = isRecommendationsDebugEnabled();
     const cacheKey = `recommendations_${userId}`;
     const cached = recommendationCache.get(cacheKey);
-    if (!forceRefresh && cached && (Date.now() - cached.timestamp) < CACHE_DURATION) {
+
+    // Never serve cached payloads for debug builds (would omit or stale-copy prompt/response)
+    if (
+      !debugEnabled &&
+      !forceRefresh &&
+      cached &&
+      Date.now() - cached.timestamp < CACHE_DURATION
+    ) {
       console.log('Returning cached recommendations');
       return NextResponse.json(cached.data);
     }
@@ -720,13 +802,17 @@ export async function GET(request: NextRequest) {
     let recommendations: Recommendation[];
     let strategyName = "fallback";
     let strategyFocus = "recommend from your want-to-watch list";
-    
+    let recommendationsDebugPayload: RecommendationsApiDebugPayload | undefined;
+
     try {
       console.log('Attempting AI recommendations...');
-      const result = await getAIRecommendations(watchlist);
+      const result = await getAIRecommendations(watchlist, debugEnabled);
       recommendations = result.recommendations;
       strategyName = result.strategy;
       strategyFocus = result.strategyFocus;
+      if (debugEnabled && result.debug) {
+        recommendationsDebugPayload = result.debug;
+      }
       console.log('AI recommendations successful:', recommendations.length);
     } catch (error) {
       const err = error instanceof Error ? error : new Error(String(error));
@@ -734,7 +820,10 @@ export async function GET(request: NextRequest) {
         errorName: err.name,
         message: err.message.slice(0, 320),
       });
-      console.error('OpenAI recommendations failed, using fallback:', error);
+      console.error('AI recommendations failed, using fallback:', error);
+      if (debugEnabled && error instanceof RecommendationsInferenceError) {
+        recommendationsDebugPayload = error.recommendationsDebugPartial;
+      }
       strategyName = 'ai-unavailable';
       strategyFocus =
         'Could not reach the AI model or parse its response; showing picks from your want-to-watch list.';
@@ -784,18 +873,26 @@ export async function GET(request: NextRequest) {
       }));
     }
 
-    const responseData = {
+    const responseData: {
+      recommendations: Recommendation[];
+      totalItems: number;
+      strategy: string;
+      strategyFocus: string;
+      debug?: RecommendationsApiDebugPayload;
+    } = {
       recommendations,
       totalItems: watchlist.length,
       strategy: strategyName,
       strategyFocus: strategyFocus,
+      ...(recommendationsDebugPayload ? { debug: recommendationsDebugPayload } : {}),
     };
 
-    // Cache the results
-    recommendationCache.set(cacheKey, {
-      data: responseData,
-      timestamp: Date.now()
-    });
+    if (!debugEnabled) {
+      recommendationCache.set(cacheKey, {
+        data: responseData,
+        timestamp: Date.now(),
+      });
+    }
 
     return NextResponse.json(responseData);
 
@@ -833,11 +930,29 @@ export async function GET(request: NextRequest) {
       tmdbTvNumberOfSeasons: item.tmdbTvNumberOfSeasons,
     }));
     
-    return NextResponse.json({
+    const fatalBody: {
+      recommendations: Recommendation[];
+      totalItems: number;
+      strategy: string;
+      strategyFocus: string;
+      debug?: RecommendationsApiDebugPayload;
+    } = {
       recommendations,
       totalItems: (watchlist || []).length,
-      strategy: "error-fallback",
-      strategyFocus: "recommendations from your want-to-watch list due to an error",
-    });
+      strategy: 'error-fallback',
+      strategyFocus: 'recommendations from your want-to-watch list due to an error',
+    };
+
+    if (isRecommendationsDebugEnabled()) {
+      fatalBody.debug = {
+        llmUsed: '(none — route fatal before LLM)',
+        prompt: null,
+        rawResponse: null,
+        phase: 'route-fatal',
+        error: err.message.slice(0, 500),
+      };
+    }
+
+    return NextResponse.json(fatalBody);
   }
 }

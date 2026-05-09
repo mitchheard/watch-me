@@ -222,6 +222,9 @@ The engine provides comprehensive logging:
 - Fallback mechanism usage
 - Performance metrics
 
+### Umami Events
+- `ai_recommendation_requested` fires on every recommendations request; `ai_fallback_fired` fires when the API `phase` indicates a fallback path, with `reason` set to that phase value.
+
 ### Key Metrics
 - **Success Rate**: Percentage of AI recommendations that map successfully
 - **Strategy Distribution**: Which strategies are most effective

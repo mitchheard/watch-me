@@ -7,6 +7,12 @@ import { SparklesIcon, ClockIcon, HeartIcon, EyeIcon } from '@heroicons/react/24
 import Image from 'next/image';
 import Link from 'next/link';
 import { trackUmamiEvent } from '@/lib/umami-bootstrap';
+import {
+  RecommendationsDebugToolbar,
+  type RecommendationsDebugPayload,
+} from './RecommendationsDebugToolbar';
+
+const showRecDebugUi = process.env.NEXT_PUBLIC_SHOW_RECOMMENDATIONS_DEBUG === 'true';
 
 interface Recommendation {
   id: string; // Changed from number to string for CUID
@@ -31,6 +37,11 @@ interface RecommendationsResponse {
   strategy?: string;
   strategyFocus?: string;
   phase?: string;
+  debug?: RecommendationsDebugPayload;
+}
+
+function isFallbackPhase(phase?: string): phase is string {
+  return Boolean(phase && phase !== 'llm-success');
 }
 
 export default function RecommendationsPage() {
@@ -44,6 +55,7 @@ export default function RecommendationsPage() {
   const [hasInitialized, setHasInitialized] = useState(false);
   const [expandedDescriptions, setExpandedDescriptions] = useState<Set<string>>(new Set());
   const [loadingStage, setLoadingStage] = useState(0);
+  const [debugPayload, setDebugPayload] = useState<RecommendationsDebugPayload | null>(null);
   
   // Debug logging for state changes (removed to improve performance)
 
@@ -60,6 +72,7 @@ export default function RecommendationsPage() {
       setStrategy('');
       setStrategyFocus('');
       setLastUpdated(null);
+      setDebugPayload(null);
     }
     
     // Simulate progress stages with better timing
@@ -75,6 +88,8 @@ export default function RecommendationsPage() {
     }, 800); // Slower progression to match actual API timing
     
     try {
+      trackUmamiEvent('ai_recommendation_requested');
+
       const url = resetState ? '/api/recommendations?refresh=true' : '/api/recommendations';
       const response = await fetch(url, {
         credentials: 'include', // Include cookies for authentication
@@ -87,13 +102,15 @@ export default function RecommendationsPage() {
       
       // Clear interval immediately when data is received
       clearInterval(progressInterval);
-
-      trackUmamiEvent('ai_recommendation_requested');
+      if (isFallbackPhase(data.phase)) {
+        trackUmamiEvent('ai_fallback_fired', { reason: data.phase });
+      }
       
       // Update data immediately - no artificial delay
       setRecommendations(data.recommendations);
       setStrategy(data.strategy || '');
       setStrategyFocus(data.strategyFocus || '');
+      setDebugPayload(data.debug ?? null);
       setLastUpdated(new Date());
       setIsLoading(false);
       setLoadingStage(0);
@@ -101,6 +118,7 @@ export default function RecommendationsPage() {
     } catch (err) {
       clearInterval(progressInterval);
       setError(err instanceof Error ? err.message : 'An error occurred');
+      setDebugPayload(null);
       setIsLoading(false);
       setLoadingStage(0);
     }
@@ -237,6 +255,12 @@ export default function RecommendationsPage() {
               <span>Updated {lastUpdated.toLocaleString()}</span>
             </div>
           )}
+        </div>
+      )}
+
+      {showRecDebugUi && (
+        <div className="mb-4 max-w-2xl mx-auto px-1">
+          <RecommendationsDebugToolbar debug={debugPayload} />
         </div>
       )}
 

@@ -76,10 +76,53 @@ interface AIRecommendation {
   confidence: number;
 }
 
+/**
+ * Included in GET JSON only when RECOMMENDATIONS_DEBUG=true.
+ */
+export type RecommendationsApiDebugPayload = {
+  llmUsed: string;
+  prompt: string | null;
+  rawResponse: string | null;
+  llmLatencyMs?: number | null;
+  inputTokens?: number | null;
+  outputTokens?: number | null;
+  totalTokens?: number | null;
+  phase?: string;
+  error?: string;
+};
+
 interface LlmCallResult {
   rawText: string;
   provider: 'anthropic';
   model: string;
+  latencyMs: number;
+  inputTokens: number | null;
+  outputTokens: number | null;
+  totalTokens: number | null;
+}
+
+function isRecommendationsDebugEnabled(): boolean {
+  return process.env.RECOMMENDATIONS_DEBUG === 'true';
+}
+
+class RecommendationsInferenceError extends Error {
+  readonly recommendationsDebugPartial: RecommendationsApiDebugPayload;
+
+  constructor(partial: RecommendationsApiDebugPayload) {
+    super('Failed to generate recommendations');
+    this.name = 'RecommendationsInferenceError';
+    this.recommendationsDebugPartial = partial;
+  }
+}
+
+function formatDebugPrompt(systemPrompt: string, userPrompt: string): string {
+  return `[SYSTEM]\n${systemPrompt}\n\n---\n[USER]\n${userPrompt}`;
+}
+
+function llmUsedLabel(llm?: LlmCallResult): string {
+  if (llm) return `${llm.provider}:${llm.model}`;
+  if (process.env.ANTHROPIC_API_KEY) return 'anthropic:(failed before/with request)';
+  return '(no LLM credentials)';
 }
 
 async function getUserId() {
@@ -125,6 +168,7 @@ async function fetchRecommendationModelOutput(
   if (anthropicKey) {
     const client = new Anthropic({ apiKey: anthropicKey });
     try {
+      const startedAtMs = Date.now();
       const message = await client.messages.create({
         model,
         max_tokens: 2048,
@@ -132,6 +176,7 @@ async function fetchRecommendationModelOutput(
         system: systemPrompt,
         messages: [{ role: 'user', content: userPrompt }],
       });
+      const latencyMs = Date.now() - startedAtMs;
       const textBlock = message.content.find((block) => block.type === 'text');
       const text = textBlock?.text?.trim();
       if (!text) {
@@ -140,7 +185,20 @@ async function fetchRecommendationModelOutput(
         });
         throw new Error('No response from Anthropic');
       }
-      return { rawText: text, provider: 'anthropic', model };
+      const inputTokens = message.usage?.input_tokens ?? null;
+      const outputTokens = message.usage?.output_tokens ?? null;
+      const totalTokens =
+        inputTokens !== null && outputTokens !== null ? inputTokens + outputTokens : null;
+
+      return {
+        rawText: text,
+        provider: 'anthropic',
+        model,
+        latencyMs,
+        inputTokens,
+        outputTokens,
+        totalTokens,
+      };
     } catch (error) {
       const err = error as {
         status?: number;
@@ -163,12 +221,14 @@ async function fetchRecommendationModelOutput(
 }
 
 async function getAIRecommendations(
-  watchlist: WatchItem[]
+  watchlist: WatchItem[],
+  includeDebug: boolean
 ): Promise<{
   recommendations: Recommendation[];
   strategy: string;
   strategyFocus: string;
   phase: string;
+  debug?: RecommendationsApiDebugPayload;
 }> {
   // Create different recommendation strategies with limited data subsets (optimized for speed)
   const strategies = [
@@ -356,11 +416,14 @@ Return: [{"id": [exact_id], "title": "[exact_title]", "reason": "[compelling 2-3
   const systemPrompt =
     'You are a personalized movie and TV recommendation expert. Always respond with valid JSON. Write compelling, specific reasons that avoid generic phrases. Reference the user\'s actual preferences and be concrete about why each recommendation matches their taste. NEVER use phrases like "perfect choice", "exactly what you\'re in the mood for", "looks good", or "might enjoy". Be specific about genres, themes, or what makes it unique.';
 
+  const fullPromptForDebug = formatDebugPrompt(systemPrompt, prompt);
+  let lastLlm: LlmCallResult | undefined;
+
   try {
-    const llmResult = await fetchRecommendationModelOutput(systemPrompt, prompt);
+    lastLlm = await fetchRecommendationModelOutput(systemPrompt, prompt);
 
     // Parse the JSON response - handle markdown formatting
-    let cleanContent = llmResult.rawText.trim();
+    let cleanContent = lastLlm.rawText.trim();
     if (cleanContent.startsWith('```json')) {
       cleanContent = cleanContent.replace(/^```json\n/, '').replace(/\n```$/, '');
     } else if (cleanContent.startsWith('```')) {
@@ -549,6 +612,22 @@ Return: [{"id": [exact_id], "title": "[exact_title]", "reason": "[compelling 2-3
       phase: usedStockReasonFallback
         ? 'llm-mapping-fallback-stock-reasons'
         : 'llm-success',
+      ...(includeDebug
+        ? {
+            debug: {
+              llmUsed: `${lastLlm.provider}:${lastLlm.model}`,
+              prompt: fullPromptForDebug,
+              rawResponse: lastLlm.rawText,
+              llmLatencyMs: lastLlm.latencyMs,
+              inputTokens: lastLlm.inputTokens,
+              outputTokens: lastLlm.outputTokens,
+              totalTokens: lastLlm.totalTokens,
+              phase: usedStockReasonFallback
+                ? 'llm-mapping-fallback-stock-reasons'
+                : 'llm-success',
+            } satisfies RecommendationsApiDebugPayload,
+          }
+        : {}),
     };
   } catch (error) {
     const err = error instanceof Error ? error : new Error(String(error));
@@ -557,6 +636,20 @@ Return: [{"id": [exact_id], "title": "[exact_title]", "reason": "[compelling 2-3
       message: err.message.slice(0, 320),
     });
     console.error('LLM recommendation error:', error);
+
+    if (includeDebug) {
+      throw new RecommendationsInferenceError({
+        llmUsed: llmUsedLabel(lastLlm),
+        prompt: fullPromptForDebug,
+        rawResponse: lastLlm?.rawText ?? null,
+        llmLatencyMs: lastLlm?.latencyMs ?? null,
+        inputTokens: lastLlm?.inputTokens ?? null,
+        outputTokens: lastLlm?.outputTokens ?? null,
+        totalTokens: lastLlm?.totalTokens ?? null,
+        phase: 'llm-pipeline-error',
+        error: err.message,
+      });
+    }
 
     throw new Error('Failed to generate recommendations');
   }
@@ -574,12 +667,14 @@ export async function GET(request: NextRequest) {
     // Check for cache busting parameter
     const { searchParams } = new URL(request.url);
     const forceRefresh = searchParams.get('refresh') === 'true';
+    const debugEnabled = isRecommendationsDebugEnabled();
     
     const cacheKey = `recommendations_${userId}`;
     const cached = recommendationCache.get(cacheKey);
 
     // Never serve cached payloads for debug builds (would omit or stale-copy prompt/response)
     if (
+      !debugEnabled &&
       !forceRefresh &&
       cached &&
       Date.now() - cached.timestamp < CACHE_DURATION
@@ -667,14 +762,18 @@ export async function GET(request: NextRequest) {
     let strategyName = "fallback";
     let strategyFocus = "recommend from your want-to-watch list";
     let phase = 'route-init';
+    let recommendationsDebugPayload: RecommendationsApiDebugPayload | undefined;
 
     try {
       console.log('Attempting AI recommendations...');
-      const result = await getAIRecommendations(watchlist);
+      const result = await getAIRecommendations(watchlist, debugEnabled);
       recommendations = result.recommendations;
       strategyName = result.strategy;
       strategyFocus = result.strategyFocus;
       phase = result.phase;
+      if (debugEnabled && result.debug) {
+        recommendationsDebugPayload = result.debug;
+      }
       console.log('AI recommendations successful:', recommendations.length);
     } catch (error) {
       const err = error instanceof Error ? error : new Error(String(error));
@@ -687,6 +786,9 @@ export async function GET(request: NextRequest) {
       strategyFocus =
         'Could not reach the AI model or parse its response; showing picks from your want-to-watch list.';
       phase = 'llm-pipeline-error';
+      if (debugEnabled && error instanceof RecommendationsInferenceError) {
+        recommendationsDebugPayload = error.recommendationsDebugPartial;
+      }
       // Fallback: simple recommendation based on want-to-watch items with variety
       const wantToWatchItems = watchlist.filter(item => item.status === 'want-to-watch');
       const fallbackReasons = [
@@ -739,18 +841,22 @@ export async function GET(request: NextRequest) {
       strategy: string;
       strategyFocus: string;
       phase: string;
+      debug?: RecommendationsApiDebugPayload;
     } = {
       recommendations,
       totalItems: watchlist.length,
       strategy: strategyName,
       strategyFocus: strategyFocus,
       phase,
+      ...(recommendationsDebugPayload ? { debug: recommendationsDebugPayload } : {}),
     };
 
-    recommendationCache.set(cacheKey, {
-      data: responseData,
-      timestamp: Date.now(),
-    });
+    if (!debugEnabled) {
+      recommendationCache.set(cacheKey, {
+        data: responseData,
+        timestamp: Date.now(),
+      });
+    }
 
     return NextResponse.json(responseData);
 
@@ -794,6 +900,7 @@ export async function GET(request: NextRequest) {
       strategy: string;
       strategyFocus: string;
       phase: string;
+      debug?: RecommendationsApiDebugPayload;
     } = {
       recommendations,
       totalItems: (watchlist || []).length,
@@ -801,6 +908,20 @@ export async function GET(request: NextRequest) {
       strategyFocus: 'recommendations from your want-to-watch list due to an error',
       phase: 'route-fatal',
     };
+
+    if (debugEnabled) {
+      fatalBody.debug = {
+        llmUsed: '(none — route fatal before LLM)',
+        prompt: null,
+        rawResponse: null,
+        llmLatencyMs: null,
+        inputTokens: null,
+        outputTokens: null,
+        totalTokens: null,
+        phase: 'route-fatal',
+        error: err.message.slice(0, 500),
+      };
+    }
 
     return NextResponse.json(fatalBody);
   }

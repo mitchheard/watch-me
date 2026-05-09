@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { createServerClient, type CookieOptions } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import Anthropic from '@anthropic-ai/sdk';
+import { parseRecommendationArray } from './json-utils';
 
 // Simple in-memory cache (in production, use Redis or similar)
 const recommendationCache = new Map<string, { data: unknown; timestamp: number }>();
@@ -422,34 +423,17 @@ Return: [{"id": [exact_id], "title": "[exact_title]", "reason": "[compelling 2-3
   try {
     lastLlm = await fetchRecommendationModelOutput(systemPrompt, prompt);
 
-    // Parse the JSON response - handle markdown formatting
-    let cleanContent = lastLlm.rawText.trim();
-    if (cleanContent.startsWith('```json')) {
-      cleanContent = cleanContent.replace(/^```json\n/, '').replace(/\n```$/, '');
-    } else if (cleanContent.startsWith('```')) {
-      cleanContent = cleanContent.replace(/^```\n/, '').replace(/\n```$/, '');
-    }
-    
-    console.log('Cleaned LLM response:', cleanContent.substring(0, 200) + '...');
-    let aiRecommendations: unknown;
+    let aiRecommendations: unknown[];
     try {
-      aiRecommendations = JSON.parse(cleanContent);
+      aiRecommendations = parseRecommendationArray(lastLlm.rawText);
     } catch (parseErr) {
       const msg =
         parseErr instanceof Error ? parseErr.message.slice(0, 240) : 'json_parse_error';
       logRecommendationsFailure('llm_json_parse', {
         message: msg,
-        contentLength: cleanContent.length,
+        contentLength: lastLlm.rawText.length,
       });
       throw parseErr;
-    }
-
-    if (!Array.isArray(aiRecommendations)) {
-      logRecommendationsFailure('llm_json_shape', {
-        message: 'response JSON is not an array',
-        receivedType: typeof aiRecommendations,
-      });
-      throw new Error('LLM returned invalid JSON shape');
     }
 
     const parsedAiRecommendations = aiRecommendations as AIRecommendation[];

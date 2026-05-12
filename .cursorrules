@@ -1,0 +1,17 @@
+# Database Rules for AvidX repos
+
+## CRITICAL
+- NEVER run `prisma db push` in any form, especially with `--accept-data-loss`. This command is BANNED across all AvidX repos.
+- For schema changes, ALWAYS use `prisma migrate dev --name <descriptive_name>`. This generates a named migration file under `prisma/migrations/` for review.
+- For production, use `prisma migrate deploy` only.
+
+## Why this matters
+The database is SHARED across AvidX products (Watch Me, Mail Zero, Planfinity, Memodee, Signal). Other products' tables (signal_*, mail_zero_*, etc.) appear as "drift" to this product's Prisma schema but MUST NOT be deleted.
+
+## If you see drift
+- If `prisma migrate dev` generates a migration containing DROP TABLE for anything outside this product's namespace, STOP and ask the user.
+- If Prisma reports drift you don't recognize, STOP and ask the user.
+- Treat anything you didn't add yourself as untouchable.
+
+## Reference
+See AVIDX-259 in Linear for full policy.

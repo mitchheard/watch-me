@@ -7,7 +7,8 @@ import { XMarkIcon } from '@heroicons/react/24/outline';
 /** REMOVE_ME: mirrors API when RECOMMENDATIONS_DEBUG=true */
 export interface RecommendationsDebugPayload {
   llmUsed: string;
-  prompt: string | null;
+  systemPrompt: string | null;
+  userPrompt: string | null;
   rawResponse: string | null;
   llmLatencyMs?: number | null;
   inputTokens?: number | null;
@@ -15,6 +16,11 @@ export interface RecommendationsDebugPayload {
   totalTokens?: number | null;
   phase?: string;
   error?: string;
+  requestContext?: {
+    clientHour: number | null;
+    clientTimeZone: string | null;
+    timeOfDayBucket: string;
+  };
 }
 
 type ModalKind = 'prompt' | 'response' | null;
@@ -35,7 +41,7 @@ export function RecommendationsDebugToolbar({ debug }: RecommendationsDebugToolb
         <p className="mt-2 leading-relaxed">
           No debug payload yet. Set server env{' '}
           <code className="rounded bg-amber-100 px-1 font-mono text-[11px]">RECOMMENDATIONS_DEBUG=true</code>, restart,
-          then load recommendations again for LLM labels, prompt, and raw response.
+          then load recommendations again for LLM labels, system/user prompts, and raw response.
         </p>
       </div>
     );
@@ -44,8 +50,29 @@ export function RecommendationsDebugToolbar({ debug }: RecommendationsDebugToolb
   const title =
     modal === 'prompt' ? 'Recommendation prompt (dev)' : modal === 'response' ? 'Raw LLM response (dev)' : '';
 
-  const body =
-    modal === 'prompt' ? debug.prompt ?? '(empty)' : modal === 'response' ? debug.rawResponse ?? '(empty)' : '';
+  const promptPanel =
+    modal === 'prompt' ? (
+      <div className="space-y-4">
+        <div>
+          <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400">
+            system (Anthropic top-level)
+          </h3>
+          <pre className="max-h-[min(35vh,18rem)] overflow-y-auto whitespace-pre-wrap break-words rounded-lg bg-slate-900 p-3 text-xs leading-relaxed text-slate-100 sm:p-4">
+            {debug.systemPrompt ?? '(empty)'}
+          </pre>
+        </div>
+        <div>
+          <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400">
+            user message
+          </h3>
+          <pre className="max-h-[min(35vh,18rem)] overflow-y-auto whitespace-pre-wrap break-words rounded-lg bg-slate-900 p-3 text-xs leading-relaxed text-slate-100 sm:p-4">
+            {debug.userPrompt ?? '(empty)'}
+          </pre>
+        </div>
+      </div>
+    ) : null;
+
+  const responseBody = modal === 'response' ? debug.rawResponse ?? '(empty)' : '';
   const hasLatency = debug.llmLatencyMs != null;
   const hasUsage =
     debug.inputTokens != null || debug.outputTokens != null || debug.totalTokens != null;
@@ -65,6 +92,14 @@ export function RecommendationsDebugToolbar({ debug }: RecommendationsDebugToolb
           <span className="font-sans font-medium text-amber-950">LLM: </span>
           {debug.llmUsed}
         </p>
+        {debug.requestContext && (
+          <p className="mt-1 font-mono text-xs text-amber-900/90">
+            <span className="font-sans font-medium text-amber-950">Time: </span>
+            bucket {debug.requestContext.timeOfDayBucket}
+            {debug.requestContext.clientHour != null ? ` · hour ${debug.requestContext.clientHour}` : ''}
+            {debug.requestContext.clientTimeZone ? ` · ${debug.requestContext.clientTimeZone}` : ''}
+          </p>
+        )}
         {(hasLatency || hasUsage) && (
           <p className="mt-1 font-mono text-xs sm:text-sm text-amber-900/90">
             {hasLatency ? (
@@ -142,9 +177,13 @@ export function RecommendationsDebugToolbar({ debug }: RecommendationsDebugToolb
                       <XMarkIcon className="h-5 w-5" />
                     </button>
                   </div>
-                  <pre className="max-h-[min(70vh,32rem)] overflow-auto rounded-lg bg-slate-900 p-4 text-xs leading-relaxed text-slate-100">
-                    {body}
-                  </pre>
+                  {modal === 'prompt' ? (
+                    promptPanel
+                  ) : (
+                    <pre className="max-h-[min(70vh,32rem)] overflow-y-auto whitespace-pre-wrap break-words rounded-lg bg-slate-900 p-4 text-xs leading-relaxed text-slate-100">
+                      {responseBody}
+                    </pre>
+                  )}
                 </Dialog.Panel>
               </Transition.Child>
             </div>

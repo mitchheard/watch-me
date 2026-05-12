@@ -27,6 +27,8 @@ export type WatchItem = {
   tmdbTvNumberOfEpisodes: number | null;
   tmdbTvNumberOfSeasons: number | null;
   tmdbTvStatus: string | null;
+  tmdbPopularity?: number | null;
+  tmdbVoteCount?: number | null;
 };
 
 export interface WatchlistItem {
@@ -80,6 +82,8 @@ export interface TMDBItemDetails {
   tmdbTvNumberOfSeasons?: number | null;
   tmdbTvStatus?: string | null;
   tmdbTvCertification?: string | null;
+  tmdbPopularity?: number | null;
+  tmdbVoteCount?: number | null;
 }
 
 export interface WatchlistFormData {
@@ -105,4 +109,6 @@ export interface WatchlistFormData {
   tmdbTvNumberOfSeasons?: number | null;
   tmdbTvStatus?: string | null;
   notes?: string | null;
+  tmdbPopularity?: number | null;
+  tmdbVoteCount?: number | null;
 }

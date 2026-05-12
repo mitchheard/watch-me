@@ -180,6 +180,10 @@ model WatchlistItem {
   tmdbTvNumberOfEpisodes Int?
   tmdbTvNumberOfSeasons  Int?
   tmdbTvStatus           String?
+  /// TMDB `popularity` (daily score; model uses for reach / buzz framing).
+  tmdbPopularity         Float?
+  /// TMDB `vote_count` (number of ratings).
+  tmdbVoteCount          Int?
   createdAt              DateTime @default(now())
   updatedAt              DateTime @updatedAt
   

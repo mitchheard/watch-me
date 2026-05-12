@@ -54,6 +54,8 @@ export async function GET(request: Request) {
         tmdbMovieRuntime: movieDetails.runtime,
         tmdbMovieReleaseYear: getYear(movieDetails.release_date),
         tmdbMovieCertification: certification,
+        tmdbPopularity: typeof movieDetails.popularity === 'number' ? movieDetails.popularity : null,
+        tmdbVoteCount: typeof movieDetails.vote_count === 'number' ? movieDetails.vote_count : null,
         media_type: 'movie',
         // TV specific fields will be null or undefined
       };
@@ -81,6 +83,8 @@ export async function GET(request: Request) {
         tmdbTvNumberOfSeasons: tvDetails.number_of_seasons,
         tmdbTvStatus: tvDetails.status,
         tmdbTvCertification: certification,
+        tmdbPopularity: typeof tvDetails.popularity === 'number' ? tvDetails.popularity : null,
+        tmdbVoteCount: typeof tvDetails.vote_count === 'number' ? tvDetails.vote_count : null,
         media_type: 'tv',
         // Movie specific fields will be null or undefined
       };

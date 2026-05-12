@@ -115,6 +115,8 @@ export async function GET(request: Request) {
         tmdbTvNumberOfSeasons: watchlistItemList.watchlistItem.tmdbTvNumberOfSeasons,
         tmdbTvStatus: watchlistItemList.watchlistItem.tmdbTvStatus,
         tmdbMovieReleaseYear: watchlistItemList.watchlistItem.tmdbMovieReleaseYear,
+        tmdbPopularity: watchlistItemList.watchlistItem.tmdbPopularity,
+        tmdbVoteCount: watchlistItemList.watchlistItem.tmdbVoteCount,
       };
 
       return NextResponse.json(item);
@@ -157,6 +159,8 @@ export async function GET(request: Request) {
       tmdbTvNumberOfSeasons: itemList.watchlistItem.tmdbTvNumberOfSeasons,
       tmdbTvStatus: itemList.watchlistItem.tmdbTvStatus,
       tmdbMovieReleaseYear: itemList.watchlistItem.tmdbMovieReleaseYear,
+      tmdbPopularity: itemList.watchlistItem.tmdbPopularity,
+      tmdbVoteCount: itemList.watchlistItem.tmdbVoteCount,
     }));
 
     return NextResponse.json(items);
@@ -202,6 +206,10 @@ export async function POST(request: Request) {
       where: { tmdbId: data.tmdbId || 0 }
     });
 
+    const popularityPatch: { tmdbPopularity?: number | null; tmdbVoteCount?: number | null } = {};
+    if (data.tmdbPopularity != null) popularityPatch.tmdbPopularity = data.tmdbPopularity;
+    if (data.tmdbVoteCount != null) popularityPatch.tmdbVoteCount = data.tmdbVoteCount;
+
     if (!watchlistItem) {
       watchlistItem = await prisma.watchlistItem.create({
         data: {
@@ -222,7 +230,14 @@ export async function POST(request: Request) {
           tmdbTvNumberOfEpisodes: data.tmdbTvNumberOfEpisodes || null,
           tmdbTvNumberOfSeasons: data.tmdbTvNumberOfSeasons || null,
           tmdbTvStatus: data.tmdbTvStatus || null,
+          tmdbPopularity: data.tmdbPopularity ?? null,
+          tmdbVoteCount: data.tmdbVoteCount ?? null,
         }
+      });
+    } else if (Object.keys(popularityPatch).length > 0) {
+      watchlistItem = await prisma.watchlistItem.update({
+        where: { id: watchlistItem.id },
+        data: popularityPatch,
       });
     }
 
@@ -304,6 +319,8 @@ export async function POST(request: Request) {
       tmdbTvNumberOfSeasons: watchlistItemList.watchlistItem.tmdbTvNumberOfSeasons,
       tmdbTvStatus: watchlistItemList.watchlistItem.tmdbTvStatus,
       tmdbMovieReleaseYear: watchlistItemList.watchlistItem.tmdbMovieReleaseYear,
+      tmdbPopularity: watchlistItemList.watchlistItem.tmdbPopularity,
+      tmdbVoteCount: watchlistItemList.watchlistItem.tmdbVoteCount,
     };
     
     return NextResponse.json(item);

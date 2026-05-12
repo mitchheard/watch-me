@@ -4,10 +4,22 @@ import { createServerClient, type CookieOptions } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import Anthropic from '@anthropic-ai/sdk';
 import { parseRecommendationArray } from './json-utils';
+import {
+  parseRecommendationsHourParam,
+  pickProfileAnchors,
+  RECOMMENDATIONS_TIME_OF_DAY_FALLBACK,
+  strategyReasonGuidance,
+  timeOfDayBucketFromLocalHour,
+  trimOverview,
+  type ProfileAnchorRow,
+} from './recommendations-helpers';
 
 // Simple in-memory cache (in production, use Redis or similar)
 const recommendationCache = new Map<string, { data: unknown; timestamp: number }>();
 const CACHE_DURATION = 1 * 1000; // 1 second (minimal cache for maximum variety)
+
+/** Want-to-watch rows loaded for recommender candidates (AVIDX-257; matches free-tier list cap). */
+const RECOMMENDATIONS_WANT_TO_WATCH_FETCH_LIMIT = 50;
 
 /** One JSON line per failure — easy to grep in Render; no secrets or raw prompts */
 function logRecommendationsFailure(
@@ -51,6 +63,8 @@ interface WatchItem {
   tmdbTvFirstAirYear: number | null;
   tmdbMovieRuntime: number | null;
   tmdbTvNumberOfSeasons: number | null;
+  tmdbPopularity: number | null;
+  tmdbVoteCount: number | null;
   createdAt?: Date | null;
 }
 
@@ -82,7 +96,10 @@ interface AIRecommendation {
  */
 export type RecommendationsApiDebugPayload = {
   llmUsed: string;
-  prompt: string | null;
+  /** Anthropic `system` parameter (stable, cache-eligible). */
+  systemPrompt: string | null;
+  /** Anthropic user message content. */
+  userPrompt: string | null;
   rawResponse: string | null;
   llmLatencyMs?: number | null;
   inputTokens?: number | null;
@@ -90,6 +107,12 @@ export type RecommendationsApiDebugPayload = {
   totalTokens?: number | null;
   phase?: string;
   error?: string;
+  /** Present when RECOMMENDATIONS_DEBUG=true (AVIDX-256). */
+  requestContext?: {
+    clientHour: number | null;
+    clientTimeZone: string | null;
+    timeOfDayBucket: string;
+  };
 };
 
 interface LlmCallResult {
@@ -116,14 +139,116 @@ class RecommendationsInferenceError extends Error {
   }
 }
 
-function formatDebugPrompt(systemPrompt: string, userPrompt: string): string {
-  return `[SYSTEM]\n${systemPrompt}\n\n---\n[USER]\n${userPrompt}`;
-}
-
 function llmUsedLabel(llm?: LlmCallResult): string {
   if (llm) return `${llm.provider}:${llm.model}`;
   if (process.env.ANTHROPIC_API_KEY) return 'anthropic:(failed before/with request)';
   return '(no LLM credentials)';
+}
+
+/** Stable system prompt — identical across calls for Anthropic prompt caching (AVIDX-251). */
+const RECOMMENDATIONS_SYSTEM_PROMPT = `You are Watch Me's recommender. You only recommend rows from the numbered candidate list supplied in the user message. Pick exactly five different candidates and return a single JSON array (no markdown code fences, no commentary outside JSON).
+
+## Output shape
+The array must contain exactly five objects. Each object has:
+- "id" (string): the exact id field from the chosen candidate row.
+- "title" (string): the exact title field from that same candidate row.
+- "reason" (string): two or three sentences.
+- "confidence" (number): between 0.1 and 1.0 inclusive.
+
+Illustrative placeholder example — do not echo these values in a real answer:
+[{"id":"cjd01example","title":"Example Film Alpha","reason":"First sentence with a concrete hook from the overview or metadata. Second sentence ties to viewer taste or strategy.","confidence":0.84},{"id":"cjd02exampleb","title":"Example Series Beta","reason":"...","confidence":0.71}]
+
+## Validation rules
+- Never invent titles or ids; never pull items that are not in the candidate list.
+- Each object's id and title must refer to the same list row.
+- Do not use generic numeric ids such as 1, 2, 3 unless they literally appear as candidate ids (they will not).
+
+## Reason quality bar
+- Tie reasons to concrete material when present: plot or tone from the overview text, runtime or season count, parallels to named finished favorites from the user message, and the per-strategy reason guidance from the user message.
+- Avoid hollow lines such as "fans of the genre will enjoy", "looks good", "might enjoy", "perfect choice", "exactly what you're in the mood for", or "based on your watchlist" without naming specific titles or on-list details.
+
+## Textured examples of the voice (do not copy phrasing)
+- "The overview leans into slow-burn institutional dread; if Station Eleven landed for you, the 45-minute episodes keep commitment modest for a weeknight."
+- "You liked Paddington 2 — the warmth in the logline here is less precious, but the benevolent mischief and short run time match a mood-booster pass."`;
+
+function inferWeakTags(item: WatchItem): string {
+  const t = item.title.toLowerCase();
+  if (t.includes('horror') || t.includes('scary')) return 'Horror lean';
+  if (t.includes('comedy') || t.includes('funny')) return 'Comedy lean';
+  if (t.includes('drama') || t.includes('serious')) return 'Drama lean';
+  const year = item.tmdbMovieReleaseYear || item.tmdbTvFirstAirYear;
+  if (year && year > 2020) return 'Recent era';
+  if (year && year < 2000) return 'Classic era';
+  return 'General';
+}
+
+function buildUserProfileBlock(anchors: ProfileAnchorRow[], shuffledWatchlist: WatchItem[]): string {
+  const lines: string[] = [];
+  if (anchors.length > 0) {
+    lines.push('Strong taste anchors (reference by name when useful):');
+    for (const a of anchors) {
+      const bucket = a.status === 'finished' ? 'finished' : 'want-to-watch (loved)';
+      lines.push(`- ${a.title} — ${bucket}${a.rating ? ` — ${a.rating}` : ''}`);
+    }
+  } else {
+    lines.push(
+      'Strong taste anchors: none listed (new or sparse history — lean on overviews and metadata; do not invent finished favorites).'
+    );
+  }
+  const tags = [...new Set(shuffledWatchlist.map(inferWeakTags))];
+  lines.push(`Weak-signal tags inferred from candidate titles/years: ${tags.join(', ')}`);
+  lines.push(`Content types in this candidate pool: ${[...new Set(shuffledWatchlist.map((i) => i.type))].join(', ') || 'mixed'}`);
+  lines.push(
+    `Candidate-pool spotlight: ${shuffledWatchlist
+      .slice(0, 5)
+      .map((item) => `${item.title} (${item.type}${item.rating ? `, ${item.rating}` : ''})`)
+      .join('; ')}`
+  );
+  return lines.join('\n');
+}
+
+function formatCandidateLine(index: number, item: WatchItem): string {
+  const year = item.tmdbMovieReleaseYear ?? item.tmdbTvFirstAirYear;
+  const yearPart = year != null ? String(year) : 'unknown year';
+  let lengthPart: string;
+  if (item.type === 'movie') {
+    lengthPart =
+      item.tmdbMovieRuntime != null && item.tmdbMovieRuntime > 0
+        ? `${item.tmdbMovieRuntime} min`
+        : 'runtime unknown';
+  } else {
+    lengthPart =
+      item.tmdbTvNumberOfSeasons != null && item.tmdbTvNumberOfSeasons > 0
+        ? `${item.tmdbTvNumberOfSeasons} season(s)`
+        : 'season count unknown';
+  }
+  const notes = item.notes?.trim();
+  const notesTrim =
+    notes && notes.length > 180 ? `${notes.slice(0, 177).trimEnd()}…` : notes ?? '';
+  const overviewEsc = trimOverview(item.tmdbOverview);
+  const rating = item.rating?.trim() || 'none';
+  const popularityPart =
+    item.tmdbPopularity != null && Number.isFinite(item.tmdbPopularity)
+      ? String(item.tmdbPopularity)
+      : 'n/a';
+  const voteCountPart =
+    item.tmdbVoteCount != null && Number.isFinite(item.tmdbVoteCount)
+      ? String(item.tmdbVoteCount)
+      : 'n/a';
+  const parts = [
+    `${index}. id=${item.id}`,
+    `title=${JSON.stringify(item.title)}`,
+    `type=${item.type}`,
+    `list_status=${item.status}`,
+    `rating=${rating}`,
+    `year=${yearPart}`,
+    `length=${lengthPart}`,
+    `popularity=${popularityPart}`,
+    `vote_count=${voteCountPart}`,
+  ];
+  if (notesTrim) parts.push(`notes=${JSON.stringify(notesTrim)}`);
+  parts.push(`overview=${JSON.stringify(overviewEsc)}`);
+  return parts.join(' | ');
 }
 
 async function getUserId() {
@@ -223,7 +348,9 @@ async function fetchRecommendationModelOutput(
 
 async function getAIRecommendations(
   watchlist: WatchItem[],
-  includeDebug: boolean
+  finishedForProfile: WatchItem[],
+  includeDebug: boolean,
+  requestTime: { clientHour: number | null; clientTimeZone: string | null }
 ): Promise<{
   recommendations: Recommendation[];
   strategy: string;
@@ -341,87 +468,62 @@ async function getAIRecommendations(
   const shuffledWatchlist = [...filteredWatchlist].sort(() => Math.random() - 0.5);
   console.log('Shuffled watchlist items:', shuffledWatchlist.map(item => item.title).slice(0, 5));
   console.log('Available IDs in shuffled watchlist:', shuffledWatchlist.map(item => item.id));
-  
-  // Optimized watchlist summary - only essential data for faster processing
-  const watchlistSummary = shuffledWatchlist.map(item => ({
-    id: item.id,
-    title: item.title,
-    type: item.type,
-    rating: item.rating,
-    year: item.tmdbMovieReleaseYear || item.tmdbTvFirstAirYear,
-    seasons: item.tmdbTvNumberOfSeasons
-  }));
 
   const strategyFocus = randomStrategy.focus;
-  const currentTime = new Date();
-  const hour = currentTime.getHours();
-  const timeContext = hour < 12 ? "morning" : hour < 17 ? "afternoon" : hour < 21 ? "evening" : "night";
-  
-  // const timestamp = Date.now(); // Removed unused variable
-  // Create a more detailed user profile for better recommendations
-  const userProfile = {
-    preferences: {
-      genres: [...new Set(shuffledWatchlist.map(item => {
-        // Simple genre inference from titles and years
-        if (item.title.toLowerCase().includes('horror') || item.title.toLowerCase().includes('scary')) return 'Horror';
-        if (item.title.toLowerCase().includes('comedy') || item.title.toLowerCase().includes('funny')) return 'Comedy';
-        if (item.title.toLowerCase().includes('drama') || item.title.toLowerCase().includes('serious')) return 'Drama';
-        const year = item.tmdbMovieReleaseYear || item.tmdbTvFirstAirYear;
-        if (year && year > 2020) return 'Recent Releases';
-        if (year && year < 2000) return 'Classic Films';
-        return 'General';
-      }))],
-      types: [...new Set(shuffledWatchlist.map(item => item.type))],
-      ratings: shuffledWatchlist.filter(item => item.rating).map(item => item.rating)
-    },
-    recentActivity: shuffledWatchlist.slice(0, 5).map(item => ({
-      title: item.title,
-      type: item.type,
-      rating: item.rating
-    }))
-  };
+  const hourForBucket =
+    requestTime.clientHour != null
+      ? requestTime.clientHour
+      : null;
+  const timeContext =
+    hourForBucket != null
+      ? timeOfDayBucketFromLocalHour(hourForBucket)
+      : RECOMMENDATIONS_TIME_OF_DAY_FALLBACK;
 
-  const prompt = `You are a personalized movie and TV recommendation expert. Analyze this user's watchlist and provide compelling, specific reasons for your recommendations.
+  const debugRequestContext = {
+    clientHour: requestTime.clientHour,
+    clientTimeZone: requestTime.clientTimeZone,
+    timeOfDayBucket: timeContext,
+  } satisfies NonNullable<RecommendationsApiDebugPayload['requestContext']>;
 
-USER PROFILE:
-- Recent additions: ${userProfile.recentActivity.map(item => `${item.title} (${item.type})${item.rating ? ` - rated ${item.rating}` : ''}`).join(', ')}
-- Preferred content types: ${userProfile.preferences.types.join(', ')}
-- Time of day: ${timeContext}
-- Strategy focus: ${strategyFocus}
+  const anchors = pickProfileAnchors(
+    finishedForProfile.map((i) => ({ title: i.title, rating: i.rating, status: i.status })),
+    watchlist.map((i) => ({ title: i.title, rating: i.rating, status: i.status }))
+  );
+  const profileBlock = buildUserProfileBlock(anchors, shuffledWatchlist);
+  const perStrategyReasonHint = strategyReasonGuidance(randomStrategy.name);
+  const candidatesLines = shuffledWatchlist.map((item, i) => formatCandidateLine(i + 1, item)).join('\n');
 
-WATCHLIST (pick 5 from these):
-${watchlistSummary.map(item => `${item.id}: ${item.title} (${item.type})${item.rating ? `, ${item.rating}` : ''}${item.year ? `, ${item.year}` : ''}${item.seasons ? `, ${item.seasons}s` : ''}`).join('\n')}
+  const userPrompt = `## User profile
+${profileBlock}
 
-REQUIREMENTS:
-- Write compelling, specific reasons that reference the user's actual preferences
-- Mention specific aspects like genre, tone, themes, or what makes it perfect for them
-- NEVER use these generic phrases: "looks good", "might enjoy", "perfect choice", "exactly what you're in the mood for", "this looks like a perfect choice", "based on your watchlist", "this one seems to align well"
-- Make each reason feel personalized and thoughtful
-- Reference their recent activity or preferences when relevant
-- Be specific about WHY this particular item matches their taste
-- Use concrete details about the content, not vague statements
-- Mention specific genres, themes, or unique aspects of the content
+## Time
+Time of day: ${timeContext}${requestTime.clientHour != null ? ` (client local hour ${requestTime.clientHour})` : ' (client hour omitted — neutral default bucket)'}
 
-EXAMPLES OF GOOD REASONS:
-- "Given your interest in psychological thrillers like [recent item], this crime drama's complex character development will keep you engaged"
-- "Since you've been exploring [genre] recently, this [specific aspect] will appeal to your current viewing mood"
-- "This [specific element] aligns perfectly with your preference for [specific preference]"
+## Strategy
+Name: ${randomStrategy.name}
+Focus: ${strategyFocus}
+Reason guidance for this strategy: ${perStrategyReasonHint}
 
-EXAMPLES OF BAD REASONS (DO NOT USE):
-- "This looks like a perfect choice for your next viewing session"
-- "Based on your watchlist, this could be exactly what you're in the mood for"
-- "This one seems to align well with your viewing preferences"
+Recommend exactly five different titles from the numbered candidate list below. Each reason must follow the strategy reason guidance and the global reason quality bar in your system instructions.
 
-Return: [{"id": [exact_id], "title": "[exact_title]", "reason": "[compelling 2-3 sentence personalized reason]", "confidence": [0.1-1.0]}]`;
+## Candidates (use only these rows; ids are authoritative)
+${candidatesLines}`;
 
-  const systemPrompt =
-    'You are a personalized movie and TV recommendation expert. Always respond with valid JSON. Write compelling, specific reasons that avoid generic phrases. Reference the user\'s actual preferences and be concrete about why each recommendation matches their taste. NEVER use phrases like "perfect choice", "exactly what you\'re in the mood for", "looks good", or "might enjoy". Be specific about genres, themes, or what makes it unique.';
+  if (includeDebug) {
+    const approxChars = RECOMMENDATIONS_SYSTEM_PROMPT.length + userPrompt.length;
+    console.log(
+      JSON.stringify({
+        event: 'recommendations_prompt_size',
+        approxChars,
+        candidateCount: shuffledWatchlist.length,
+      })
+    );
+  }
 
-  const fullPromptForDebug = formatDebugPrompt(systemPrompt, prompt);
   let lastLlm: LlmCallResult | undefined;
 
   try {
-    lastLlm = await fetchRecommendationModelOutput(systemPrompt, prompt);
+    lastLlm = await fetchRecommendationModelOutput(RECOMMENDATIONS_SYSTEM_PROMPT, userPrompt);
 
     let aiRecommendations: unknown[];
     try {
@@ -600,7 +702,8 @@ Return: [{"id": [exact_id], "title": "[exact_title]", "reason": "[compelling 2-3
         ? {
             debug: {
               llmUsed: `${lastLlm.provider}:${lastLlm.model}`,
-              prompt: fullPromptForDebug,
+              systemPrompt: RECOMMENDATIONS_SYSTEM_PROMPT,
+              userPrompt,
               rawResponse: lastLlm.rawText,
               llmLatencyMs: lastLlm.latencyMs,
               inputTokens: lastLlm.inputTokens,
@@ -609,6 +712,7 @@ Return: [{"id": [exact_id], "title": "[exact_title]", "reason": "[compelling 2-3
               phase: usedStockReasonFallback
                 ? 'llm-mapping-fallback-stock-reasons'
                 : 'llm-success',
+              requestContext: debugRequestContext,
             } satisfies RecommendationsApiDebugPayload,
           }
         : {}),
@@ -624,7 +728,8 @@ Return: [{"id": [exact_id], "title": "[exact_title]", "reason": "[compelling 2-3
     if (includeDebug) {
       throw new RecommendationsInferenceError({
         llmUsed: llmUsedLabel(lastLlm),
-        prompt: fullPromptForDebug,
+        systemPrompt: RECOMMENDATIONS_SYSTEM_PROMPT,
+        userPrompt,
         rawResponse: lastLlm?.rawText ?? null,
         llmLatencyMs: lastLlm?.latencyMs ?? null,
         inputTokens: lastLlm?.inputTokens ?? null,
@@ -632,6 +737,7 @@ Return: [{"id": [exact_id], "title": "[exact_title]", "reason": "[compelling 2-3
         totalTokens: lastLlm?.totalTokens ?? null,
         phase: 'llm-pipeline-error',
         error: err.message,
+        requestContext: debugRequestContext,
       });
     }
 
@@ -642,6 +748,7 @@ Return: [{"id": [exact_id], "title": "[exact_title]", "reason": "[compelling 2-3
 export async function GET(request: NextRequest) {
   console.log('Recommendations API called');
   let watchlist: WatchItem[] = [];
+  let finishedForProfile: WatchItem[] = [];
   
   try {
     console.log('Getting user ID...');
@@ -652,8 +759,14 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const forceRefresh = searchParams.get('refresh') === 'true';
     const debugEnabled = isRecommendationsDebugEnabled();
-    
-    const cacheKey = `recommendations_${userId}`;
+    const clientHour = parseRecommendationsHourParam(searchParams.get('hour'));
+    const tzRaw = searchParams.get('tz');
+    const clientTimeZone =
+      tzRaw && tzRaw.trim().length > 0 ? tzRaw.trim().slice(0, 160) : null;
+
+    const requestTime = { clientHour, clientTimeZone };
+
+    const cacheKey = `recommendations_${userId}_h${clientHour ?? 'na'}_tz${clientTimeZone ?? 'na'}`;
     const cached = recommendationCache.get(cacheKey);
 
     // Never serve cached payloads for debug builds (would omit or stale-copy prompt/response)
@@ -682,49 +795,78 @@ export async function GET(request: NextRequest) {
         console.log('No default watchlist found for user');
         watchlist = [];
       } else {
-        // Get items from the default watchlist (optimized for AI processing)
-        const watchlistItems = await prisma.watchlistItemList.findMany({
-          where: {
-            watchlistId: defaultWatchlist.id,
-            status: 'want-to-watch', // Only get want-to-watch items for recommendations
-          },
-          include: {
-            watchlistItem: {
-              select: {
-                id: true,
-                title: true,
-                type: true,
-                tmdbPosterPath: true,
-                tmdbOverview: true,
-                tmdbMovieReleaseYear: true,
-                tmdbTvFirstAirYear: true,
-                tmdbMovieRuntime: true,
-                tmdbTvNumberOfSeasons: true,
-                createdAt: true,
+        const itemSelect = {
+          id: true,
+          title: true,
+          type: true,
+          tmdbPosterPath: true,
+          tmdbOverview: true,
+          tmdbMovieReleaseYear: true,
+          tmdbTvFirstAirYear: true,
+          tmdbMovieRuntime: true,
+          tmdbTvNumberOfSeasons: true,
+          tmdbPopularity: true,
+          tmdbVoteCount: true,
+          createdAt: true,
+        } as const;
+
+        const [watchlistItems, finishedRows] = await Promise.all([
+          prisma.watchlistItemList.findMany({
+            where: {
+              watchlistId: defaultWatchlist.id,
+              status: 'want-to-watch',
+            },
+            include: {
+              watchlistItem: {
+                select: {
+                  ...itemSelect,
+                },
               },
             },
-          },
-          orderBy: {
-            addedAt: 'desc',
-          },
-          take: 20, // Reduced to 20 items for faster AI processing
-        });
+            orderBy: {
+              addedAt: 'desc',
+            },
+            take: RECOMMENDATIONS_WANT_TO_WATCH_FETCH_LIMIT,
+          }),
+          prisma.watchlistItemList.findMany({
+            where: {
+              watchlistId: defaultWatchlist.id,
+              status: 'finished',
+            },
+            include: {
+              watchlistItem: {
+                select: {
+                  ...itemSelect,
+                },
+              },
+            },
+            orderBy: {
+              updatedAt: 'desc',
+            },
+            take: 40,
+          }),
+        ]);
 
-        // Transform to the expected format (optimized)
-        watchlist = watchlistItems.map(item => ({
+        const mapRow = (item: (typeof watchlistItems)[0]): WatchItem => ({
           id: item.watchlistItem.id,
           title: item.watchlistItem.title,
           type: item.watchlistItem.type,
           status: item.status,
           rating: item.rating,
+          notes: item.notes,
           tmdbPosterPath: item.watchlistItem.tmdbPosterPath,
           tmdbOverview: item.watchlistItem.tmdbOverview,
           tmdbMovieReleaseYear: item.watchlistItem.tmdbMovieReleaseYear,
           tmdbTvFirstAirYear: item.watchlistItem.tmdbTvFirstAirYear,
           tmdbMovieRuntime: item.watchlistItem.tmdbMovieRuntime,
           tmdbTvNumberOfSeasons: item.watchlistItem.tmdbTvNumberOfSeasons,
+          tmdbPopularity: item.watchlistItem.tmdbPopularity,
+          tmdbVoteCount: item.watchlistItem.tmdbVoteCount,
           createdAt: item.watchlistItem.createdAt,
-        }));
+        });
+
+        watchlist = watchlistItems.map(mapRow);
+        finishedForProfile = finishedRows.map(mapRow);
       }
 
       console.log('Watchlist items found:', watchlist.length);
@@ -750,7 +892,7 @@ export async function GET(request: NextRequest) {
 
     try {
       console.log('Attempting AI recommendations...');
-      const result = await getAIRecommendations(watchlist, debugEnabled);
+      const result = await getAIRecommendations(watchlist, finishedForProfile, debugEnabled, requestTime);
       recommendations = result.recommendations;
       strategyName = result.strategy;
       strategyFocus = result.strategyFocus;
@@ -893,10 +1035,11 @@ export async function GET(request: NextRequest) {
       phase: 'route-fatal',
     };
 
-    if (debugEnabled) {
+    if (isRecommendationsDebugEnabled()) {
       fatalBody.debug = {
         llmUsed: '(none — route fatal before LLM)',
-        prompt: null,
+        systemPrompt: null,
+        userPrompt: null,
         rawResponse: null,
         llmLatencyMs: null,
         inputTokens: null,

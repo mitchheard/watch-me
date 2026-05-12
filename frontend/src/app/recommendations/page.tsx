@@ -49,6 +49,7 @@ export default function RecommendationsPage() {
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [strategy, setStrategy] = useState<string>('');
   const [strategyFocus, setStrategyFocus] = useState<string>('');
+  const [phase, setPhase] = useState<string | undefined>(undefined);
   const [hasInitialized, setHasInitialized] = useState(false);
   const [expandedDescriptions, setExpandedDescriptions] = useState<Set<string>>(new Set());
   const [loadingStage, setLoadingStage] = useState(0);
@@ -68,6 +69,7 @@ export default function RecommendationsPage() {
       setRecommendations([]);
       setStrategy('');
       setStrategyFocus('');
+      setPhase(undefined);
       setLastUpdated(null);
       setDebugPayload(null);
     }
@@ -87,7 +89,14 @@ export default function RecommendationsPage() {
     try {
       trackUmamiEvent('ai_recommendation_requested');
 
-      const url = resetState ? '/api/recommendations?refresh=true' : '/api/recommendations';
+      const timeParams = new URLSearchParams();
+      timeParams.set('hour', String(new Date().getHours()));
+      const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      if (tz) timeParams.set('tz', tz);
+
+      const basePath = '/api/recommendations';
+      const pathWithTime = `${basePath}?${timeParams.toString()}`;
+      const url = resetState ? `${pathWithTime}&refresh=true` : pathWithTime;
       const response = await fetch(url, {
         credentials: 'include', // Include cookies for authentication
       });
@@ -107,6 +116,7 @@ export default function RecommendationsPage() {
       setRecommendations(data.recommendations);
       setStrategy(data.strategy || '');
       setStrategyFocus(data.strategyFocus || '');
+      setPhase(data.phase);
       setDebugPayload(data.debug ?? null);
       setLastUpdated(new Date());
       setIsLoading(false);
@@ -235,7 +245,7 @@ export default function RecommendationsPage() {
       {/* Strategy Info */}
       {(strategy || lastUpdated) && (
         <div className="text-center mb-4 sm:mb-6 space-y-2">
-          {strategy && (
+          {phase === 'llm-success' && strategy && (
             <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">
               <SparklesIcon className="h-4 w-4" />
               {strategy.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')} Strategy

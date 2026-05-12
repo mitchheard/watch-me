@@ -33,7 +33,9 @@ const initialFormState: WatchlistFormInputs = {
   tmdbTvNumberOfEpisodes: null,
   tmdbTvNumberOfSeasons: null,
   tmdbTvStatus: null,
-  rating: null
+  rating: null,
+  tmdbPopularity: null,
+  tmdbVoteCount: null,
 };
 
 interface WatchlistFormProps {
@@ -97,7 +99,9 @@ export default function WatchlistForm({
       tmdbTvNumberOfEpisodes: itemToEdit.tmdbTvNumberOfEpisodes,
       tmdbTvNumberOfSeasons: itemToEdit.tmdbTvNumberOfSeasons,
       tmdbTvStatus: itemToEdit.tmdbTvStatus,
-      rating: itemToEdit.rating ?? null
+      rating: itemToEdit.rating ?? null,
+      tmdbPopularity: itemToEdit.tmdbPopularity ?? null,
+      tmdbVoteCount: itemToEdit.tmdbVoteCount ?? null,
     } : initialFormState
   });
 
@@ -141,7 +145,9 @@ export default function WatchlistForm({
         tmdbTvNumberOfEpisodes: details.tmdbTvNumberOfEpisodes || null,
         tmdbTvNumberOfSeasons: totalSeasonsFromTmdb, // Use the same value as totalSeasons
         tmdbTvStatus: details.tmdbTvStatus || null,
-        rating: null
+        rating: null,
+        tmdbPopularity: details.tmdbPopularity ?? null,
+        tmdbVoteCount: details.tmdbVoteCount ?? null,
       };
       reset(newValues);
     } catch (error) {
@@ -251,6 +257,8 @@ export default function WatchlistForm({
       setValue('tmdbTvNumberOfEpisodes', null);
       setValue('tmdbTvNumberOfSeasons', null);
       setValue('tmdbTvStatus', null);
+      setValue('tmdbPopularity', null);
+      setValue('tmdbVoteCount', null);
     } else {
       // Auto-detect type if user is typing and not selecting TMDB
       const detectedType = guessTypeFromTitle(newValue);

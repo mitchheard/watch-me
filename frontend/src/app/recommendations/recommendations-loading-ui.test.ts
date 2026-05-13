@@ -1,16 +1,17 @@
 import { describe, expect, it } from 'vitest';
 import {
+  finalizingEllipsisSuffix,
   recommendationsLoadingBarPercent,
   recommendationsLoadingIsIndeterminate,
   recommendationsLoadingShowPercentLabel,
 } from './recommendations-loading-ui';
 
 describe('recommendationsLoadingBarPercent', () => {
-  it('matches staged 0–75% then caps at 90% for stage 4', () => {
+  it('advances in equal fifths of 90% then caps at 90% for stage 4', () => {
     expect(recommendationsLoadingBarPercent(0)).toBe(0);
-    expect(recommendationsLoadingBarPercent(1)).toBe(25);
-    expect(recommendationsLoadingBarPercent(2)).toBe(50);
-    expect(recommendationsLoadingBarPercent(3)).toBe(75);
+    expect(recommendationsLoadingBarPercent(1)).toBe(22.5);
+    expect(recommendationsLoadingBarPercent(2)).toBe(45);
+    expect(recommendationsLoadingBarPercent(3)).toBe(67.5);
     expect(recommendationsLoadingBarPercent(4)).toBe(90);
   });
 
@@ -35,5 +36,14 @@ describe('recommendationsLoadingShowPercentLabel', () => {
   it('shows percentage through the capped wait stage including 90%', () => {
     expect(recommendationsLoadingShowPercentLabel(3)).toBe(true);
     expect(recommendationsLoadingShowPercentLabel(4)).toBe(true);
+  });
+});
+
+describe('finalizingEllipsisSuffix', () => {
+  it('cycles two through four dots', () => {
+    expect(finalizingEllipsisSuffix(0)).toBe('..');
+    expect(finalizingEllipsisSuffix(1)).toBe('...');
+    expect(finalizingEllipsisSuffix(2)).toBe('....');
+    expect(finalizingEllipsisSuffix(3)).toBe('..');
   });
 });

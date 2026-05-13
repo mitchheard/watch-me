@@ -14,6 +14,7 @@ import {
 import { isFallbackPhase } from './analytics';
 import { allowRecommendationsDebugChrome } from '@/lib/recommendations-debug-env';
 import {
+  finalizingEllipsisSuffix,
   recommendationsLoadingBarPercent,
   recommendationsLoadingIsIndeterminate,
   recommendationsLoadingShowPercentLabel,
@@ -60,9 +61,18 @@ export default function RecommendationsPage() {
   const hasAutoFetchedRef = useRef(false);
   const [expandedDescriptions, setExpandedDescriptions] = useState<Set<string>>(new Set());
   const [loadingStage, setLoadingStage] = useState(0);
+  const [finalizingTick, setFinalizingTick] = useState(0);
   const [debugPayload, setDebugPayload] = useState<RecommendationsDebugPayload | null>(null);
   
   // Debug logging for state changes (removed to improve performance)
+
+  useEffect(() => {
+    if (!isLoading || loadingStage < 4) return;
+    const id = setInterval(() => {
+      setFinalizingTick((n) => n + 1);
+    }, 450);
+    return () => clearInterval(id);
+  }, [isLoading, loadingStage]);
 
   const fetchRecommendations = useCallback(async (resetState = false) => {
     if (!user) return;
@@ -70,6 +80,7 @@ export default function RecommendationsPage() {
     // Fetching recommendations...
     setIsLoading(true);
     setLoadingStage(0);
+    setFinalizingTick(0);
     setError(null);
     
     if (resetState) {
@@ -81,13 +92,13 @@ export default function RecommendationsPage() {
       setDebugPayload(null);
     }
     
-    // Staged progress 0→3 (0–75%), then cap at stage 4 = 90% + indeterminate UI until fetch completes (AVIDX-266)
+    // Staged progress: equal steps to 90% (see recommendationsLoadingBarPercent), then hold at 90% with animated status
     const progressInterval = setInterval(() => {
       setLoadingStage(prev => {
         const next = prev + 1;
         if (next >= 4) {
           clearInterval(progressInterval);
-          return 4; // Capped: bar at 90%, indeterminate messaging
+          return 4; // Capped at 90% until fetch completes (AVIDX-266)
         }
         return next;
       });
@@ -128,6 +139,7 @@ export default function RecommendationsPage() {
       setLastUpdated(new Date());
       setIsLoading(false);
       setLoadingStage(0);
+      setFinalizingTick(0);
       
     } catch (err) {
       clearInterval(progressInterval);
@@ -135,6 +147,7 @@ export default function RecommendationsPage() {
       setDebugPayload(null);
       setIsLoading(false);
       setLoadingStage(0);
+      setFinalizingTick(0);
     }
   }, [user]);
 
@@ -321,7 +334,17 @@ export default function RecommendationsPage() {
               {loadingStage === 1 && 'Selecting best strategy...'}
               {loadingStage === 2 && 'Generating personalized recommendations...'}
               {loadingStage === 3 && 'Tuning picks to your watchlist...'}
-              {recommendationsLoadingIsIndeterminate(loadingStage) && 'Finalizing your picks…'}
+              {recommendationsLoadingIsIndeterminate(loadingStage) && (
+                <>
+                  <span className="sr-only">Finalizing your picks</span>
+                  <span aria-hidden className="inline-flex items-baseline gap-0">
+                    Finalizing your picks
+                    <span className="inline-block min-w-[4ch] tabular-nums text-left">
+                      {finalizingEllipsisSuffix(finalizingTick)}
+                    </span>
+                  </span>
+                </>
+              )}
             </span>
           </div>
         </div>

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 
 // TODO: Move this to env or a Profile table
@@ -30,10 +30,15 @@ export default function UserNotificationSettingsClient() {
 
   const isAdmin = user?.id === ADMIN_USER_ID;
 
+  // Synchronous gate so a single mount only kicks off one auto-fetch even when
+  // Supabase emits onAuthStateChange repeatedly (each event hands us a freshly-built
+  // user object reference and would otherwise refire the effect).
+  const hasAutoFetchedRef = useRef(false);
+
   useEffect(() => {
-    if (!isLoading && user) {
-      fetchPreferences();
-    }
+    if (isLoading || !user || hasAutoFetchedRef.current) return;
+    hasAutoFetchedRef.current = true;
+    fetchPreferences();
   }, [user, isLoading]);
 
   const fetchPreferences = async () => {

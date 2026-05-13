@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 // import { WatchItem } from '@/types/watchlist'; // Unused import
 import { SparklesIcon, ClockIcon, HeartIcon, EyeIcon } from '@heroicons/react/24/outline';
@@ -54,7 +54,10 @@ export default function RecommendationsPage() {
   const [strategy, setStrategy] = useState<string>('');
   const [strategyFocus, setStrategyFocus] = useState<string>('');
   const [phase, setPhase] = useState<string | undefined>(undefined);
-  const [hasInitialized, setHasInitialized] = useState(false);
+  // Synchronous gate so a single navigation only kicks off one auto-fetch even when
+  // the effect's deps change mid-flight (e.g. Supabase emits TOKEN_REFRESHED after the
+  // API route refreshes auth cookies, which gives `user` a new reference).
+  const hasAutoFetchedRef = useRef(false);
   const [expandedDescriptions, setExpandedDescriptions] = useState<Set<string>>(new Set());
   const [loadingStage, setLoadingStage] = useState(0);
   const [debugPayload, setDebugPayload] = useState<RecommendationsDebugPayload | null>(null);
@@ -136,11 +139,10 @@ export default function RecommendationsPage() {
   }, [user]);
 
   useEffect(() => {
-    if (user && !hasInitialized) {
-      setHasInitialized(true);
-      fetchRecommendations();
-    }
-  }, [user, hasInitialized, fetchRecommendations]); // Include fetchRecommendations to satisfy ESLint
+    if (!user || hasAutoFetchedRef.current) return;
+    hasAutoFetchedRef.current = true;
+    fetchRecommendations();
+  }, [user, fetchRecommendations]);
 
   const getStatusColor = (status: string) => {
     switch (status) {

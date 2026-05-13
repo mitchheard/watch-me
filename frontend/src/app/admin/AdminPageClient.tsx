@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 
 // TODO: Move this to env or a Profile table
@@ -31,8 +31,14 @@ export default function AdminPageClient() {
   const [sortBy, setSortBy] = useState('lastItemAddedAt');
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
 
+  // Synchronous gate so a single mount only kicks off one auto-fetch even when
+  // Supabase emits onAuthStateChange repeatedly (each event hands us a freshly-built
+  // user object reference and would otherwise refire the effect).
+  const hasAutoFetchedRef = useRef(false);
+
   useEffect(() => {
-    if (!user || user.id !== ADMIN_USER_ID) return;
+    if (!user || user.id !== ADMIN_USER_ID || hasAutoFetchedRef.current) return;
+    hasAutoFetchedRef.current = true;
     fetch('/api/admin/users')
       .then(res => res.json())
       .then(data => {

@@ -12,8 +12,12 @@ import {
   type RecommendationsDebugPayload,
 } from './RecommendationsDebugToolbar';
 import { isFallbackPhase } from './analytics';
-
-const showRecDebugUi = process.env.NEXT_PUBLIC_SHOW_RECOMMENDATIONS_DEBUG === 'true';
+import { allowRecommendationsDebugChrome } from '@/lib/recommendations-debug-env';
+import {
+  recommendationsLoadingBarPercent,
+  recommendationsLoadingIsIndeterminate,
+  recommendationsLoadingShowPercentLabel,
+} from './recommendations-loading-ui';
 
 interface Recommendation {
   id: string; // Changed from number to string for CUID
@@ -74,13 +78,13 @@ export default function RecommendationsPage() {
       setDebugPayload(null);
     }
     
-    // Simulate progress stages with better timing
+    // Staged progress 0→3 (0–75%), then cap at stage 4 = 90% + indeterminate UI until fetch completes (AVIDX-266)
     const progressInterval = setInterval(() => {
       setLoadingStage(prev => {
         const next = prev + 1;
-        if (next >= 4) { // Add one more stage for "Finalizing"
+        if (next >= 4) {
           clearInterval(progressInterval);
-          return 4; // Stop at 100%
+          return 4; // Capped: bar at 90%, indeterminate messaging
         }
         return next;
       });
@@ -265,7 +269,7 @@ export default function RecommendationsPage() {
         </div>
       )}
 
-      {showRecDebugUi && (
+      {allowRecommendationsDebugChrome() && (
         <div className="mb-4 max-w-2xl mx-auto px-1">
           <RecommendationsDebugToolbar debug={debugPayload} />
         </div>
@@ -284,23 +288,65 @@ export default function RecommendationsPage() {
           <div className="w-full max-w-md">
             <div className="flex items-center justify-between mb-2">
               <span className="text-sm font-medium text-gray-700">Generating recommendations...</span>
-              <span className="text-sm text-gray-500">{Math.round((loadingStage / 4) * 100)}%</span>
+              <span className="text-sm text-gray-500 tabular-nums min-w-[2.5rem] text-right">
+                {recommendationsLoadingShowPercentLabel(loadingStage) ? (
+                  `${Math.round(recommendationsLoadingBarPercent(loadingStage))}%`
+                ) : (
+                  <span aria-hidden className="text-gray-400">
+                    …
+                  </span>
+                )}
+              </span>
             </div>
-            <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
-              <div 
-                className="bg-blue-600 h-2 rounded-full transition-all duration-500 ease-out"
-                style={{ width: `${(loadingStage / 4) * 100}%` }}
-              ></div>
+            <div
+              className={
+                recommendationsLoadingIsIndeterminate(loadingStage)
+                  ? 'w-full rounded-full h-2.5 overflow-hidden bg-gray-200 ring-1 ring-blue-100/80'
+                  : 'w-full bg-gray-200 rounded-full h-2.5 overflow-hidden'
+              }
+              role="progressbar"
+              aria-valuemin={0}
+              aria-valuemax={100}
+              aria-valuenow={
+                recommendationsLoadingIsIndeterminate(loadingStage)
+                  ? undefined
+                  : Math.round(recommendationsLoadingBarPercent(loadingStage))
+              }
+              aria-valuetext={
+                recommendationsLoadingIsIndeterminate(loadingStage)
+                  ? 'Still generating recommendations'
+                  : undefined
+              }
+            >
+              {recommendationsLoadingIsIndeterminate(loadingStage) ? (
+                <div
+                  className="h-2.5 rounded-full bg-gradient-to-r from-blue-500 via-blue-600 to-blue-500 motion-safe:animate-pulse"
+                  style={{ width: `${recommendationsLoadingBarPercent(loadingStage)}%` }}
+                />
+              ) : (
+                <div
+                  className="bg-blue-600 h-2.5 rounded-full transition-all duration-500 ease-out"
+                  style={{ width: `${recommendationsLoadingBarPercent(loadingStage)}%` }}
+                />
+              )}
             </div>
           </div>
           <div className="flex items-center gap-2 text-sm text-gray-600">
-            <SparklesIcon className="h-4 w-4 animate-pulse" />
+            <SparklesIcon className="h-4 w-4 shrink-0 animate-pulse" />
             <span>
-              {loadingStage === 0 && "Analyzing your watchlist..."}
-              {loadingStage === 1 && "Selecting best strategy..."}
-              {loadingStage === 2 && "Generating personalized recommendations..."}
-              {loadingStage === 3 && "Finalizing your picks..."}
-              {loadingStage === 4 && "Almost ready..."}
+              {loadingStage === 0 && 'Analyzing your watchlist...'}
+              {loadingStage === 1 && 'Selecting best strategy...'}
+              {loadingStage === 2 && 'Generating personalized recommendations...'}
+              {loadingStage === 3 && 'Tuning picks to your watchlist...'}
+              {recommendationsLoadingIsIndeterminate(loadingStage) && (
+                <span className="inline-flex flex-wrap items-center gap-2">
+                  <span className="relative flex h-2 w-2 shrink-0" aria-hidden>
+                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-blue-400 opacity-60" />
+                    <span className="relative inline-flex h-2 w-2 rounded-full bg-blue-600" />
+                  </span>
+                  Finalizing your picks…
+                </span>
+              )}
             </span>
           </div>
         </div>

@@ -54,7 +54,7 @@ Unchanged contract from prior versions:
 ## UI
 
 - **Strategy badge**: Shown only when `phase === 'llm-success'` so fallback paths (e.g. `ai-unavailable`) do not show a misleading “strategy” pill; `strategyFocus` copy still explains the state.
-- **Dev toolbar** (when `RECOMMENDATIONS_DEBUG=true` and `NEXT_PUBLIC_SHOW_RECOMMENDATIONS_DEBUG=true`): Shows separate **system** and **user** panels matching the Anthropic call; long lines wrap (`whitespace-pre-wrap` / `break-words`).
+- **Dev toolbar** (AVIDX-266): Shown only on **non-production surfaces** (`allowRecommendationsDebugChrome()` in `frontend/src/lib/recommendations-debug-env.ts`). Production is detected as `VERCEL_ENV === 'production'`, or `NODE_ENV === 'production'` when not on a Vercel preview/dev deploy (so local `next start` and typical production hosts never show the strip). When the surface allows it, the page renders `RecommendationsDebugToolbar`; the API still omits the `debug` JSON unless **`RECOMMENDATIONS_DEBUG=true` on the server** (`shouldAttachRecommendationsApiDebug()`), so prompts and raw responses never ship to production clients even if the flag is set by mistake. On Vercel preview, `next.config.ts` exposes `NEXT_PUBLIC_VERCEL_ENV` from `VERCEL_ENV` so the client gate matches the server. The toolbar shows separate **system** and **user** panels matching the Anthropic call; long lines wrap (`whitespace-pre-wrap` / `break-words`).
 
 ## Caching and refresh
 
@@ -67,10 +67,16 @@ Unchanged contract from prior versions:
 ANTHROPIC_API_KEY=sk-ant-...
 # Optional override:
 # ANTHROPIC_RECOMMENDATIONS_MODEL=claude-haiku-4-5-20251001
-RECOMMENDATIONS_DEBUG=true   # server: include debug payload
-NEXT_PUBLIC_SHOW_RECOMMENDATIONS_DEBUG=true   # client: show dev strip
+
+# Server-only. When true *and* the deployment is not a production surface (see
+# recommendations-debug-env.ts: VERCEL_ENV / NODE_ENV), GET /api/recommendations
+# includes a `debug` object (prompts, raw response, tokens, latency). Omit in
+# production env groups (e.g. Render).
+RECOMMENDATIONS_DEBUG=true
 ```
+
+There is **no** separate `NEXT_PUBLIC_*` flag for the dev strip: client visibility follows the same **surface** rules as above; the **`debug`** payload is only attached when both the flag and those rules allow it.
 
 ---
 
-*Last updated: May 2026 (AVIDX-251).*
+*Last updated: May 2026 (AVIDX-251, AVIDX-266).*

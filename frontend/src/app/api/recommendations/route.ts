@@ -13,6 +13,7 @@ import {
   trimOverview,
   type ProfileAnchorRow,
 } from './recommendations-helpers';
+import { shouldAttachRecommendationsApiDebug } from '@/lib/recommendations-debug-env';
 
 // Simple in-memory cache (in production, use Redis or similar)
 const recommendationCache = new Map<string, { data: unknown; timestamp: number }>();
@@ -92,7 +93,8 @@ interface AIRecommendation {
 }
 
 /**
- * Included in GET JSON only when RECOMMENDATIONS_DEBUG=true.
+ * Included in GET JSON only when RECOMMENDATIONS_DEBUG=true and the deployment is not a
+ * production surface (see shouldAttachRecommendationsApiDebug / AVIDX-266).
  */
 export type RecommendationsApiDebugPayload = {
   llmUsed: string;
@@ -123,10 +125,6 @@ interface LlmCallResult {
   inputTokens: number | null;
   outputTokens: number | null;
   totalTokens: number | null;
-}
-
-function isRecommendationsDebugEnabled(): boolean {
-  return process.env.RECOMMENDATIONS_DEBUG === 'true';
 }
 
 class RecommendationsInferenceError extends Error {
@@ -758,7 +756,7 @@ export async function GET(request: NextRequest) {
     // Check for cache busting parameter
     const { searchParams } = new URL(request.url);
     const forceRefresh = searchParams.get('refresh') === 'true';
-    const debugEnabled = isRecommendationsDebugEnabled();
+    const debugPayloadEnabled = shouldAttachRecommendationsApiDebug();
     const clientHour = parseRecommendationsHourParam(searchParams.get('hour'));
     const tzRaw = searchParams.get('tz');
     const clientTimeZone =
@@ -771,7 +769,7 @@ export async function GET(request: NextRequest) {
 
     // Never serve cached payloads for debug builds (would omit or stale-copy prompt/response)
     if (
-      !debugEnabled &&
+      !debugPayloadEnabled &&
       !forceRefresh &&
       cached &&
       Date.now() - cached.timestamp < CACHE_DURATION
@@ -892,12 +890,12 @@ export async function GET(request: NextRequest) {
 
     try {
       console.log('Attempting AI recommendations...');
-      const result = await getAIRecommendations(watchlist, finishedForProfile, debugEnabled, requestTime);
+      const result = await getAIRecommendations(watchlist, finishedForProfile, debugPayloadEnabled, requestTime);
       recommendations = result.recommendations;
       strategyName = result.strategy;
       strategyFocus = result.strategyFocus;
       phase = result.phase;
-      if (debugEnabled && result.debug) {
+      if (debugPayloadEnabled && result.debug) {
         recommendationsDebugPayload = result.debug;
       }
       console.log('AI recommendations successful:', recommendations.length);
@@ -912,7 +910,7 @@ export async function GET(request: NextRequest) {
       strategyFocus =
         'Could not reach the AI model or parse its response; showing picks from your want-to-watch list.';
       phase = 'llm-pipeline-error';
-      if (debugEnabled && error instanceof RecommendationsInferenceError) {
+      if (debugPayloadEnabled && error instanceof RecommendationsInferenceError) {
         recommendationsDebugPayload = error.recommendationsDebugPartial;
       }
       // Fallback: simple recommendation based on want-to-watch items with variety
@@ -977,7 +975,7 @@ export async function GET(request: NextRequest) {
       ...(recommendationsDebugPayload ? { debug: recommendationsDebugPayload } : {}),
     };
 
-    if (!debugEnabled) {
+    if (!debugPayloadEnabled) {
       recommendationCache.set(cacheKey, {
         data: responseData,
         timestamp: Date.now(),
@@ -1035,7 +1033,7 @@ export async function GET(request: NextRequest) {
       phase: 'route-fatal',
     };
 
-    if (isRecommendationsDebugEnabled()) {
+    if (shouldAttachRecommendationsApiDebug()) {
       fatalBody.debug = {
         llmUsed: '(none — route fatal before LLM)',
         systemPrompt: null,

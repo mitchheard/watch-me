@@ -291,46 +291,27 @@ export default function RecommendationsPage() {
             <div className="flex items-center justify-between mb-2">
               <span className="text-sm font-medium text-gray-700">Generating recommendations...</span>
               <span className="text-sm text-gray-500 tabular-nums min-w-[2.5rem] text-right">
-                {recommendationsLoadingShowPercentLabel(loadingStage) ? (
-                  `${Math.round(recommendationsLoadingBarPercent(loadingStage))}%`
-                ) : (
-                  <span aria-hidden className="text-gray-400">
-                    …
-                  </span>
-                )}
+                {recommendationsLoadingShowPercentLabel(loadingStage)
+                  ? `${Math.round(recommendationsLoadingBarPercent(loadingStage))}%`
+                  : null}
               </span>
             </div>
             <div
-              className={
-                recommendationsLoadingIsIndeterminate(loadingStage)
-                  ? 'w-full rounded-full h-2.5 overflow-hidden bg-gray-200 ring-1 ring-blue-100/80'
-                  : 'w-full bg-gray-200 rounded-full h-2.5 overflow-hidden'
-              }
+              className="w-full bg-gray-200 rounded-full h-2.5 overflow-hidden"
               role="progressbar"
               aria-valuemin={0}
               aria-valuemax={100}
-              aria-valuenow={
-                recommendationsLoadingIsIndeterminate(loadingStage)
-                  ? undefined
-                  : Math.round(recommendationsLoadingBarPercent(loadingStage))
-              }
+              aria-valuenow={Math.round(recommendationsLoadingBarPercent(loadingStage))}
               aria-valuetext={
                 recommendationsLoadingIsIndeterminate(loadingStage)
-                  ? 'Still generating recommendations'
+                  ? '90 percent, finalizing recommendations'
                   : undefined
               }
             >
-              {recommendationsLoadingIsIndeterminate(loadingStage) ? (
-                <div
-                  className="h-2.5 rounded-full bg-gradient-to-r from-blue-500 via-blue-600 to-blue-500 motion-safe:animate-pulse"
-                  style={{ width: `${recommendationsLoadingBarPercent(loadingStage)}%` }}
-                />
-              ) : (
-                <div
-                  className="bg-blue-600 h-2.5 rounded-full transition-all duration-500 ease-out"
-                  style={{ width: `${recommendationsLoadingBarPercent(loadingStage)}%` }}
-                />
-              )}
+              <div
+                className="bg-blue-600 h-2.5 rounded-full transition-all duration-500 ease-out"
+                style={{ width: `${recommendationsLoadingBarPercent(loadingStage)}%` }}
+              />
             </div>
           </div>
           <div className="flex items-center gap-2 text-sm text-gray-600">
@@ -340,15 +321,7 @@ export default function RecommendationsPage() {
               {loadingStage === 1 && 'Selecting best strategy...'}
               {loadingStage === 2 && 'Generating personalized recommendations...'}
               {loadingStage === 3 && 'Tuning picks to your watchlist...'}
-              {recommendationsLoadingIsIndeterminate(loadingStage) && (
-                <span className="inline-flex flex-wrap items-center gap-2">
-                  <span className="relative flex h-2 w-2 shrink-0" aria-hidden>
-                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-blue-400 opacity-60" />
-                    <span className="relative inline-flex h-2 w-2 rounded-full bg-blue-600" />
-                  </span>
-                  Finalizing your picks…
-                </span>
-              )}
+              {recommendationsLoadingIsIndeterminate(loadingStage) && 'Finalizing your picks…'}
             </span>
           </div>
         </div>

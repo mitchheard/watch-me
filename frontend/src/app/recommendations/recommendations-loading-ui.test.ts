@@ -32,8 +32,8 @@ describe('recommendationsLoadingIsIndeterminate', () => {
 });
 
 describe('recommendationsLoadingShowPercentLabel', () => {
-  it('hides percentage in indeterminate state', () => {
+  it('shows percentage through the capped wait stage including 90%', () => {
     expect(recommendationsLoadingShowPercentLabel(3)).toBe(true);
-    expect(recommendationsLoadingShowPercentLabel(4)).toBe(false);
+    expect(recommendationsLoadingShowPercentLabel(4)).toBe(true);
   });
 });

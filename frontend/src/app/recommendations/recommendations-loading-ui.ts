@@ -13,6 +13,7 @@ export function recommendationsLoadingIsIndeterminate(loadingStage: number): boo
   return loadingStage >= STAGED_MAX;
 }
 
+/** Always show the capped numeric % (including 90% on the final wait stage) so the header stays consistent. */
 export function recommendationsLoadingShowPercentLabel(loadingStage: number): boolean {
-  return loadingStage < STAGED_MAX;
+  return loadingStage <= STAGED_MAX;
 }

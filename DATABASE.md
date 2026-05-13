@@ -1,6 +1,6 @@
 # Database
 
-> AvidX runs a single shared Supabase Postgres database ("AvidX Production"). Every product's tables live in the same instance. This repo's `prisma/schema.prisma` only describes this product's own tables — every other product's tables look like drift.
+> AvidX runs a single shared Supabase Postgres database ("AvidX Production"). Every product's tables live in the same instance. This repo's Prisma schema only describes this product's own tables — every other product's tables look like drift.
 
 ## Canonical policy
 

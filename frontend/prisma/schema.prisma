@@ -20,6 +20,12 @@ model User {
   watchlists Watchlist[]
   watchlistMembers WatchlistMember[]
   sentInvitations WatchlistInvitation[]
+
+  stripeCustomerId       String?   @unique
+  stripeSubscriptionId   String?   @unique
+  subscriptionStatus     String    @default("free") // 'free' | 'active' | 'canceled' | 'past_due'
+  subscriptionPeriodEnd  DateTime?
+  cancelAtPeriodEnd      Boolean   @default(false)
 }
 
 model UserSession {

@@ -14,6 +14,7 @@ import {
   type ProfileAnchorRow,
 } from './recommendations-helpers';
 import { shouldAttachRecommendationsApiDebug } from '@/lib/recommendations-debug-env';
+import { getUserSubscription, isPro } from '@/lib/subscription';
 
 // Simple in-memory cache (in production, use Redis or similar)
 const recommendationCache = new Map<string, { data: unknown; timestamp: number }>();
@@ -752,6 +753,11 @@ export async function GET(request: NextRequest) {
     console.log('Getting user ID...');
     const userId = await getUserId();
     console.log('User ID:', userId);
+
+    const subscription = await getUserSubscription(userId);
+    if (!isPro(subscription)) {
+      return NextResponse.json({ error: 'pro_required' }, { status: 403 });
+    }
 
     // Check for cache busting parameter
     const { searchParams } = new URL(request.url);

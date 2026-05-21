@@ -9,10 +9,12 @@ import useWatchlistFilters from '@/hooks/useWatchlistFilters';
 import { FilmIcon, TvIcon, ChevronDownIcon } from '@heroicons/react/24/outline';
 import { motion } from 'framer-motion';
 import Image from 'next/image';
+import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'react-hot-toast';
 import { Dialog } from '@headlessui/react';
 import { trackUmamiEvent } from '@/lib/umami-bootstrap';
+import { FREE_WATCHLIST_ITEM_LIMIT } from '@/lib/subscription';
 
 // type FilterType = 'all' | 'movie' | 'show';
 type FilterStatus = 'all' | 'want-to-watch' | 'watching' | 'finished';
@@ -35,6 +37,7 @@ export default function WatchlistItems() {
   const [rateItem, setRateItem] = useState<WatchItem | null>(null);
   const [rateValue, setRateValue] = useState<string | null>(null);
   const [isRateSubmitting, setIsRateSubmitting] = useState(false);
+  const [isProTier, setIsProTier] = useState<boolean | null>(null);
   const [modalStep, setModalStep] = useState<'edit' | 'rate'>('edit');
   const [modalItem, setModalItem] = useState<WatchItem | null>(null);
   const hasTrackedWatchlistView = useRef(false);
@@ -56,7 +59,30 @@ export default function WatchlistItems() {
     }
   }, [loading, hasMounted, user]);
 
-  if (!user) return null;
+  useEffect(() => {
+    if (!user) {
+      setIsProTier(null);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      try {
+        const r = await fetch('/api/user/subscription', { credentials: 'include' });
+        const j = (await r.json()) as { isPro?: boolean };
+        if (cancelled) return;
+        if (r.ok && typeof j.isPro === 'boolean') {
+          setIsProTier(j.isPro);
+        } else {
+          setIsProTier(null);
+        }
+      } catch {
+        if (!cancelled) setIsProTier(null);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [user]);
 
   const fetchItems = async () => {
     try {
@@ -176,8 +202,24 @@ export default function WatchlistItems() {
     return 'Item';
   }
 
+  if (!user) return null;
+
   return (
     <div className="w-full max-w-2xl mx-auto">
+      {!loading &&
+        isProTier === false &&
+        items.length >= 45 &&
+        items.length < FREE_WATCHLIST_ITEM_LIMIT && (
+          <div
+            role="status"
+            className="mb-4 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-900"
+          >
+            You&apos;re at {items.length}/{FREE_WATCHLIST_ITEM_LIMIT} items. Pro removes the limit.{' '}
+            <Link href="/settings" className="font-semibold text-blue-800 underline hover:text-blue-950">
+              Upgrade to Pro
+            </Link>
+          </div>
+        )}
       {/* Enhanced Filter Bar with Counts */}
       <div className="flex flex-col sm:flex-row sm:justify-between items-stretch mb-6 mt-2 gap-3">
         {/* Type Filters with Counts */}

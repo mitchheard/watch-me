@@ -301,6 +301,14 @@ export default function WatchlistForm({
           const body = await res.json();
           setError(body.error || 'This title is already in your watchlist.');
           return;
+        } else if (res.status === 403) {
+          const body = await res.json().catch(() => ({}));
+          setError(
+            typeof body.error === 'string' && body.error === 'limit_reached'
+              ? 'Free accounts are limited to 50 watchlist items. Upgrade to Pro for unlimited lists.'
+              : 'An error occurred while saving the item'
+          );
+          return;
         } else if (!res.ok) {
           setError('An error occurred while saving the item');
           return;

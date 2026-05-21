@@ -4,6 +4,7 @@ import { createServerClient, type CookieOptions } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import { WatchlistFormData } from '@/types/watchlist';
 import { notifyFirstItem, notifyFirstReview } from '@/lib/adminNotifications';
+import { FREE_WATCHLIST_ITEM_LIMIT, isPro } from '@/lib/subscription';
 
 async function getUserId() {
   const cookieStore = await cookies();
@@ -196,10 +197,16 @@ export async function POST(request: Request) {
       });
     }
     
-    // Check if this is the user's first item
-    const existingItems = await prisma.watchlistItemList.count({
-      where: { watchlistId: defaultWatchlist.id },
-    });
+    // Check if this is the user's first item (+ subscription for free-tier cap)
+    const [existingItems, userSub] = await Promise.all([
+      prisma.watchlistItemList.count({
+        where: { watchlistId: defaultWatchlist.id },
+      }),
+      prisma.user.findUnique({
+        where: { id: _userId },
+        select: { subscriptionStatus: true },
+      }),
+    ]);
     
     // Find or create the WatchlistItem
     let watchlistItem = await prisma.watchlistItem.findUnique({
@@ -254,6 +261,10 @@ export async function POST(request: Request) {
         { error: 'This title is already in your watchlist.' },
         { status: 409 }
       );
+    }
+
+    if (existingItems >= FREE_WATCHLIST_ITEM_LIMIT && !isPro(userSub)) {
+      return NextResponse.json({ error: 'limit_reached' }, { status: 403 });
     }
 
     // Add item to watchlist

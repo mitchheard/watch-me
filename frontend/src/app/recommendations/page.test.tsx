@@ -58,9 +58,18 @@ describe('RecommendationsPage auto-fetch gate', () => {
   let fetchMock: ReturnType<typeof vi.fn>;
 
   beforeEach(() => {
-    fetchMock = vi.fn().mockResolvedValue({
-      ok: true,
-      json: async () => recommendationsResponse,
+    fetchMock = vi.fn().mockImplementation((input: RequestInfo | URL) => {
+      const url = typeof input === 'string' ? input : input.toString();
+      if (url.includes('/api/user/subscription')) {
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({ isPro: true, subscriptionStatus: 'active' }),
+        });
+      }
+      return Promise.resolve({
+        ok: true,
+        json: async () => recommendationsResponse,
+      });
     });
     vi.stubGlobal('fetch', fetchMock);
   });

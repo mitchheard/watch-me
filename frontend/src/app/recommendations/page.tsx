@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 // import { WatchItem } from '@/types/watchlist'; // Unused import
-import { SparklesIcon, ClockIcon, HeartIcon, EyeIcon } from '@heroicons/react/24/outline';
+import { SparklesIcon, ClockIcon, HeartIcon, EyeIcon, LockClosedIcon } from '@heroicons/react/24/outline';
 import Image from 'next/image';
 import Link from 'next/link';
 import { trackUmamiEvent } from '@/lib/umami-bootstrap';
@@ -63,8 +63,8 @@ export default function RecommendationsPage() {
   const [loadingStage, setLoadingStage] = useState(0);
   const [finalizingTick, setFinalizingTick] = useState(0);
   const [debugPayload, setDebugPayload] = useState<RecommendationsDebugPayload | null>(null);
-  
-  // Debug logging for state changes (removed to improve performance)
+  /** null = not loaded yet; Pro users get AI recommendations, free users see upsell (AVIDX-107). */
+  const [isProTier, setIsProTier] = useState<boolean | null>(null);
 
   useEffect(() => {
     if (!isLoading || loadingStage < 4) return;
@@ -118,6 +118,25 @@ export default function RecommendationsPage() {
       const response = await fetch(url, {
         credentials: 'include', // Include cookies for authentication
       });
+
+      if (response.status === 403) {
+        const body = (await response.json().catch(() => null)) as { error?: string } | null;
+        if (body?.error === 'pro_required') {
+          clearInterval(progressInterval);
+          setIsProTier(false);
+          setRecommendations([]);
+          setStrategy('');
+          setStrategyFocus('');
+          setPhase(undefined);
+          setLastUpdated(null);
+          setDebugPayload(null);
+          setIsLoading(false);
+          setLoadingStage(0);
+          setFinalizingTick(0);
+          return;
+        }
+      }
+
       if (!response.ok) {
         throw new Error('Failed to fetch recommendations');
       }
@@ -137,6 +156,7 @@ export default function RecommendationsPage() {
       setPhase(data.phase);
       setDebugPayload(data.debug ?? null);
       setLastUpdated(new Date());
+      setIsProTier(true);
       setIsLoading(false);
       setLoadingStage(0);
       setFinalizingTick(0);
@@ -154,7 +174,21 @@ export default function RecommendationsPage() {
   useEffect(() => {
     if (!user || hasAutoFetchedRef.current) return;
     hasAutoFetchedRef.current = true;
-    fetchRecommendations();
+
+    (async () => {
+      try {
+        const subRes = await fetch('/api/user/subscription', { credentials: 'include' });
+        const subJson = (await subRes.json().catch(() => ({}))) as { isPro?: boolean };
+        if (subRes.ok && subJson.isPro === false) {
+          setIsProTier(false);
+          return;
+        }
+        setIsProTier(true);
+        await fetchRecommendations(false);
+      } catch {
+        hasAutoFetchedRef.current = false;
+      }
+    })();
   }, [user, fetchRecommendations]);
 
   const getStatusColor = (status: string) => {
@@ -249,7 +283,37 @@ export default function RecommendationsPage() {
         </p>
       </div>
 
-      {/* Compact Refresh Button */}
+      {/* Tier loading */}
+      {user && isProTier === null && (
+        <p className="text-center text-gray-500 text-sm mb-4">Checking subscription…</p>
+      )}
+
+      {/* Free tier — AI recommendations are Pro-only (AVIDX-107) */}
+      {isProTier === false && (
+        <div className="max-w-xl mx-auto mb-6 rounded-xl border border-amber-200 bg-amber-50/90 p-5 sm:p-6 text-left space-y-3">
+          <div className="flex items-start gap-3">
+            <LockClosedIcon className="h-6 w-6 text-amber-700 shrink-0 mt-0.5" aria-hidden />
+            <div>
+              <h2 className="text-base sm:text-lg font-semibold text-amber-950">
+                Watch Me Pro unlocks this page
+              </h2>
+              <p className="text-sm text-amber-900/90 mt-1">
+                Personalized &quot;What Should I Watch?&quot; picks use our AI model on every refresh —
+                that&apos;s included with Pro ($29/year).
+              </p>
+              <Link
+                href="/settings"
+                className="inline-flex mt-3 text-sm font-semibold text-blue-700 hover:text-blue-800 hover:underline"
+              >
+                Upgrade to Pro
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Pro: refresh control */}
+      {isProTier === true && (
       <div className="flex justify-center mb-4 sm:mb-6">
         <button
           onClick={() => fetchRecommendations(true)}
@@ -260,9 +324,10 @@ export default function RecommendationsPage() {
           {isLoading ? 'Generating...' : 'Get New Recommendations'}
         </button>
       </div>
+      )}
 
       {/* Strategy Info */}
-      {(strategy || lastUpdated) && (
+      {isProTier === true && (strategy || lastUpdated) && (
         <div className="text-center mb-4 sm:mb-6 space-y-2">
           {phase === 'llm-success' && strategy && (
             <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">
@@ -284,21 +349,21 @@ export default function RecommendationsPage() {
         </div>
       )}
 
-      {allowRecommendationsDebugChrome() && (
+      {isProTier === true && allowRecommendationsDebugChrome() && (
         <div className="mb-4 max-w-2xl mx-auto px-1">
           <RecommendationsDebugToolbar debug={debugPayload} />
         </div>
       )}
 
       {/* Error State */}
-      {error && (
+      {isProTier === true && error && (
         <div className="bg-red-50 border border-red-200 rounded-lg p-3 sm:p-4 mb-4 sm:mb-6">
           <p className="text-red-700 text-sm sm:text-base">{error}</p>
         </div>
       )}
 
       {/* Loading State */}
-      {isLoading && (
+      {isProTier === true && isLoading && (
         <div className="flex flex-col items-center justify-center py-8 sm:py-12 space-y-4">
           <div className="w-full max-w-md">
             <div className="flex items-center justify-between mb-2">
@@ -351,7 +416,7 @@ export default function RecommendationsPage() {
       )}
 
       {/* Recommendations */}
-      {!isLoading && !error && recommendations.length > 0 && (
+      {isProTier === true && !isLoading && !error && recommendations.length > 0 && (
         <div className="space-y-4 sm:space-y-6">
           {recommendations.map((item, index) => (
             <div
@@ -514,7 +579,7 @@ export default function RecommendationsPage() {
       )}
 
       {/* Empty State */}
-      {!isLoading && !error && recommendations.length === 0 && (
+      {isProTier === true && !isLoading && !error && recommendations.length === 0 && (
         <div className="text-center py-8 sm:py-12">
           <SparklesIcon className="h-12 w-12 sm:h-16 sm:w-16 text-gray-300 mx-auto mb-3 sm:mb-4" />
           <h3 className="text-base sm:text-lg font-medium text-gray-900 mb-2">No recommendations yet</h3>

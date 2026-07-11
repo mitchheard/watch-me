@@ -3,6 +3,7 @@ import Stripe from 'stripe';
 import { prisma } from '@/lib/prisma';
 import { getStripe } from '@/lib/stripe-server';
 import { stripeSubscriptionToUserFields } from '@/lib/stripe-subscription-status';
+import { sendProSubscriptionConfirmationEmail } from '@/lib/subscription-confirmation-email';
 
 export const runtime = 'nodejs';
 
@@ -112,6 +113,19 @@ export async function POST(request: Request) {
           expand: ['items.data'],
         });
         await applySubscriptionToUser(userId, customerId, subscriptionId, subscription);
+
+        const { subscriptionPeriodEnd } = stripeSubscriptionToUserFields(subscription);
+        const recipientEmail =
+          session.customer_details?.email?.trim() ||
+          session.customer_email?.trim() ||
+          null;
+        if (recipientEmail && subscriptionPeriodEnd) {
+          try {
+            await sendProSubscriptionConfirmationEmail(recipientEmail, subscriptionPeriodEnd);
+          } catch (emailErr) {
+            console.error('[stripe/webhook] confirmation email failed', emailErr);
+          }
+        }
         break;
       }
 

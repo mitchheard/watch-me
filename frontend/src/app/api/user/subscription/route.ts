@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getSupabaseRouteUser } from '@/lib/supabase-route-auth';
-import { isPro } from '@/lib/subscription';
+import { hasProAccess, isPro } from '@/lib/subscription';
 
 export async function GET() {
   const user = await getSupabaseRouteUser();
@@ -17,6 +17,7 @@ export async function GET() {
       subscriptionStatus: true,
       subscriptionPeriodEnd: true,
       cancelAtPeriodEnd: true,
+      isAdmin: true,
     },
   });
 
@@ -24,6 +25,10 @@ export async function GET() {
     subscriptionStatus: row.subscriptionStatus,
     subscriptionPeriodEnd: row.subscriptionPeriodEnd?.toISOString() ?? null,
     cancelAtPeriodEnd: row.cancelAtPeriodEnd,
+    isAdmin: row.isAdmin,
+    /** Paid Stripe Pro only — Settings billing UI. */
     isPro: isPro(row),
+    /** Feature entitlement (admin OR paid Pro). */
+    hasProAccess: hasProAccess(row),
   });
 }

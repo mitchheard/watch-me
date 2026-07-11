@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   FREE_WATCHLIST_ITEM_LIMIT,
   getSettingsSubscriptionPhase,
+  hasProAccess,
   isPro,
 } from './subscription';
 
@@ -25,6 +26,31 @@ describe('isPro', () => {
     expect(
       isPro({ subscriptionStatus: 'canceled', cancelAtPeriodEnd: true })
     ).toBe(false);
+  });
+});
+
+describe('hasProAccess (AVIDX-310)', () => {
+  it('grants access to admins regardless of subscriptionStatus', () => {
+    expect(
+      hasProAccess({ subscriptionStatus: 'free', isAdmin: true })
+    ).toBe(true);
+    expect(
+      hasProAccess({ subscriptionStatus: 'canceled', isAdmin: true })
+    ).toBe(true);
+  });
+
+  it('grants access to paid Pro without isAdmin', () => {
+    expect(
+      hasProAccess({ subscriptionStatus: 'active', isAdmin: false })
+    ).toBe(true);
+  });
+
+  it('denies free non-admin users', () => {
+    expect(
+      hasProAccess({ subscriptionStatus: 'free', isAdmin: false })
+    ).toBe(false);
+    expect(hasProAccess({ subscriptionStatus: 'free' })).toBe(false);
+    expect(hasProAccess(null)).toBe(false);
   });
 });
 

@@ -68,10 +68,13 @@ export default function WatchlistItems() {
     (async () => {
       try {
         const r = await fetch('/api/user/subscription', { credentials: 'include' });
-        const j = (await r.json()) as { isPro?: boolean };
+        const j = (await r.json()) as { hasProAccess?: boolean; isPro?: boolean };
         if (cancelled) return;
-        if (r.ok && typeof j.isPro === 'boolean') {
-          setIsProTier(j.isPro);
+        // Prefer hasProAccess (admin OR paid); fall back to isPro for older responses.
+        const entitled =
+          typeof j.hasProAccess === 'boolean' ? j.hasProAccess : j.isPro;
+        if (r.ok && typeof entitled === 'boolean') {
+          setIsProTier(entitled);
         } else {
           setIsProTier(null);
         }

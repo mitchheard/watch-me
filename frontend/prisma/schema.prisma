@@ -26,6 +26,20 @@ model User {
   subscriptionStatus     String    @default("free") // 'free' | 'active' | 'canceled' | 'past_due'
   subscriptionPeriodEnd  DateTime?
   cancelAtPeriodEnd      Boolean   @default(false)
+  isAdmin                Boolean   @default(false)
+  subscriptionConsents   SubscriptionConsent[]
+}
+
+model SubscriptionConsent {
+  id          String   @id @default(cuid())
+  userId      String
+  consentedAt DateTime @default(now())
+  termsText   String
+  consented   Boolean  @default(true)
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([consentedAt])
 }
 
 model UserSession {

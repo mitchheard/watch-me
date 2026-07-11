@@ -178,8 +178,15 @@ export default function RecommendationsPage() {
     (async () => {
       try {
         const subRes = await fetch('/api/user/subscription', { credentials: 'include' });
-        const subJson = (await subRes.json().catch(() => ({}))) as { isPro?: boolean };
-        if (subRes.ok && subJson.isPro === false) {
+        const subJson = (await subRes.json().catch(() => ({}))) as {
+          hasProAccess?: boolean;
+          isPro?: boolean;
+        };
+        const entitled =
+          typeof subJson.hasProAccess === 'boolean'
+            ? subJson.hasProAccess
+            : subJson.isPro;
+        if (subRes.ok && entitled === false) {
           setIsProTier(false);
           return;
         }
@@ -299,7 +306,7 @@ export default function RecommendationsPage() {
               </h2>
               <p className="text-sm text-amber-900/90 mt-1">
                 Personalized &quot;What Should I Watch?&quot; picks use our AI model on every refresh —
-                that&apos;s included with Pro ($29/year).
+                that&apos;s included with Pro ($25/year).
               </p>
               <Link
                 href="/settings"

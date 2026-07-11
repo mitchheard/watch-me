@@ -14,7 +14,7 @@ import {
   type ProfileAnchorRow,
 } from './recommendations-helpers';
 import { shouldAttachRecommendationsApiDebug } from '@/lib/recommendations-debug-env';
-import { getUserSubscription, isPro } from '@/lib/subscription';
+import { getUserSubscription, hasProAccess } from '@/lib/subscription';
 
 // Simple in-memory cache (in production, use Redis or similar)
 const recommendationCache = new Map<string, { data: unknown; timestamp: number }>();
@@ -755,7 +755,7 @@ export async function GET(request: NextRequest) {
     console.log('User ID:', userId);
 
     const subscription = await getUserSubscription(userId);
-    if (!isPro(subscription)) {
+    if (!hasProAccess(subscription)) {
       return NextResponse.json({ error: 'pro_required' }, { status: 403 });
     }
 

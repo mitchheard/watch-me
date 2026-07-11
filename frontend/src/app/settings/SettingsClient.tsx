@@ -6,6 +6,10 @@ import Link from 'next/link';
 import toast from 'react-hot-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { CheckCircleIcon } from '@heroicons/react/24/solid';
+import {
+  PRO_SUBSCRIPTION_CONSENT_LABEL,
+  PRO_SUBSCRIPTION_DISCLOSURE,
+} from '@/lib/subscription-arl';
 
 type SubscriptionPayload = {
   subscriptionStatus: string;
@@ -21,6 +25,7 @@ export default function SettingsClient() {
   const [loading, setLoading] = useState(true);
   const [checkoutBusy, setCheckoutBusy] = useState(false);
   const [portalBusy, setPortalBusy] = useState(false);
+  const [arlConsentChecked, setArlConsentChecked] = useState(false);
 
   const loadSubscription = useCallback(async () => {
     if (!user) {
@@ -59,11 +64,17 @@ export default function SettingsClient() {
   }, [searchParams, loadSubscription]);
 
   const startCheckout = async () => {
+    if (!arlConsentChecked) return;
     setCheckoutBusy(true);
     try {
       const res = await fetch('/api/stripe/create-checkout', {
         method: 'POST',
         credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          consented: true,
+          termsText: PRO_SUBSCRIPTION_DISCLOSURE,
+        }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -194,9 +205,9 @@ export default function SettingsClient() {
           <div>
             <h2 className="text-lg font-semibold text-slate-900">Upgrade to Pro</h2>
             <p className="text-2xl font-bold text-blue-600 mt-1">
-              $29/year
+              $25/year
               <span className="block text-sm font-normal text-slate-600 mt-0.5">
-                ~$0.56/week, billed annually
+                ~$0.48/week, billed annually
               </span>
             </p>
           </div>
@@ -215,17 +226,33 @@ export default function SettingsClient() {
               <span className="text-slate-500">Coming soon:</span> New-seasons email alerts
             </li>
           </ul>
+          <div
+            className="rounded-lg border-2 border-slate-300 bg-slate-50 p-4 text-sm font-medium text-slate-900"
+            role="region"
+            aria-label="Subscription terms"
+          >
+            {PRO_SUBSCRIPTION_DISCLOSURE}
+          </div>
+          <label htmlFor="arl-consent" className="flex items-start gap-3 cursor-pointer text-sm text-slate-800">
+            <input
+              id="arl-consent"
+              type="checkbox"
+              checked={arlConsentChecked}
+              onChange={(e) => setArlConsentChecked(e.target.checked)}
+              className="mt-0.5 h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+            />
+            <span>{PRO_SUBSCRIPTION_CONSENT_LABEL}</span>
+          </label>
           <button
             type="button"
             onClick={() => void startCheckout()}
-            disabled={checkoutBusy}
-            className="w-full sm:w-auto px-6 py-3 rounded-lg bg-blue-600 text-white font-semibold hover:bg-blue-700 disabled:opacity-50"
+            disabled={!arlConsentChecked || checkoutBusy}
+            className="w-full sm:w-auto px-6 py-3 rounded-lg bg-blue-600 text-white font-semibold hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {checkoutBusy ? 'Redirecting…' : 'Upgrade to Pro'}
           </button>
           <p className="text-xs text-slate-500">
-            Secure checkout with Stripe (test mode in development). By upgrading you agree to our
-            billing provider&apos;s terms. See also{' '}
+            Secure checkout with Stripe. See{' '}
             <Link href="/privacy" className="text-blue-600 hover:underline">
               Privacy
             </Link>

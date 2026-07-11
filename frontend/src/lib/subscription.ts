@@ -10,13 +10,28 @@ export async function getUserSubscription(userId: string) {
       subscriptionStatus: true,
       subscriptionPeriodEnd: true,
       cancelAtPeriodEnd: true,
+      isAdmin: true,
     },
   });
 }
 
-/** Pro access: active Stripe status only (includes cancel-at-period-end until period ends). */
+/** Paid Pro: active Stripe status only (includes cancel-at-period-end until period ends). */
 export function isPro(subscription: { subscriptionStatus: string } | null | undefined) {
   return subscription?.subscriptionStatus === 'active';
+}
+
+/**
+ * Feature entitlement: founder/admin OR paid Pro (AVIDX-310).
+ * Independent of Stripe — does not imply a real subscription for billing UI.
+ */
+export function hasProAccess(
+  user:
+    | { subscriptionStatus: string; isAdmin?: boolean }
+    | null
+    | undefined
+): boolean {
+  if (user?.isAdmin) return true;
+  return isPro(user);
 }
 
 export type SettingsSubscriptionPhase = 'free' | 'pro' | 'pro-canceling';

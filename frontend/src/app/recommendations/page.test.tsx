@@ -63,7 +63,12 @@ describe('RecommendationsPage auto-fetch gate', () => {
       if (url.includes('/api/user/subscription')) {
         return Promise.resolve({
           ok: true,
-          json: async () => ({ isPro: true, subscriptionStatus: 'active' }),
+          json: async () => ({
+            isPro: true,
+            hasProAccess: true,
+            isAdmin: false,
+            subscriptionStatus: 'active',
+          }),
         });
       }
       return Promise.resolve({

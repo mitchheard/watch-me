@@ -4,7 +4,7 @@ import { createServerClient, type CookieOptions } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import { WatchlistFormData } from '@/types/watchlist';
 import { notifyFirstItem, notifyFirstReview } from '@/lib/adminNotifications';
-import { FREE_WATCHLIST_ITEM_LIMIT, isPro } from '@/lib/subscription';
+import { FREE_WATCHLIST_ITEM_LIMIT, hasProAccess } from '@/lib/subscription';
 
 async function getUserId() {
   const cookieStore = await cookies();
@@ -204,7 +204,7 @@ export async function POST(request: Request) {
       }),
       prisma.user.findUnique({
         where: { id: _userId },
-        select: { subscriptionStatus: true },
+        select: { subscriptionStatus: true, isAdmin: true },
       }),
     ]);
     
@@ -263,7 +263,7 @@ export async function POST(request: Request) {
       );
     }
 
-    if (existingItems >= FREE_WATCHLIST_ITEM_LIMIT && !isPro(userSub)) {
+    if (existingItems >= FREE_WATCHLIST_ITEM_LIMIT && !hasProAccess(userSub)) {
       return NextResponse.json({ error: 'limit_reached' }, { status: 403 });
     }
 

@@ -2,13 +2,17 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useForm } from 'react-hook-form';
+import Link from 'next/link';
 import { WatchlistFormData, TMDBSearchResult, TMDBItemDetails, WatchItem } from '@/types/watchlist';
 import Image from 'next/image';
 import { useDebounceValue } from 'usehooks-ts';
 import MobileSelect from '@/components/ui/MobileSelect';
 import { trackUmamiEvent } from '@/lib/umami-bootstrap';
+import { FREE_WATCHLIST_ITEM_LIMIT } from '@/lib/subscription';
 
 console.log('WatchlistForm SCRIPT EXECUTING (Phase 6 Restore - RHF Integration)');
+
+export const LIMIT_REACHED_MESSAGE = `Free accounts are limited to ${FREE_WATCHLIST_ITEM_LIMIT} watchlist items. Upgrade to Pro for unlimited lists.`;
 
 type WatchlistFormInputs = WatchlistFormData;
 
@@ -106,6 +110,7 @@ export default function WatchlistForm({
   });
 
   const [error, setError] = useState<string | null>(null);
+  const [limitReached, setLimitReached] = useState(false);
 
   const [tmdbSearchQuery, setTmdbSearchQuery] = useState('');
   const [debouncedSearchQuery] = useDebounceValue(tmdbSearchQuery, 500);
@@ -188,6 +193,7 @@ export default function WatchlistForm({
     }
     setTmdbSearchQuery('');
     setError(null);
+    setLimitReached(false);
     setTmdbResults([]);
     setShowTmdbResults(false);
     setTmdbSearchError(null);
@@ -270,6 +276,7 @@ export default function WatchlistForm({
 
   const onSubmit = async (data: WatchlistFormData) => {
     setError(null);
+    setLimitReached(false);
 
     try {
       if (itemToEdit) {
@@ -303,11 +310,11 @@ export default function WatchlistForm({
           return;
         } else if (res.status === 403) {
           const body = await res.json().catch(() => ({}));
-          setError(
-            typeof body.error === 'string' && body.error === 'limit_reached'
-              ? 'Free accounts are limited to 50 watchlist items. Upgrade to Pro for unlimited lists.'
-              : 'An error occurred while saving the item'
-          );
+          if (typeof body.error === 'string' && body.error === 'limit_reached') {
+            setLimitReached(true);
+          } else {
+            setError('An error occurred while saving the item');
+          }
           return;
         } else if (!res.ok) {
           setError('An error occurred while saving the item');
@@ -447,14 +454,30 @@ export default function WatchlistForm({
           </>
         )}
 
-        {/* Error and Success Messages */}
+        {/* Limit upsell (AVIDX-311) — brand blue, not error red */}
+        {limitReached && (
+          <div
+            role="status"
+            className="rounded-lg border border-blue-200 bg-blue-50 px-4 py-3"
+          >
+            <p className="text-sm text-blue-900">{LIMIT_REACHED_MESSAGE}</p>
+            <Link
+              href="/settings"
+              className="mt-3 inline-flex w-full justify-center items-center rounded-md bg-blue-600 px-4 py-3 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors min-h-[44px]"
+            >
+              Upgrade to Pro →
+            </Link>
+          </div>
+        )}
+
+        {/* Actual errors only */}
         {error && (
           <div className="rounded-md bg-red-50 p-4">
             <div className="text-sm text-red-700">{error}</div>
           </div>
         )}
 
-        {/* Form Actions */}
+        {/* Form Actions — hide dead-end Add when at free-tier cap */}
         <div className="flex justify-end gap-3">
           {onCancelEdit && (
             <button
@@ -465,13 +488,15 @@ export default function WatchlistForm({
               Cancel
             </button>
           )}
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className="flex-1 inline-flex justify-center items-center rounded-md border border-transparent bg-blue-600 px-4 py-3 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 transition-colors min-h-[44px]"
-          >
-            {isSubmitting ? 'Saving...' : itemToEdit ? 'Update' : 'Add'}
-          </button>
+          {!limitReached && (
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className="flex-1 inline-flex justify-center items-center rounded-md border border-transparent bg-blue-600 px-4 py-3 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 transition-colors min-h-[44px]"
+            >
+              {isSubmitting ? 'Saving...' : itemToEdit ? 'Update' : 'Add'}
+            </button>
+          )}
         </div>
       </form>
     </div>

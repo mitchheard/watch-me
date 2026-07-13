@@ -6,7 +6,7 @@ import { WatchItem, WatchlistFormData } from '@/types/watchlist';
 import WatchlistForm from './WatchlistForm'; // Import our test form
 import Modal from '@/components/Modal'; // Import Modal for WatchlistForm
 import useWatchlistFilters from '@/hooks/useWatchlistFilters';
-import { FilmIcon, TvIcon, ChevronDownIcon } from '@heroicons/react/24/outline';
+import { FilmIcon, TvIcon, ChevronDownIcon, MagnifyingGlassIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import { motion } from 'framer-motion';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -15,8 +15,8 @@ import { toast } from 'react-hot-toast';
 import { Dialog } from '@headlessui/react';
 import { trackUmamiEvent } from '@/lib/umami-bootstrap';
 import { FREE_WATCHLIST_ITEM_LIMIT } from '@/lib/subscription';
+import { filterWatchlistItems } from './filterWatchlistItems';
 
-// type FilterType = 'all' | 'movie' | 'show';
 type FilterStatus = 'all' | 'want-to-watch' | 'watching' | 'finished';
 
 // Define poster sizes for card and modal (2:3 aspect ratio)
@@ -32,6 +32,7 @@ export default function WatchlistItems() {
   const [selectedItem, setSelectedItem] = useState<WatchItem | null>(null); // This will be itemToEdit for WatchlistForm
   // No need for isEditModalOpen, selectedItem existing will trigger the modal with WatchlistForm
   const { type, status, updateFilters } = useWatchlistFilters();
+  const [searchQuery, setSearchQuery] = useState('');
   const [hasMounted, setHasMounted] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
   const [rateItem, setRateItem] = useState<WatchItem | null>(null);
@@ -118,10 +119,12 @@ export default function WatchlistItems() {
   if (!hasMounted) return <div className="text-slate-500 text-center py-10">Initializing...</div>;
   if (loading) return <div className="text-slate-500 text-center py-10">Loading your watchlist...</div>;
 
-  const visibleItems = items
-    .filter((item) => type === 'all' || item.type === type)
-    .filter((item) => status === 'all' || item.status === status)
-    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  const trimmedSearch = searchQuery.trim();
+  const visibleItems = filterWatchlistItems(items, {
+    type,
+    status,
+    searchQuery,
+  });
 
   // Calculate counts for filter badges
   const movieCount = items.filter(item => item.type === 'movie').length;
@@ -224,61 +227,88 @@ export default function WatchlistItems() {
           </div>
         )}
       {/* Enhanced Filter Bar with Counts */}
-      <div className="flex flex-col sm:flex-row sm:justify-between items-stretch mb-6 mt-2 gap-3">
-        {/* Type Filters with Counts */}
-        <div className="flex flex-row gap-1.5 bg-slate-100 rounded-xl p-1 h-full w-full sm:w-auto">
-          <button
-            onClick={() => updateFilters('all', status)}
-            className={`px-2 py-1.5 text-xs sm:text-sm rounded-lg font-medium flex items-center transition-all h-full w-full sm:w-auto justify-center ${type === 'all' ? 'bg-white text-slate-800 shadow-sm ring-1 ring-slate-200' : 'text-slate-600 bg-transparent hover:bg-white/50'}`}
-          >
-            All
-            <span className="ml-1 text-xs bg-slate-200 text-slate-600 px-1 py-0.5 rounded-full">
-              {items.length}
-            </span>
-          </button>
-          <button
-            onClick={() => updateFilters('movie', status)}
-            className={`px-2 py-1.5 text-xs sm:text-sm rounded-lg font-medium flex items-center transition-all h-full w-full sm:w-auto justify-center ${type === 'movie' ? 'bg-purple-100 text-purple-700 shadow-sm ring-1 ring-purple-200' : 'text-slate-600 bg-transparent hover:bg-purple-50'}`}
-          >
-            <FilmIcon className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
-            <span className="hidden sm:inline">Movies</span>
-            <span className="sm:hidden">Movie</span>
-            <span className="ml-1 text-xs bg-purple-200 text-purple-700 px-1 py-0.5 rounded-full">
-              {movieCount}
-            </span>
-          </button>
-          <button
-            onClick={() => updateFilters('show', status)}
-            className={`px-2 py-1.5 text-xs sm:text-sm rounded-lg font-medium flex items-center transition-all h-full w-full sm:w-auto justify-center ${type === 'show' ? 'bg-emerald-100 text-emerald-700 shadow-sm ring-1 ring-emerald-200' : 'text-slate-600 bg-transparent hover:bg-emerald-50'}`}
-          >
-            <TvIcon className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
-            <span className="hidden sm:inline">TV Shows</span>
-            <span className="sm:hidden">TV</span>
-            <span className="ml-1 text-xs bg-emerald-200 text-emerald-700 px-1 py-0.5 rounded-full">
-              {showCount}
-            </span>
-          </button>
-        </div>
-        
-        {/* Status Filter with Counts */}
-        <div className="flex items-stretch w-full sm:w-auto">
-          <label htmlFor="status-filter" className="sr-only">Status</label>
-          <div className="relative w-full sm:w-auto">
-            <select
-              id="status-filter"
-              value={status}
-              onChange={e => updateFilters(type, e.target.value as FilterStatus)}
-              className="rounded-lg border border-slate-300 px-3 py-2 pr-10 shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-base w-full sm:w-auto h-full appearance-none bg-white"
+      <div className="flex flex-col gap-3 mb-6 mt-2">
+        <div className="flex flex-col sm:flex-row sm:justify-between items-stretch gap-3">
+          {/* Type Filters with Counts */}
+          <div className="flex flex-row gap-1.5 bg-slate-100 rounded-xl p-1 h-full w-full sm:w-auto">
+            <button
+              onClick={() => updateFilters('all', status)}
+              className={`px-2 py-1.5 text-xs sm:text-sm rounded-lg font-medium flex items-center transition-all h-full w-full sm:w-auto justify-center ${type === 'all' ? 'bg-white text-slate-800 shadow-sm ring-1 ring-slate-200' : 'text-slate-600 bg-transparent hover:bg-white/50'}`}
             >
-              <option value="all">All Statuses ({items.length})</option>
-              <option value="want-to-watch">Want to Watch ({wantToWatchCount})</option>
-              <option value="watching">Watching ({watchingCount})</option>
-              <option value="finished">Finished ({finishedCount})</option>
-            </select>
-            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
-              <ChevronDownIcon className="h-4 w-4 text-slate-500" />
+              All
+              <span className="ml-1 text-xs bg-slate-200 text-slate-600 px-1 py-0.5 rounded-full">
+                {items.length}
+              </span>
+            </button>
+            <button
+              onClick={() => updateFilters('movie', status)}
+              className={`px-2 py-1.5 text-xs sm:text-sm rounded-lg font-medium flex items-center transition-all h-full w-full sm:w-auto justify-center ${type === 'movie' ? 'bg-purple-100 text-purple-700 shadow-sm ring-1 ring-purple-200' : 'text-slate-600 bg-transparent hover:bg-purple-50'}`}
+            >
+              <FilmIcon className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
+              <span className="hidden sm:inline">Movies</span>
+              <span className="sm:hidden">Movie</span>
+              <span className="ml-1 text-xs bg-purple-200 text-purple-700 px-1 py-0.5 rounded-full">
+                {movieCount}
+              </span>
+            </button>
+            <button
+              onClick={() => updateFilters('show', status)}
+              className={`px-2 py-1.5 text-xs sm:text-sm rounded-lg font-medium flex items-center transition-all h-full w-full sm:w-auto justify-center ${type === 'show' ? 'bg-emerald-100 text-emerald-700 shadow-sm ring-1 ring-emerald-200' : 'text-slate-600 bg-transparent hover:bg-emerald-50'}`}
+            >
+              <TvIcon className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
+              <span className="hidden sm:inline">TV Shows</span>
+              <span className="sm:hidden">TV</span>
+              <span className="ml-1 text-xs bg-emerald-200 text-emerald-700 px-1 py-0.5 rounded-full">
+                {showCount}
+              </span>
+            </button>
+          </div>
+
+          {/* Status Filter with Counts */}
+          <div className="flex items-stretch w-full sm:w-auto">
+            <label htmlFor="status-filter" className="sr-only">Status</label>
+            <div className="relative w-full sm:w-auto">
+              <select
+                id="status-filter"
+                value={status}
+                onChange={e => updateFilters(type, e.target.value as FilterStatus)}
+                className="rounded-lg border border-slate-300 px-3 py-2 pr-10 shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-base w-full sm:w-auto h-full appearance-none bg-white"
+              >
+                <option value="all">All Statuses ({items.length})</option>
+                <option value="want-to-watch">Want to Watch ({wantToWatchCount})</option>
+                <option value="watching">Watching ({watchingCount})</option>
+                <option value="finished">Finished ({finishedCount})</option>
+              </select>
+              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
+                <ChevronDownIcon className="h-4 w-4 text-slate-500" />
+              </div>
             </div>
           </div>
+        </div>
+
+        {/* Title search — client-side substring filter */}
+        <div className="relative w-full">
+          <label htmlFor="watchlist-search" className="sr-only">Search by title</label>
+          <MagnifyingGlassIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+          <input
+            id="watchlist-search"
+            type="search"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search by title…"
+            autoComplete="off"
+            className="w-full rounded-lg border border-slate-300 bg-white py-2 pl-9 pr-9 text-base shadow-sm placeholder:text-slate-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+          />
+          {searchQuery && (
+            <button
+              type="button"
+              onClick={() => setSearchQuery('')}
+              className="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400 hover:text-slate-600"
+              aria-label="Clear search"
+            >
+              <XMarkIcon className="h-4 w-4" />
+            </button>
+          )}
         </div>
       </div>
 
@@ -434,12 +464,25 @@ export default function WatchlistItems() {
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.25} stroke="currentColor" className="w-20 h-20 mx-auto text-slate-300 mb-4">
             <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 6.75h7.5M8.25 12h7.5m-7.5 5.25h7.5M3.75 6.75h.007v.008H3.75V6.75zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0ZM3.75 12h.007v.008H3.75V12zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm-.375 5.25h.007v.008H3.75v-.008zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z" />
           </svg>
-          <p className="text-slate-600 font-semibold text-lg mb-1">
-            Your Watchlist is Empty
-          </p>
-          <p className="text-sm text-slate-400">
-            Add some movies or shows to get started!
-          </p>
+          {trimmedSearch ? (
+            <>
+              <p className="text-slate-600 font-semibold text-lg mb-1">
+                No titles match &lsquo;{trimmedSearch}&rsquo;
+              </p>
+              <p className="text-sm text-slate-400">
+                Try a different search, or clear filters.
+              </p>
+            </>
+          ) : (
+            <>
+              <p className="text-slate-600 font-semibold text-lg mb-1">
+                Your Watchlist is Empty
+              </p>
+              <p className="text-sm text-slate-400">
+                Add some movies or shows to get started!
+              </p>
+            </>
+          )}
         </div>
       )}
 

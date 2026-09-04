@@ -3,29 +3,20 @@ import { cookies } from 'next/headers';
 import { NextResponse, type NextRequest } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { notifyNewUser, notifyRepeatVisit, notifyUserReturned } from '@/lib/adminNotifications';
+import { getAppOrigin } from '@/lib/getAppOrigin';
 
 export async function GET(request: NextRequest) {
-  // Use the URL the browser actually hit for this callback so custom domains (e.g. gowatchme.app)
-  // stay on that host after OAuth. NEXTAUTH_URL alone would force redirects to Render's hostname.
-  let appOrigin = request.nextUrl.origin;
-
-  if (!appOrigin) {
-    appOrigin = process.env.NEXTAUTH_URL ?? '';
-  }
-  if (!appOrigin) {
-    const requestOrigin = request.headers.get('origin') || request.headers.get('host');
-    if (requestOrigin) {
-      appOrigin = requestOrigin.startsWith('http') ? requestOrigin : `http://${requestOrigin}`;
-      console.log(`[AuthCallback] Using Host/origin fallback: ${appOrigin}`);
-    } else {
-      console.error(
-        '[AuthCallback] CRITICAL: Could not determine app origin. Set NEXTAUTH_URL or ensure Host is present.'
-      );
-      return NextResponse.json(
-        { error: 'Internal server configuration error: App origin not set.' },
-        { status: 500 }
-      );
-    }
+  // Prefer public Host / x-forwarded-* / NEXTAUTH_URL. request.nextUrl.origin alone can be
+  // https://localhost:10000 on Render even when the browser used gowatchme.app.
+  let appOrigin: string;
+  try {
+    appOrigin = getAppOrigin(request);
+  } catch (error) {
+    console.error('[AuthCallback] CRITICAL: Could not determine app origin.', error);
+    return NextResponse.json(
+      { error: 'Internal server configuration error: App origin not set.' },
+      { status: 500 }
+    );
   }
 
   const { searchParams } = new URL(request.url); // Still use request.url for searchParams

@@ -15,6 +15,7 @@ import { isFallbackPhase } from './analytics';
 import { allowRecommendationsDebugChrome } from '@/lib/recommendations-debug-env';
 import {
   finalizingEllipsisSuffix,
+  RECOMMENDATIONS_LOADING_STAGE_MS,
   recommendationsLoadingBarPercent,
   recommendationsLoadingIsIndeterminate,
   recommendationsLoadingShowPercentLabel,
@@ -102,7 +103,7 @@ export default function RecommendationsPage() {
         }
         return next;
       });
-    }, 800); // Slower progression to match actual API timing
+    }, RECOMMENDATIONS_LOADING_STAGE_MS);
     
     try {
       trackUmamiEvent('ai_recommendation_requested');
@@ -389,12 +390,14 @@ export default function RecommendationsPage() {
               aria-valuenow={Math.round(recommendationsLoadingBarPercent(loadingStage))}
               aria-valuetext={
                 recommendationsLoadingIsIndeterminate(loadingStage)
-                  ? '90 percent, finalizing recommendations'
+                  ? 'finalizing recommendations'
                   : undefined
               }
             >
               <div
-                className="bg-blue-600 h-2.5 rounded-full transition-all duration-500 ease-out"
+                className={`bg-blue-600 h-2.5 rounded-full transition-all duration-500 ease-out ${
+                  recommendationsLoadingIsIndeterminate(loadingStage) ? 'animate-pulse' : ''
+                }`}
                 style={{ width: `${recommendationsLoadingBarPercent(loadingStage)}%` }}
               />
             </div>

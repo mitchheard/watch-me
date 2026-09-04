@@ -1,9 +1,13 @@
 /**
  * AVIDX-266: staged progress caps at 90%; stage 4+ is the final wait (no 100% while fetch pending).
- * loadingStage ticks 0→4 on an 800ms timer. Bar uses equal fifths of 90% (0 → 22.5 → … → 90)
- * so each timer step is the same size; the label rounds for display (e.g. 23%, 45%, 68%, 90%).
+ * loadingStage ticks 0→4 on RECOMMENDATIONS_LOADING_STAGE_MS. Bar uses equal fifths of 90%
+ * (0 → 22.5 → … → 90). Interval is sized so 90% lands near typical Haiku latency (~6–8s),
+ * not at ~3.2s with a long frozen hold.
  */
 const STAGED_MAX = 4;
+
+/** Delay between staged ticks (4 × 1600ms ≈ 6.4s to the 90% wait). */
+export const RECOMMENDATIONS_LOADING_STAGE_MS = 1600;
 
 export function recommendationsLoadingBarPercent(loadingStage: number): number {
   const s = Math.min(Math.max(loadingStage, 0), STAGED_MAX);
@@ -19,7 +23,7 @@ export function recommendationsLoadingIsIndeterminate(loadingStage: number): boo
   return loadingStage >= STAGED_MAX;
 }
 
-/** Always show the capped numeric % (including 90% on the final wait stage) so the header stays consistent. */
+/** Hide the frozen 90% during the wait so the hold does not look stuck. */
 export function recommendationsLoadingShowPercentLabel(loadingStage: number): boolean {
-  return loadingStage <= STAGED_MAX;
+  return loadingStage < STAGED_MAX;
 }

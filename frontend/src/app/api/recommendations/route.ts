@@ -5,6 +5,7 @@ import { cookies } from 'next/headers';
 import Anthropic from '@anthropic-ai/sdk';
 import { parseRecommendationArray } from './json-utils';
 import {
+  describeRecommendationsFailure,
   parseRecommendationsHourParam,
   pickProfileAnchors,
   recommendationPickCount,
@@ -320,19 +321,41 @@ async function fetchRecommendationModelOutput(
     const client = new Anthropic({ apiKey: anthropicKey });
     try {
       const startedAtMs = Date.now();
-      const message = await client.messages.create({
-        model,
-        max_tokens: 4096,
-        temperature: 0.7,
-        system: systemPrompt,
-        messages: [{ role: 'user', content: userPrompt }],
-        output_config: {
-          format: {
-            type: 'json_schema',
-            schema: RECOMMENDATIONS_OUTPUT_SCHEMA,
-          },
-        },
-      });
+      const createMessage = (structured: boolean) =>
+        client.messages.create({
+          model,
+          max_tokens: 4096,
+          temperature: 0.7,
+          system: systemPrompt,
+          messages: [{ role: 'user', content: userPrompt }],
+          ...(structured
+            ? {
+                output_config: {
+                  format: {
+                    type: 'json_schema',
+                    schema: RECOMMENDATIONS_OUTPUT_SCHEMA,
+                  },
+                },
+              }
+            : {}),
+        });
+
+      let message;
+      try {
+        message = await createMessage(true);
+      } catch (structuredErr) {
+        const status = (structuredErr as { status?: number }).status;
+        if (status !== 400) throw structuredErr;
+        logRecommendationsFailure('anthropic_structured_output_rejected', {
+          httpStatus: status,
+          message: (
+            (structuredErr as { error?: { message?: string }; message?: string }).error?.message ??
+            (structuredErr as { message?: string }).message ??
+            'structured output rejected'
+          ).slice(0, 240),
+        });
+        message = await createMessage(false);
+      }
       const latencyMs = Date.now() - startedAtMs;
       const textBlock = message.content.find((block) => block.type === 'text');
       const text = textBlock?.text?.trim();
@@ -766,7 +789,7 @@ ${candidatesLines}`;
     console.error('LLM recommendation error:', error);
 
     if (includeDebug) {
-      throw new RecommendationsInferenceError({
+      const wrapped = new RecommendationsInferenceError({
         llmUsed: llmUsedLabel(lastLlm),
         systemPrompt: RECOMMENDATIONS_SYSTEM_PROMPT,
         userPrompt,
@@ -779,9 +802,11 @@ ${candidatesLines}`;
         error: err.message,
         requestContext: debugRequestContext,
       });
+      wrapped.cause = error;
+      throw wrapped;
     }
 
-    throw new Error('Failed to generate recommendations');
+    throw error;
   }
 }
 
@@ -948,14 +973,15 @@ export async function GET(request: NextRequest) {
       console.log('AI recommendations successful:', recommendations.length);
     } catch (error) {
       const err = error instanceof Error ? error : new Error(String(error));
+      const described = describeRecommendationsFailure(error);
       logRecommendationsFailure('route_ai_fallback', {
         errorName: err.name,
+        failureCode: described.code,
         message: err.message.slice(0, 320),
       });
       console.error('AI recommendations failed, using fallback:', error);
       strategyName = 'ai-unavailable';
-      strategyFocus =
-        'Could not reach the AI model or parse its response; showing picks from your want-to-watch list.';
+      strategyFocus = described.publicMessage;
       phase = 'llm-pipeline-error';
       if (debugPayloadEnabled && error instanceof RecommendationsInferenceError) {
         recommendationsDebugPayload = error.recommendationsDebugPartial;

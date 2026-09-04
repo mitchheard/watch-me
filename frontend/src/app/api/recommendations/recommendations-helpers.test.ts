@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   OVERVIEW_PROMPT_MAX,
+  describeRecommendationsFailure,
   parseRecommendationsHourParam,
   pickProfileAnchors,
   recommendationPickCount,
@@ -100,6 +101,31 @@ describe('recommendationPickCount', () => {
     expect(recommendationPickCount(3)).toBe(3);
     expect(recommendationPickCount(5)).toBe(5);
     expect(recommendationPickCount(50)).toBe(5);
+  });
+});
+
+describe('describeRecommendationsFailure', () => {
+  it('detects a missing API key', () => {
+    const out = describeRecommendationsFailure(new Error('No LLM API key configured'));
+    expect(out.code).toBe('missing_api_key');
+    expect(out.publicMessage).toContain('ANTHROPIC_API_KEY');
+  });
+
+  it('detects a rejected key', () => {
+    const err = Object.assign(new Error('invalid x-api-key'), { status: 401 });
+    const out = describeRecommendationsFailure(err);
+    expect(out.code).toBe('anthropic_unauthorized');
+  });
+
+  it('includes a sanitized 400 body and redacts secrets', () => {
+    const err = Object.assign(new Error('ignored'), {
+      status: 400,
+      error: { type: 'invalid_request_error', message: 'bad schema sk-ant-secret123' },
+    });
+    const out = describeRecommendationsFailure(err);
+    expect(out.code).toBe('anthropic_bad_request');
+    expect(out.publicMessage).toContain('bad schema');
+    expect(out.publicMessage).not.toContain('sk-ant-secret123');
   });
 });
 

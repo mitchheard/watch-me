@@ -10,6 +10,103 @@ export function recommendationPickCount(candidateCount: number): number {
   return Math.min(RECOMMENDATIONS_PICK_TARGET, Math.floor(candidateCount));
 }
 
+const SECRET_FRAGMENT = /sk-[a-z0-9-]+/gi;
+
+function sanitizePublicErrorText(raw: string, max = 180): string {
+  return raw.replace(SECRET_FRAGMENT, '[redacted]').replace(/\s+/g, ' ').trim().slice(0, max);
+}
+
+type AnthropicLikeError = {
+  status?: number;
+  error?: { type?: string; message?: string };
+  message?: string;
+  cause?: unknown;
+};
+
+function unwrapLlmError(error: unknown): { status?: number; type: string; message: string } {
+  let current: unknown = error;
+  let status: number | undefined;
+  let type = '';
+  let message = '';
+
+  for (let i = 0; i < 5 && current; i++) {
+    const obj = current as AnthropicLikeError & {
+      recommendationsDebugPartial?: { error?: string };
+    };
+    if (typeof obj.status === 'number') status = obj.status;
+    if (obj.error?.type) type = obj.error.type;
+    const candidate =
+      obj.error?.message ||
+      obj.recommendationsDebugPartial?.error ||
+      (obj.message && obj.message !== 'Failed to generate recommendations' ? obj.message : '');
+    if (candidate && !message) message = candidate;
+    current = obj.cause;
+  }
+
+  return { status, type, message };
+}
+
+/** Safe, user-visible explanation for why the recommender fell back. */
+export function describeRecommendationsFailure(error: unknown): {
+  code: string;
+  publicMessage: string;
+} {
+  const { status, type, message } = unwrapLlmError(error);
+  const detail = sanitizePublicErrorText(message);
+  const lower = `${type} ${detail}`.toLowerCase();
+  const suffix = detail
+    ? ` (${detail}); showing picks from your want-to-watch list.`
+    : '; showing picks from your want-to-watch list.';
+
+  if (lower.includes('no llm api key') || lower.includes('anthropic_api_key is not set')) {
+    return {
+      code: 'missing_api_key',
+      publicMessage:
+        'ANTHROPIC_API_KEY is not set on the server; showing picks from your want-to-watch list.',
+    };
+  }
+  if (status === 401 || lower.includes('authentication') || lower.includes('invalid x-api-key')) {
+    return {
+      code: 'anthropic_unauthorized',
+      publicMessage: `The Anthropic API key was rejected${suffix}`,
+    };
+  }
+  if (status === 404 || lower.includes('not_found') || lower.includes('model:')) {
+    return {
+      code: 'anthropic_model',
+      publicMessage: `The AI model is unavailable${suffix}`,
+    };
+  }
+  if (status === 402 || lower.includes('credit') || lower.includes('billing')) {
+    return {
+      code: 'anthropic_billing',
+      publicMessage: `The Anthropic account cannot complete this request${suffix}`,
+    };
+  }
+  if (lower.includes('no json array') || lower.includes('invalid json') || lower.includes('json_parse')) {
+    return {
+      code: 'json_parse',
+      publicMessage: `Could not parse the AI response${suffix}`,
+    };
+  }
+  if (status === 400 || status === 422) {
+    return {
+      code: 'anthropic_bad_request',
+      publicMessage: `The AI request was rejected${suffix}`,
+    };
+  }
+  if (status && status >= 400) {
+    return {
+      code: 'anthropic_http',
+      publicMessage: `Could not reach the AI model (HTTP ${status}${detail ? `: ${detail}` : ''}); showing picks from your want-to-watch list.`,
+    };
+  }
+  return {
+    code: 'llm_pipeline',
+    publicMessage: `Could not reach the AI model${suffix}`,
+  };
+}
+
 /** Hidden-gems framing vs mainstream (tune in AVIDX-258). */
 export const HIDDEN_GEM_VOTE_COUNT_THRESHOLD = 10_000;
 

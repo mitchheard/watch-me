@@ -1,6 +1,15 @@
 /** Max TMDB overview length sent to the recommender (per AVIDX-251). */
 export const OVERVIEW_PROMPT_MAX = 250;
 
+/** Target number of titles the recommender should return. */
+export const RECOMMENDATIONS_PICK_TARGET = 5;
+
+/** Never ask the model for more titles than the candidate pool contains. */
+export function recommendationPickCount(candidateCount: number): number {
+  if (!Number.isFinite(candidateCount) || candidateCount < 1) return 0;
+  return Math.min(RECOMMENDATIONS_PICK_TARGET, Math.floor(candidateCount));
+}
+
 /** Hidden-gems framing vs mainstream (tune in AVIDX-258). */
 export const HIDDEN_GEM_VOTE_COUNT_THRESHOLD = 10_000;
 

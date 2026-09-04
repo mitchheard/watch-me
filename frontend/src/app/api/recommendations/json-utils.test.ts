@@ -16,4 +16,19 @@ describe('json-utils', () => {
     const response = '[{"id":"1","title":"Broken"';
     expect(() => parseRecommendationArray(response)).toThrow('No JSON array found');
   });
+
+  it('parses structured-output object wrapper', () => {
+    const response = JSON.stringify({
+      recommendations: [{ id: 'abc', title: 'Example', reason: 'Hook.', confidence: 0.8 }],
+    });
+    expect(parseRecommendationArray(response)).toEqual([
+      { id: 'abc', title: 'Example', reason: 'Hook.', confidence: 0.8 },
+    ]);
+  });
+
+  it('parses object wrapper inside markdown fences', () => {
+    const response =
+      '```json\n{"recommendations":[{"id":"abc","title":"Example"}]}\n```';
+    expect(parseRecommendationArray(response)).toEqual([{ id: 'abc', title: 'Example' }]);
+  });
 });

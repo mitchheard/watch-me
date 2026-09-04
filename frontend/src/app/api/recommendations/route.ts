@@ -7,6 +7,7 @@ import { parseRecommendationArray } from './json-utils';
 import {
   parseRecommendationsHourParam,
   pickProfileAnchors,
+  recommendationPickCount,
   RECOMMENDATIONS_TIME_OF_DAY_FALLBACK,
   strategyReasonGuidance,
   timeOfDayBucketFromLocalHour,
@@ -144,18 +145,43 @@ function llmUsedLabel(llm?: LlmCallResult): string {
   return '(no LLM credentials)';
 }
 
+/** Constrained JSON shape for Claude structured outputs (avoids markdown/truncated-array parse failures). */
+const RECOMMENDATIONS_OUTPUT_SCHEMA: { [key: string]: unknown } = {
+  type: 'object',
+  properties: {
+    recommendations: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          id: { type: 'string' },
+          title: { type: 'string' },
+          reason: { type: 'string' },
+          confidence: { type: 'number' },
+        },
+        required: ['id', 'title', 'reason', 'confidence'],
+        additionalProperties: false,
+      },
+    },
+  },
+  required: ['recommendations'],
+  additionalProperties: false,
+};
+
 /** Stable system prompt — identical across calls for Anthropic prompt caching (AVIDX-251). */
-const RECOMMENDATIONS_SYSTEM_PROMPT = `You are Watch Me's recommender. You only recommend rows from the numbered candidate list supplied in the user message. Pick exactly five different candidates and return a single JSON array (no markdown code fences, no commentary outside JSON).
+const RECOMMENDATIONS_SYSTEM_PROMPT = `You are Watch Me's recommender. You only recommend rows from the numbered candidate list supplied in the user message. Pick the number of different candidates requested in the user message (at most five) and return a JSON object with a "recommendations" array (no markdown code fences, no commentary outside JSON).
 
 ## Output shape
-The array must contain exactly five objects. Each object has:
+The object must contain a "recommendations" array. Each array object has:
 - "id" (string): the exact id field from the chosen candidate row.
 - "title" (string): the exact title field from that same candidate row.
 - "reason" (string): two or three sentences.
 - "confidence" (number): between 0.1 and 1.0 inclusive.
 
+If the user message asks for fewer than five picks, return that many — never invent extra rows.
+
 Illustrative placeholder example — do not echo these values in a real answer:
-[{"id":"cjd01example","title":"Example Film Alpha","reason":"First sentence with a concrete hook from the overview or metadata. Second sentence ties to viewer taste or strategy.","confidence":0.84},{"id":"cjd02exampleb","title":"Example Series Beta","reason":"...","confidence":0.71}]
+{"recommendations":[{"id":"cjd01example","title":"Example Film Alpha","reason":"First sentence with a concrete hook from the overview or metadata. Second sentence ties to viewer taste or strategy.","confidence":0.84},{"id":"cjd02exampleb","title":"Example Series Beta","reason":"...","confidence":0.71}]}
 
 ## Validation rules
 - Never invent titles or ids; never pull items that are not in the candidate list.
@@ -296,17 +322,31 @@ async function fetchRecommendationModelOutput(
       const startedAtMs = Date.now();
       const message = await client.messages.create({
         model,
-        max_tokens: 2048,
+        max_tokens: 4096,
         temperature: 0.7,
         system: systemPrompt,
         messages: [{ role: 'user', content: userPrompt }],
+        output_config: {
+          format: {
+            type: 'json_schema',
+            schema: RECOMMENDATIONS_OUTPUT_SCHEMA,
+          },
+        },
       });
       const latencyMs = Date.now() - startedAtMs;
       const textBlock = message.content.find((block) => block.type === 'text');
       const text = textBlock?.text?.trim();
+      if (message.stop_reason === 'max_tokens') {
+        logRecommendationsFailure('anthropic_max_tokens', {
+          message: 'response truncated at max_tokens',
+          contentLength: text?.length ?? 0,
+          outputTokens: message.usage?.output_tokens ?? undefined,
+        });
+      }
       if (!text) {
         logRecommendationsFailure('anthropic_empty_content', {
           message: 'no text content block in response',
+          stopReason: message.stop_reason ?? '',
         });
         throw new Error('No response from Anthropic');
       }
@@ -491,6 +531,7 @@ async function getAIRecommendations(
   const profileBlock = buildUserProfileBlock(anchors, shuffledWatchlist);
   const perStrategyReasonHint = strategyReasonGuidance(randomStrategy.name);
   const candidatesLines = shuffledWatchlist.map((item, i) => formatCandidateLine(i + 1, item)).join('\n');
+  const pickCount = recommendationPickCount(shuffledWatchlist.length);
 
   const userPrompt = `## User profile
 ${profileBlock}
@@ -503,7 +544,7 @@ Name: ${randomStrategy.name}
 Focus: ${strategyFocus}
 Reason guidance for this strategy: ${perStrategyReasonHint}
 
-Recommend exactly five different titles from the numbered candidate list below. Each reason must follow the strategy reason guidance and the global reason quality bar in your system instructions.
+Recommend exactly ${pickCount} different title${pickCount === 1 ? '' : 's'} from the numbered candidate list below. Each reason must follow the strategy reason guidance and the global reason quality bar in your system instructions. Return a JSON object whose "recommendations" array has exactly ${pickCount} item${pickCount === 1 ? '' : 's'}.
 
 ## Candidates (use only these rows; ids are authoritative)
 ${candidatesLines}`;
@@ -662,7 +703,7 @@ ${candidatesLines}`;
 
     // If AI mapping failed for most items, pick random items from the watchlist
     let usedStockReasonFallback = false;
-    if (recommendations.length < 3) {
+    if (recommendations.length < Math.min(3, pickCount)) {
       usedStockReasonFallback = true;
       console.log('AI mapping failed, picking random items from watchlist');
       const availableItems = [...watchlist].sort(() => Math.random() - 0.5).slice(0, 5);

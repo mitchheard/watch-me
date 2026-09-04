@@ -3,6 +3,7 @@ import {
   OVERVIEW_PROMPT_MAX,
   parseRecommendationsHourParam,
   pickProfileAnchors,
+  recommendationPickCount,
   strategyReasonGuidance,
   timeOfDayBucketFromLocalHour,
   trimOverview,
@@ -89,6 +90,16 @@ describe('timeOfDayBucketFromLocalHour (AVIDX-256)', () => {
     expect(timeOfDayBucketFromLocalHour(20)).toBe('evening');
     expect(timeOfDayBucketFromLocalHour(23)).toBe('late night');
     expect(timeOfDayBucketFromLocalHour(3)).toBe('overnight');
+  });
+});
+
+describe('recommendationPickCount', () => {
+  it('caps at five and never exceeds the pool', () => {
+    expect(recommendationPickCount(0)).toBe(0);
+    expect(recommendationPickCount(1)).toBe(1);
+    expect(recommendationPickCount(3)).toBe(3);
+    expect(recommendationPickCount(5)).toBe(5);
+    expect(recommendationPickCount(50)).toBe(5);
   });
 });
 

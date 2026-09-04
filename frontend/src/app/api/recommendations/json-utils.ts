@@ -13,8 +13,28 @@ export function stripJsonMarkdownFences(rawText: string): string {
   return cleanText.trim();
 }
 
+function recommendationsFromParsedJson(parsed: unknown): unknown[] | null {
+  if (Array.isArray(parsed)) return parsed;
+  if (
+    parsed &&
+    typeof parsed === 'object' &&
+    Array.isArray((parsed as { recommendations?: unknown }).recommendations)
+  ) {
+    return (parsed as { recommendations: unknown[] }).recommendations;
+  }
+  return null;
+}
+
 export function parseRecommendationArray(rawText: string): unknown[] {
   const sanitized = stripJsonMarkdownFences(rawText);
+
+  try {
+    const direct = recommendationsFromParsedJson(JSON.parse(sanitized));
+    if (direct) return direct;
+  } catch {
+    // Fall through to bracket extraction for trailing prose / fences.
+  }
+
   const arrayStart = sanitized.indexOf('[');
   const arrayEnd = sanitized.lastIndexOf(']');
 
@@ -23,11 +43,6 @@ export function parseRecommendationArray(rawText: string): unknown[] {
   }
 
   const candidateJson = sanitized.slice(arrayStart, arrayEnd + 1);
-  const trailingJunk = sanitized.slice(arrayEnd + 1).trim();
-  if (trailingJunk.length > 0) {
-    // Allow trailing prose outside the JSON payload while still parsing safely.
-  }
-
   const parsed = JSON.parse(candidateJson);
   if (!Array.isArray(parsed)) {
     throw new Error('LLM returned invalid JSON shape');

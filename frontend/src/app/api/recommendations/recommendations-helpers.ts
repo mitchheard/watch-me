@@ -1,3 +1,5 @@
+import { localHourInTimeZone } from '@/lib/user-timezone';
+
 /** Max TMDB overview length sent to the recommender (per AVIDX-251). */
 export const OVERVIEW_PROMPT_MAX = 250;
 
@@ -112,6 +114,71 @@ export const HIDDEN_GEM_VOTE_COUNT_THRESHOLD = 10_000;
 
 /** When `hour` query param is missing or invalid (AVIDX-256). */
 export const RECOMMENDATIONS_TIME_OF_DAY_FALLBACK = 'evening';
+
+export type RecommendationsTimeSource = 'query-hour' | 'stored-timezone' | 'fallback';
+
+export type RecommendationsTimeContext = {
+  /** Hour used for the time-of-day bucket (from `?hour=` or stored timezone). */
+  hour: number | null;
+  bucket: string;
+  source: RecommendationsTimeSource;
+  storedTimeZone: string | null;
+  /** Parsed `hour` query param (null if omitted/invalid). */
+  clientHour: number | null;
+  /** Raw `tz` query param (debug only; not used to compute hour). */
+  clientTimeZone: string | null;
+};
+
+/**
+ * Resolve recommender time-of-day (AVIDX-261).
+ * 1. `?hour=` if valid
+ * 2. Else current hour in the user's stored IANA timezone
+ * 3. Else evening
+ *
+ * Cron/email callers (AVIDX-250) can pass `clientHour: null` and a stored timezone.
+ */
+export function resolveRecommendationsTimeContext(opts: {
+  clientHour: number | null;
+  storedTimeZone?: string | null;
+  clientTimeZone?: string | null;
+  now?: Date;
+}): RecommendationsTimeContext {
+  const storedTimeZone = opts.storedTimeZone?.trim() || null;
+  const clientTimeZone = opts.clientTimeZone?.trim() || null;
+  const base = {
+    storedTimeZone,
+    clientHour: opts.clientHour,
+    clientTimeZone,
+  };
+
+  if (opts.clientHour != null) {
+    return {
+      ...base,
+      hour: opts.clientHour,
+      bucket: timeOfDayBucketFromLocalHour(opts.clientHour),
+      source: 'query-hour' as const,
+    };
+  }
+
+  if (storedTimeZone) {
+    const hour = localHourInTimeZone(storedTimeZone, opts.now ?? new Date());
+    if (hour != null) {
+      return {
+        ...base,
+        hour,
+        bucket: timeOfDayBucketFromLocalHour(hour),
+        source: 'stored-timezone' as const,
+      };
+    }
+  }
+
+  return {
+    ...base,
+    hour: null,
+    bucket: RECOMMENDATIONS_TIME_OF_DAY_FALLBACK,
+    source: 'fallback' as const,
+  };
+}
 
 /**
  * Local-hour (0–23) bucket for recommender prompt copy.

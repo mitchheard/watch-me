@@ -225,9 +225,6 @@ export default function RecommendationsPage() {
     if (item.type === 'movie' && item.tmdbMovieRuntime) {
       return `${item.tmdbMovieRuntime} min`;
     }
-    if (item.type === 'show' && item.tmdbTvNumberOfSeasons) {
-      return `${item.tmdbTvNumberOfSeasons} season${item.tmdbTvNumberOfSeasons > 1 ? 's' : ''}`;
-    }
     return null;
   };
 
@@ -501,22 +498,11 @@ export default function RecommendationsPage() {
                             </>
                           )}
                         </span>
-                        {/* Combined year and seasons info like in watchlist */}
                         {(getYear(item) || getRuntime(item)) && (
                           <span className="text-xs sm:text-sm text-gray-500">
-                            {item.type === 'show' && item.tmdbTvNumberOfSeasons ? (
-                              <>
-                                {item.tmdbTvNumberOfSeasons} {item.tmdbTvNumberOfSeasons === 1 ? 'season' : 'seasons'}
-                                {getYear(item) && (
-                                  <>
-                                    {' • '}
-                                    {getYear(item)}
-                                  </>
-                                )}
-                              </>
-                            ) : (
-                              getYear(item)
-                            )}
+                            {getYear(item)}
+                            {getYear(item) && getRuntime(item) ? ' • ' : null}
+                            {getRuntime(item)}
                           </span>
                         )}
                         {/* Rating pill inline with other metadata */}

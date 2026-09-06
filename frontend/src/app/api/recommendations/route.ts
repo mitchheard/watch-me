@@ -9,11 +9,11 @@ import {
   parseRecommendationsHourParam,
   pickProfileAnchors,
   recommendationPickCount,
-  RECOMMENDATIONS_TIME_OF_DAY_FALLBACK,
+  resolveRecommendationsTimeContext,
   strategyReasonGuidance,
-  timeOfDayBucketFromLocalHour,
   trimOverview,
   type ProfileAnchorRow,
+  type RecommendationsTimeContext,
 } from './recommendations-helpers';
 import { shouldAttachRecommendationsApiDebug } from '@/lib/recommendations-debug-env';
 import { getUserSubscription, hasProAccess } from '@/lib/subscription';
@@ -116,7 +116,10 @@ export type RecommendationsApiDebugPayload = {
   requestContext?: {
     clientHour: number | null;
     clientTimeZone: string | null;
+    storedTimeZone: string | null;
+    hourUsed: number | null;
     timeOfDayBucket: string;
+    timeSource: 'query-hour' | 'stored-timezone' | 'fallback';
   };
 };
 
@@ -412,7 +415,7 @@ async function getAIRecommendations(
   watchlist: WatchItem[],
   finishedForProfile: WatchItem[],
   includeDebug: boolean,
-  requestTime: { clientHour: number | null; clientTimeZone: string | null }
+  requestTime: RecommendationsTimeContext
 ): Promise<{
   recommendations: Recommendation[];
   strategy: string;
@@ -532,19 +535,14 @@ async function getAIRecommendations(
   console.log('Available IDs in shuffled watchlist:', shuffledWatchlist.map(item => item.id));
 
   const strategyFocus = randomStrategy.focus;
-  const hourForBucket =
-    requestTime.clientHour != null
-      ? requestTime.clientHour
-      : null;
-  const timeContext =
-    hourForBucket != null
-      ? timeOfDayBucketFromLocalHour(hourForBucket)
-      : RECOMMENDATIONS_TIME_OF_DAY_FALLBACK;
-
+  const timeContext = requestTime.bucket;
   const debugRequestContext = {
     clientHour: requestTime.clientHour,
     clientTimeZone: requestTime.clientTimeZone,
+    storedTimeZone: requestTime.storedTimeZone,
+    hourUsed: requestTime.hour,
     timeOfDayBucket: timeContext,
+    timeSource: requestTime.source,
   } satisfies NonNullable<RecommendationsApiDebugPayload['requestContext']>;
 
   const anchors = pickProfileAnchors(
@@ -560,7 +558,13 @@ async function getAIRecommendations(
 ${profileBlock}
 
 ## Time
-Time of day: ${timeContext}${requestTime.clientHour != null ? ` (client local hour ${requestTime.clientHour})` : ' (client hour omitted — neutral default bucket)'}
+Time of day: ${timeContext}${
+  requestTime.source === 'query-hour'
+    ? ` (client local hour ${requestTime.hour})`
+    : requestTime.source === 'stored-timezone'
+      ? ` (hour ${requestTime.hour} in ${requestTime.storedTimeZone})`
+      : ' (client hour omitted — neutral default bucket)'
+}
 
 ## Strategy
 Name: ${randomStrategy.name}
@@ -834,9 +838,17 @@ export async function GET(request: NextRequest) {
     const clientTimeZone =
       tzRaw && tzRaw.trim().length > 0 ? tzRaw.trim().slice(0, 160) : null;
 
-    const requestTime = { clientHour, clientTimeZone };
+    const dbUser = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { timezone: true },
+    });
+    const requestTime = resolveRecommendationsTimeContext({
+      clientHour,
+      storedTimeZone: dbUser?.timezone ?? null,
+      clientTimeZone,
+    });
 
-    const cacheKey = `recommendations_${userId}_h${clientHour ?? 'na'}_tz${clientTimeZone ?? 'na'}`;
+    const cacheKey = `recommendations_${userId}_h${requestTime.hour ?? 'na'}_src${requestTime.source}_tz${requestTime.storedTimeZone ?? clientTimeZone ?? 'na'}`;
     const cached = recommendationCache.get(cacheKey);
 
     // Never serve cached payloads for debug builds (would omit or stale-copy prompt/response)

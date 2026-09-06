@@ -28,6 +28,12 @@ model User {
   cancelAtPeriodEnd      Boolean   @default(false)
   isAdmin                Boolean   @default(false)
   subscriptionConsents   SubscriptionConsent[]
+
+  /// IANA timezone (e.g. America/Chicago). Populated opportunistically from the browser (AVIDX-261).
+  timezone               String?
+  timezoneUpdatedAt      DateTime?
+  /// Cached tonight pick (AVIDX-350). See lib/tonight-cache.ts.
+  tonightPickCache       Json?
 }
 
 model SubscriptionConsent {

@@ -19,7 +19,10 @@ export interface RecommendationsDebugPayload {
   requestContext?: {
     clientHour: number | null;
     clientTimeZone: string | null;
+    storedTimeZone: string | null;
+    hourUsed: number | null;
     timeOfDayBucket: string;
+    timeSource?: 'query-hour' | 'stored-timezone' | 'fallback';
   };
 }
 
@@ -96,8 +99,13 @@ export function RecommendationsDebugToolbar({ debug }: RecommendationsDebugToolb
           <p className="mt-1 font-mono text-xs text-amber-900/90">
             <span className="font-sans font-medium text-amber-950">Time: </span>
             bucket {debug.requestContext.timeOfDayBucket}
-            {debug.requestContext.clientHour != null ? ` · hour ${debug.requestContext.clientHour}` : ''}
-            {debug.requestContext.clientTimeZone ? ` · ${debug.requestContext.clientTimeZone}` : ''}
+            {debug.requestContext.hourUsed != null ? ` · hour ${debug.requestContext.hourUsed}` : ''}
+            {debug.requestContext.timeSource ? ` · ${debug.requestContext.timeSource}` : ''}
+            {debug.requestContext.storedTimeZone
+              ? ` · stored ${debug.requestContext.storedTimeZone}`
+              : debug.requestContext.clientTimeZone
+                ? ` · ${debug.requestContext.clientTimeZone}`
+                : ''}
           </p>
         )}
         {(hasLatency || hasUsage) && (

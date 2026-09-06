@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useEffect, useRef, useState, ReactNode } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabaseClient';
 
@@ -20,6 +20,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const timezonePostedForUserRef = useRef<string | null>(null);
 
   useEffect(() => {
     console.log('[AuthContext] useEffect: Initializing session check.');
@@ -57,9 +58,23 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   useEffect(() => {
-    if (user) {
-      fetch('/api/user/sync', { method: 'POST' });
-    }
+    if (!user) return;
+    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    fetch('/api/user/sync', { method: 'POST' })
+      .then((res) => {
+        if (!res.ok || !tz) return;
+        if (timezonePostedForUserRef.current === user.id) return;
+        timezonePostedForUserRef.current = user.id;
+        return fetch('/api/profile/timezone', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ timezone: tz }),
+        });
+      })
+      .catch(() => {
+        /* opportunistic; ignore network errors */
+      });
   }, [user]);
 
   const loginWithGoogle = async () => {

@@ -1,6 +1,6 @@
 /** Exact disclosure shown above the Pro checkout button (California ARL). */
 export const PRO_SUBSCRIPTION_DISCLOSURE =
-  '$25/year, automatically renews annually until canceled. Cancel anytime in Settings.';
+  '$25/year, automatically renews annually until canceled. Cancel anytime in Account.';
 
 export const PRO_SUBSCRIPTION_CONSENT_LABEL =
   'I agree to the auto-renewing subscription terms above.';

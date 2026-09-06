@@ -8,14 +8,19 @@ export const UMAMI_SCRIPT_SRC =
 export const UMAMI_WEBSITE_ID =
   "10c0dd15-f7d3-4b30-bea5-58c317c49cc2" as const;
 
-/** Custom events from AVIDX-85 and AVIDX-253 only. */
+/** Custom events from AVIDX-85, AVIDX-253, and AVIDX-350. Properties must not include PII. */
 export type UmamiTicketEvent =
   | "item_added_to_watchlist"
   | "item_marked_watched"
   | "ai_recommendation_requested"
   | "ai_fallback_fired"
   | "search_performed"
-  | "watchlist_viewed";
+  | "watchlist_viewed"
+  | "pick_viewed"
+  | "pick_regenerated"
+  | "not_tonight"
+  | "start_watching"
+  | "pro_lock_viewed";
 
 declare global {
   interface Window {

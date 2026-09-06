@@ -39,7 +39,7 @@ describe('buildProSubscriptionConfirmationHtml', () => {
       day: 'numeric',
     }));
     expect(html).toContain(PRO_SUBSCRIPTION_DISCLOSURE);
-    expect(html).toContain('https://watchme.test/settings');
+    expect(html).toContain('https://watchme.test/account');
   });
 });
 

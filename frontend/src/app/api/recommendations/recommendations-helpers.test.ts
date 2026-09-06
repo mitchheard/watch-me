@@ -5,6 +5,7 @@ import {
   parseRecommendationsHourParam,
   pickProfileAnchors,
   recommendationPickCount,
+  resolveRecommendationsTimeContext,
   strategyReasonGuidance,
   timeOfDayBucketFromLocalHour,
   trimOverview,
@@ -140,5 +141,53 @@ describe('parseRecommendationsHourParam', () => {
     expect(parseRecommendationsHourParam('')).toBeNull();
     expect(parseRecommendationsHourParam('24')).toBeNull();
     expect(parseRecommendationsHourParam('abc')).toBeNull();
+  });
+});
+
+describe('resolveRecommendationsTimeContext (AVIDX-261)', () => {
+  const now = new Date('2026-09-06T17:00:00.000Z'); // 12:00 America/Chicago
+
+  it('uses ?hour= even when a stored timezone is present', () => {
+    const ctx = resolveRecommendationsTimeContext({
+      clientHour: 1,
+      storedTimeZone: 'America/Chicago',
+      now,
+    });
+    expect(ctx.source).toBe('query-hour');
+    expect(ctx.hour).toBe(1);
+    expect(ctx.bucket).toBe('late night');
+  });
+
+  it('uses the stored timezone when hour is omitted', () => {
+    const ctx = resolveRecommendationsTimeContext({
+      clientHour: null,
+      storedTimeZone: 'America/Chicago',
+      now,
+    });
+    expect(ctx.source).toBe('stored-timezone');
+    expect(ctx.hour).toBe(12);
+    expect(ctx.bucket).toBe('midday');
+    expect(ctx.storedTimeZone).toBe('America/Chicago');
+  });
+
+  it('falls back to evening when hour and timezone are both absent', () => {
+    const ctx = resolveRecommendationsTimeContext({
+      clientHour: null,
+      storedTimeZone: null,
+      now,
+    });
+    expect(ctx.source).toBe('fallback');
+    expect(ctx.hour).toBeNull();
+    expect(ctx.bucket).toBe('evening');
+  });
+
+  it('falls back to evening when the stored timezone is invalid', () => {
+    const ctx = resolveRecommendationsTimeContext({
+      clientHour: null,
+      storedTimeZone: 'Not/ARealZone',
+      now,
+    });
+    expect(ctx.source).toBe('fallback');
+    expect(ctx.bucket).toBe('evening');
   });
 });

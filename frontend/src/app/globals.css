@@ -1,19 +1,36 @@
 :root {
-  --foreground-rgb: 0, 0, 0;
-  --background-start-rgb: 214, 219, 220;
-  --background-end-rgb: 255, 255, 255;
-  /* Removed light/dark theme specific CSS variables */
+  --wm-canvas: #0c0b0a;
+  --wm-surface: #161412;
+  --wm-elevated: #1f1c19;
+  --wm-ink: #f4efe6;
+  --wm-muted: #a39a8f;
+  --wm-accent: #e8a317;
+  --wm-accent-ink: #1a1408;
+  --wm-line: #2a2622;
+  --wm-danger: #e07070;
+  --foreground-rgb: 244, 239, 230;
 }
 
-/* Removed html.dark block */
+@media (prefers-color-scheme: light) {
+  :root {
+    --wm-canvas: #f4efe6;
+    --wm-surface: #fffdf8;
+    --wm-elevated: #ffffff;
+    --wm-ink: #1a1714;
+    --wm-muted: #6f675e;
+    --wm-accent: #c4840a;
+    --wm-accent-ink: #fffdf8;
+    --wm-line: #e4ddd0;
+    --wm-danger: #b42318;
+    --foreground-rgb: 26, 23, 20;
+  }
+}
 
 body {
-  color: rgb(var(--foreground-rgb));
-  background-color: rgb(241, 245, 249); /* slate-100, was --page-bg */
-  font-family: var(--font-geist-sans, Arial, Helvetica, sans-serif);
+  color: var(--wm-ink);
+  background-color: var(--wm-canvas);
+  font-family: var(--font-geist-sans, ui-sans-serif, system-ui, sans-serif);
 }
-
-/* Removed any other global dark mode overrides */
 
 @tailwind base;
 @tailwind components;

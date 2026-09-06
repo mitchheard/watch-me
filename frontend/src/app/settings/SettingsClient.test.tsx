@@ -31,7 +31,8 @@ describe('SettingsClient subscription states (AVIDX-269)', () => {
     mockedUseAuth.mockReturnValue({
       user,
       loginWithGoogle: vi.fn(),
-    } as ReturnType<typeof useAuth>);
+      logout: vi.fn(),
+    } as unknown as ReturnType<typeof useAuth>);
 
     fetchMock = vi.fn().mockImplementation((input: RequestInfo | URL) => {
       const url = typeof input === 'string' ? input : input.toString();
@@ -39,6 +40,12 @@ describe('SettingsClient subscription states (AVIDX-269)', () => {
         return Promise.resolve({
           ok: true,
           json: async () => subscriptionPayload,
+        });
+      }
+      if (url.includes('/api/user/notifications/preferences')) {
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({ preferences: { newSeasonAlerts: true } }),
         });
       }
       if (url.includes('/api/stripe/create-checkout')) {
@@ -78,6 +85,7 @@ describe('SettingsClient subscription states (AVIDX-269)', () => {
       expect(screen.getByRole('button', { name: /upgrade to pro/i })).toBeTruthy();
     });
     expect(screen.getByText(PRO_SUBSCRIPTION_DISCLOSURE)).toBeTruthy();
+    expect(screen.getByText('$25/year')).toBeTruthy();
     const consentBox = screen.getByLabelText(PRO_SUBSCRIPTION_CONSENT_LABEL);
     expect(consentBox).toHaveProperty('checked', false);
   });

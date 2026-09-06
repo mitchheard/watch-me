@@ -22,7 +22,7 @@ function formatRenewalDate(date: Date): string {
 }
 
 export function buildProSubscriptionConfirmationHtml(renewalDate: Date): string {
-  const cancelUrl = `${siteOrigin()}/settings`;
+  const cancelUrl = `${siteOrigin()}/account`;
   const renewalLabel = formatRenewalDate(renewalDate);
 
   return `
@@ -35,7 +35,7 @@ export function buildProSubscriptionConfirmationHtml(renewalDate: Date): string 
       <p style="margin: 0 0 12px;">Your next renewal date is <strong>${renewalLabel}</strong>.</p>
       <p style="margin: 0 0 16px;">${PRO_SUBSCRIPTION_DISCLOSURE}</p>
       <p style="margin: 0;">
-        <a href="${cancelUrl}" style="color: #2563eb;">Cancel or manage your subscription in Settings</a>
+        <a href="${cancelUrl}" style="color: #2563eb;">Cancel or manage your subscription in Account</a>
       </p>
     </div>
   `.trim();

@@ -155,4 +155,13 @@ describe('RecommendationsPage auto-fetch gate', () => {
 
     expect(recommendationsCallCount()).toBe(1);
   });
+
+  it('includes local hour on the recommendations request (AVIDX-256/261)', async () => {
+    mockedUseAuth.mockReturnValue({ user: makeUser() } as ReturnType<typeof useAuth>);
+    render(<RecommendationsPage />);
+
+    await waitFor(() => expect(recommendationsCallCount()).toBe(1));
+    const url = String(fetchMock.mock.calls.find(([u]) => String(u).startsWith('/api/recommendations'))?.[0]);
+    expect(url).toMatch(/[?&]hour=\d{1,2}/);
+  });
 });
